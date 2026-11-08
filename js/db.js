@@ -1,10 +1,19 @@
-/* Capa de datos: persiste todo en localStorage y genera datos de ejemplo. */
+/* Capa de datos de DentaGest.
+   - Dentro de claude.ai (artefacto): usa la base compartida del artefacto (capacidad `db`),
+     con actualizaciones en vivo cuando otra persona modifica algo.
+   - Fuera de claude.ai: guarda todo en este navegador (localStorage) y arranca con datos de ejemplo.
+   Las vistas trabajan siempre sobre una copia en memoria; las escrituras se envían en segundo plano. */
 (function () {
-  const KEY = 'dentagest-db-v1';
-  const SESSION_KEY = 'dentagest-session';
-  const { isoDate, addDays } = U;
+  const { storage, inClaude, capability, newSalt, hashPassword } = U;
 
-  const COLLECTIONS = ['users', 'patients', 'appointments', 'treatments', 'budgets', 'payments', 'history', 'consents', 'activity'];
+  const LOCAL_KEY = 'dentagest-db-v1';
+  const SESSION_KEY = 'dentagest-session';
+  const LISTS = ['users', 'patients', 'appointments', 'treatments', 'budgets', 'payments', 'history', 'consents', 'activity'];
+  const CLOUD_COLLECTIONS = [...LISTS, 'odontograms', 'config'];
+  const ACTIVITY_KEEP = 300;
+  const ACTIVITY_MAX = 360;
+  const MAX_PARALLEL_WRITES = 4;
+  const SAFE_ID = /^[A-Za-z0-9_-]{1,120}$/;
 
   const ROLES = { admin: 'Administrador', odontologo: 'Odontólogo/a', recepcion: 'Recepción' };
   const SPECIALTIES = ['Odontología general', 'Ortodoncia', 'Endodoncia', 'Periodoncia', 'Implantología', 'Odontopediatría', 'Cirugía maxilofacial'];
@@ -12,197 +21,410 @@
   const APPT_STATUS = { programada: 'Programada', confirmada: 'Confirmada', atendida: 'Atendida', cancelada: 'Cancelada', ausente: 'No asistió' };
   const BUDGET_STATUS = { pendiente: 'Pendiente', aceptado: 'Aceptado', en_curso: 'En curso', finalizado: 'Finalizado', rechazado: 'Rechazado' };
   const TREATMENT_CATEGORIES = ['Diagnóstico', 'Prevención', 'Operatoria', 'Endodoncia', 'Periodoncia', 'Cirugía', 'Prótesis', 'Ortodoncia', 'Implantes', 'Estética'];
+  const DEFAULT_SETTINGS = {
+    clinicName: 'Mi clínica dental', taxId: '', phone: '', email: '', address: '',
+    openTime: '09:00', closeTime: '19:00', workDays: 'Lunes a viernes', slotMinutes: 30,
+    receiptFooter: 'Gracias por confiar en nosotros.',
+  };
+  const PREFIX = { users: 'u', patients: 'p', appointments: 'a', treatments: 't', budgets: 'b', payments: 'pay', history: 'h', consents: 'c', activity: 'log' };
+  const MODULE_LABEL = { users: 'Usuarios', patients: 'Pacientes', appointments: 'Citas', treatments: 'Tratamientos', budgets: 'Presupuestos', payments: 'Pagos', history: 'Historia clínica', consents: 'Consentimientos' };
 
-  let state = null;
-  let seq = 1;
+  const emptyState = () => ({
+    users: [], patients: [], appointments: [], treatments: [], budgets: [], payments: [], history: [], consents: [], activity: [],
+    odontograms: {}, settings: { ...DEFAULT_SETTINGS },
+  });
 
-  const uid = (prefix) => `${prefix}${Date.now().toString(36)}${(seq++).toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+  let state = emptyState();
+  let mode = 'loading'; // 'local' | 'cloud' | 'unavailable'
+  let readOnly = false;
+  const confirmed = new Set();
+  const changeListeners = new Set();
+  const syncListeners = new Set();
 
-  const save = () => localStorage.setItem(KEY, JSON.stringify(state));
+  let seq = 0;
+  const uid = (prefix) => `${prefix}${Date.now().toString(36)}${(seq++).toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  const clone = (v) => JSON.parse(JSON.stringify(v));
+  const canon = (v) => {
+    if (Array.isArray(v)) return `[${v.map(canon).join(',')}]`;
+    if (v && typeof v === 'object') return `{${Object.keys(v).filter((k) => v[k] !== undefined).sort().map((k) => `${JSON.stringify(k)}:${canon(v[k])}`).join(',')}}`;
+    return JSON.stringify(v === undefined ? null : v);
+  };
+  const byId = (a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  const listSignature = (list) => canon([...list].sort(byId));
 
-  const seed = () => {
-    const today = new Date();
-    const d = (n) => isoDate(addDays(today, n));
-
-    const users = [
-      { id: 'u1', firstName: 'Admin', lastName: 'Sistema', email: 'admin@dentagest.com', password: 'admin123', role: 'admin', specialty: '', phone: '', active: true, color: '#0d9488' },
-      { id: 'u2', firstName: 'Carlos', lastName: 'Rodríguez', email: 'crodriguez@dentagest.com', password: 'demo123', role: 'odontologo', specialty: 'Odontología general', phone: '11 4455-1020', active: true, color: '#0284c7' },
-      { id: 'u3', firstName: 'María', lastName: 'González', email: 'mgonzalez@dentagest.com', password: 'demo123', role: 'odontologo', specialty: 'Ortodoncia', phone: '11 4455-1021', active: true, color: '#7c3aed' },
-      { id: 'u4', firstName: 'Andrés', lastName: 'López', email: 'alopez@dentagest.com', password: 'demo123', role: 'odontologo', specialty: 'Endodoncia', phone: '11 4455-1022', active: true, color: '#d97706' },
-      { id: 'u5', firstName: 'Laura', lastName: 'Martínez', email: 'lmartinez@dentagest.com', password: 'demo123', role: 'odontologo', specialty: 'Implantología', phone: '11 4455-1023', active: true, color: '#db2777' },
-      { id: 'u6', firstName: 'Julieta', lastName: 'Paz', email: 'recepcion@dentagest.com', password: 'demo123', role: 'recepcion', specialty: '', phone: '11 4455-1000', active: true, color: '#475569' },
-    ];
-
-    const names = [
-      ['María', 'García', 'F', '1988-03-14'], ['Roberto', 'Fernández', 'M', '1975-07-02'], ['Luciana', 'Martínez', 'F', '1992-11-21'],
-      ['Carlos', 'López', 'M', '1980-01-30'], ['Ana', 'Rodríguez', 'F', '1995-05-09'], ['Diego', 'Sánchez', 'M', '1987-09-17'],
-      ['Valentina', 'Torres', 'F', '2001-12-03'], ['Martín', 'Díaz', 'M', '1980-04-25'], ['Sofía', 'Romero', 'F', '1999-08-11'],
-      ['Federico', 'Morales', 'M', '1969-02-08'], ['Camila', 'Herrera', 'F', '2012-06-19'], ['Joaquín', 'Benítez', 'M', '1990-10-05'],
-    ];
-    const insurers = ['OSDE', 'Swiss Medical', 'Galeno', 'Particular', 'IOMA', 'Medifé'];
-    const patients = names.map(([firstName, lastName, sex, birthDate], i) => ({
-      id: 'p' + (i + 1), firstName, lastName, sex, birthDate,
-      dni: String(25000000 + i * 1234567).slice(0, 8),
-      phone: `11 ${5000 + i * 37}-${1000 + i * 91}`,
-      email: `${firstName}.${lastName}`.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '') + '@mail.com',
-      address: `Av. Siempre Viva ${100 + i * 15}, CABA`,
-      insurance: insurers[i % insurers.length], insuranceNumber: insurers[i % insurers.length] === 'Particular' ? '' : String(800000 + i * 731),
-      allergies: i % 4 === 0 ? 'Penicilina' : '', medications: i % 5 === 1 ? 'Enalapril 10mg' : '',
-      conditions: i % 6 === 2 ? 'Hipertensión' : '', notes: '',
-      createdAt: d(-120 + i * 9),
-    }));
-
-    const treatments = [
-      ['Consulta y diagnóstico', 'Diagnóstico', 15000, 30], ['Radiografía periapical', 'Diagnóstico', 8000, 15],
-      ['Limpieza y profilaxis', 'Prevención', 22000, 45], ['Aplicación de flúor', 'Prevención', 9000, 20], ['Sellador de fosas', 'Prevención', 12000, 20],
-      ['Obturación con resina (1 cara)', 'Operatoria', 28000, 40], ['Obturación con resina (2+ caras)', 'Operatoria', 36000, 60],
-      ['Endodoncia unirradicular', 'Endodoncia', 85000, 60], ['Endodoncia multirradicular', 'Endodoncia', 120000, 90],
-      ['Raspaje y alisado radicular', 'Periodoncia', 40000, 60], ['Extracción simple', 'Cirugía', 35000, 30], ['Extracción de tercer molar', 'Cirugía', 90000, 60],
-      ['Corona de porcelana', 'Prótesis', 180000, 60], ['Prótesis removible parcial', 'Prótesis', 220000, 60],
-      ['Control de ortodoncia', 'Ortodoncia', 25000, 30], ['Brackets metálicos (instalación)', 'Ortodoncia', 350000, 90],
-      ['Implante dental', 'Implantes', 600000, 120], ['Blanqueamiento en consultorio', 'Estética', 120000, 60],
-    ].map(([name, category, price, duration], i) => ({ id: 't' + (i + 1), name, category, price, duration, description: '' }));
-
-    const dentists = users.filter((u) => u.role === 'odontologo');
-    const times = ['09:00', '09:30', '10:00', '11:00', '11:30', '12:00', '14:00', '15:00', '15:30', '16:30', '17:00', '18:00'];
-    const appointments = [];
-    let a = 1;
-    for (let day = -10; day <= 12; day++) {
-      const date = addDays(today, day);
-      if (date.getDay() === 0) continue;
-      const count = date.getDay() === 6 ? 2 : 4;
-      for (let k = 0; k < count; k++) {
-        const p = patients[(a * 7 + k) % patients.length];
-        const t = treatments[(a * 3 + k) % treatments.length];
-        const dentist = dentists[(a + k) % dentists.length];
-        let status = 'programada';
-        if (day < 0) status = (a % 9 === 0) ? 'ausente' : (a % 11 === 0 ? 'cancelada' : 'atendida');
-        else if (day <= 2) status = a % 2 ? 'confirmada' : 'programada';
-        appointments.push({ id: 'a' + a, patientId: p.id, dentistId: dentist.id, treatmentId: t.id, date: isoDate(date), time: times[(a + k * 3) % times.length], duration: t.duration >= 60 ? 60 : 30, status, notes: '' });
-        a++;
-      }
-    }
-
-    const budgetDefs = [
-      ['p1', 'u2', [['t6', 2], ['t3', 1]], 'en_curso', -40], ['p2', 'u3', [['t15', 1]], 'aceptado', -35], ['p3', 'u2', [['t6', 1]], 'aceptado', -30],
-      ['p4', 'u4', [['t8', 1], ['t13', 1]], 'finalizado', -60], ['p5', 'u5', [['t3', 1]], 'aceptado', -12], ['p6', 'u2', [['t9', 1]], 'pendiente', -5],
-      ['p7', 'u2', [['t7', 1]], 'finalizado', -50], ['p8', 'u3', [['t16', 1]], 'aceptado', -25], ['p9', 'u4', [['t18', 1]], 'pendiente', -3],
-      ['p10', 'u2', [['t12', 1]], 'pendiente', -2], ['p12', 'u5', [['t17', 1]], 'rechazado', -45],
-    ];
-    const tById = Object.fromEntries(treatments.map((t) => [t.id, t]));
-    const budgets = budgetDefs.map(([patientId, dentistId, items, status, day], i) => ({
-      id: 'b' + (i + 1), number: 1001 + i, patientId, dentistId, status, date: d(day), notes: '', discount: 0,
-      items: items.map(([treatmentId, qty]) => ({ treatmentId, description: tById[treatmentId].name, qty, price: tById[treatmentId].price, tooth: '' })),
-    }));
-
-    const budgetTotal = (b) => b.items.reduce((s, it) => s + it.qty * it.price, 0) * (1 - (b.discount || 0) / 100);
-    const payments = [];
-    let pid = 1;
-    budgets.forEach((b, i) => {
-      if (b.status === 'pendiente' || b.status === 'rechazado') return;
-      const total = budgetTotal(b);
-      const parts = b.status === 'finalizado' ? [1] : (i % 2 ? [0.5] : [0.3, 0.3]);
-      parts.forEach((part, j) => {
-        payments.push({ id: 'pay' + pid++, patientId: b.patientId, budgetId: b.id, amount: Math.round(total * part), method: PAYMENT_METHODS[(i + j) % 4], date: d(Math.min(0, -26 + i * 3 + j * 9)), concept: 'Pago presupuesto #' + b.number, receipt: 'R-' + String(2000 + pid).padStart(6, '0') });
-      });
-    });
-
-    const history = [
-      { id: 'h1', patientId: 'p8', dentistId: 'u3', date: d(-25), title: 'Primera consulta de ortodoncia', notes: 'Apiñamiento anteroinferior leve. Se solicitan radiografía panorámica y telerradiografía.' },
-      { id: 'h2', patientId: 'p8', dentistId: 'u2', date: d(-14), title: 'Obturación pieza 14', notes: 'Caries oclusal en 14. Se realiza obturación con resina A2. Sin complicaciones.' },
-      { id: 'h3', patientId: 'p1', dentistId: 'u2', date: d(-20), title: 'Limpieza y control', notes: 'Sarro moderado en sector anteroinferior. Se indica técnica de cepillado.' },
-    ];
-
-    const consents = [
-      { id: 'c1', patientId: 'p8', type: 'Tratamiento de ortodoncia', date: d(-25), signed: true, notes: 'Firmado en consultorio.' },
-    ];
-
-    const odontograms = {
-      p8: { 14: { faces: { c: 'obturacion', r: 'caries' } }, 15: { faces: { t: 'caries' } }, 12: { faces: { c: 'obturacion' } }, 21: { whole: 'corona' }, 25: { whole: 'extraccion' }, 46: { faces: { l: 'caries' } }, 33: { whole: 'endodoncia' } },
-      p4: { 36: { whole: 'endodoncia' }, 37: { whole: 'corona' }, 18: { whole: 'ausente' } },
-      p1: { 16: { faces: { c: 'obturacion' } }, 26: { faces: { c: 'caries' } } },
-    };
-
-    const activity = [];
-
-    return {
-      users, patients, treatments, appointments, budgets, payments, history, consents, activity, odontograms,
-      settings: {
-        clinicName: 'Clínica Dental Sonrisas', taxId: '30-71234567-8', phone: '11 4455-1000', email: 'contacto@sonrisas.com',
-        address: 'Av. Corrientes 1234, CABA', openTime: '09:00', closeTime: '19:00', workDays: 'Lunes a sábado',
-        currency: 'ARS', slotMinutes: 30, receiptFooter: 'Gracias por confiar en nosotros.',
-      },
-    };
+  let changeTimer;
+  const notifyChange = () => {
+    clearTimeout(changeTimer);
+    changeTimer = setTimeout(() => changeListeners.forEach((fn) => fn()), 150);
   };
 
-  const load = () => {
+  /* =====================================================================
+     Base compartida del artefacto
+     ===================================================================== */
+  let cloud = null;
+  const overrides = new Map(); // ruta -> { body, seq }: cambios locales aún no confirmados
+  const slots = new Map();     // ruta -> estado de la cola de escritura de ese documento
+  const waiting = [];
+  let activeWrites = 0;
+  let writeSeq = 0;
+
+  const pendingWrites = () => { let n = 0; slots.forEach((s) => { if (s.has || s.busy) n++; }); return n; };
+  const notifySync = () => { const n = pendingWrites(); syncListeners.forEach((fn) => fn(n)); };
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  let lastSaveErrorAt = 0;
+  const reportWriteError = (code) => {
+    if (code === 'invalid_argument' || code === 'transform_error' || code === 'not_granted') {
+      if (!readOnly) { readOnly = true; notifyChange(); }
+      U.toast('No tenés permiso para modificar los datos de esta clínica.', 'err');
+      return;
+    }
+    if (code === 'quota_exceeded') { U.toast('La base de datos está llena. Eliminá registros antiguos para seguir guardando.', 'err'); return; }
+    if (code === 'revoked' || code === 'capability_disabled' || code === 'capability_removed') { mode = 'unavailable'; notifyChange(); return; }
+    if (Date.now() - lastSaveErrorAt > 4000) {
+      lastSaveErrorAt = Date.now();
+      U.toast('No se pudo guardar un cambio. Revisá la conexión e intentá de nuevo.', 'err');
+    }
+  };
+
+  const runWrite = async (path, body) => {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const ref = cloud.doc(path);
+        if (body === null) await ref.delete(); else await ref.set(body);
+        return true;
+      } catch (err) {
+        const code = (err && err.code) || 'unavailable';
+        if (code === 'unavailable' && attempt === 0) { await sleep(300 + Math.random() * 700); continue; }
+        if (code === 'resource_exhausted' && attempt < 2) { await sleep(1500 * (attempt + 1) + Math.random() * 500); continue; }
+        reportWriteError(code);
+        return false;
+      }
+    }
+    return false;
+  };
+
+  const applyDoc = (path, body) => {
+    if (overrides.has(path)) return;
+    const [col, id] = path.split('/');
+    if (col === 'config') {
+      const next = { ...DEFAULT_SETTINGS, ...(body || {}) };
+      if (canon(next) !== canon(state.settings)) { state.settings = next; notifyChange(); }
+      return;
+    }
+    if (col === 'odontograms') {
+      const next = { ...state.odontograms };
+      if (body) next[id] = body.teeth || {}; else delete next[id];
+      if (canon(next) !== canon(state.odontograms)) { state.odontograms = next; notifyChange(); }
+      return;
+    }
+    const list = state[col];
+    if (!list) return;
+    const index = list.findIndex((x) => x.id === id);
+    const next = list.slice();
+    if (body) { if (index >= 0) next[index] = body; else next.push(body); }
+    else if (index >= 0) next.splice(index, 1);
+    else return;
+    if (col === 'activity') next.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    state[col] = next;
+    notifyChange();
+  };
+
+  const refetch = async (path) => {
     try {
-      const raw = localStorage.getItem(KEY);
-      state = raw ? JSON.parse(raw) : null;
-    } catch { state = null; }
-    if (!state || !state.users) { state = seed(); save(); }
-    COLLECTIONS.forEach((c) => { if (!Array.isArray(state[c])) state[c] = []; });
-    state.odontograms = state.odontograms || {};
+      const snap = await cloud.doc(path).get();
+      applyDoc(path, snap.exists ? clone(snap.data()) : null);
+    } catch { /* la próxima actualización en vivo lo corrige */ }
+  };
+
+  const pump = () => {
+    while (activeWrites < MAX_PARALLEL_WRITES && waiting.length) {
+      const path = waiting.shift();
+      const slot = slots.get(path);
+      if (!slot) continue;
+      slot.queued = false;
+      if (!slot.has) continue;
+      const { body, seq: mySeq } = slot;
+      slot.has = false;
+      slot.busy = true;
+      activeWrites++;
+      runWrite(path, body)
+        .then((ok) => {
+          const pending = overrides.get(path);
+          if (pending && pending.seq === mySeq) overrides.delete(path);
+          if (!ok) refetch(path);
+        })
+        .finally(() => {
+          slot.busy = false;
+          activeWrites--;
+          if (slot.has && !slot.queued) { slot.queued = true; waiting.push(path); }
+          if (!slot.has && !slot.busy && !slot.queued) slots.delete(path);
+          notifySync();
+          pump();
+        });
+    }
+    notifySync();
+  };
+
+  /** Encola la escritura de un documento (body = null lo borra). Solo viaja el último estado de cada documento. */
+  const schedule = (path, body) => {
+    const slot = slots.get(path) || { has: false, busy: false, queued: false };
+    slot.body = body === null ? null : clone(body);
+    slot.seq = ++writeSeq;
+    slot.has = true;
+    slots.set(path, slot);
+    overrides.set(path, { body: slot.body, seq: slot.seq });
+    if (!slot.busy && !slot.queued) { slot.queued = true; waiting.push(path); }
+    pump();
+  };
+
+  const applySnapshot = (col, snap) => {
+    const docs = new Map();
+    snap.docs.forEach((doc) => { if (doc.exists) docs.set(doc.id, doc.data()); });
+    overrides.forEach((pending, path) => {
+      const [c, id] = path.split('/');
+      if (c !== col) return;
+      if (pending.body === null) docs.delete(id); else docs.set(id, pending.body);
+    });
+    if (col === 'config') {
+      const next = { ...DEFAULT_SETTINGS, ...clone(docs.get('clinic') || {}) };
+      if (canon(next) === canon(state.settings)) return false;
+      state.settings = next;
+      return true;
+    }
+    if (col === 'odontograms') {
+      const next = {};
+      docs.forEach((value, id) => { next[id] = clone((value && value.teeth) || {}); });
+      if (canon(next) === canon(state.odontograms)) return false;
+      state.odontograms = next;
+      return true;
+    }
+    const next = [...docs.values()].map(clone);
+    if (listSignature(next) === listSignature(state[col])) return false;
+    if (col === 'activity') next.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    state[col] = next;
+    return true;
+  };
+
+  const subscribe = (col, onFirst) => {
+    let first = true;
+    const done = () => { if (first) { first = false; onFirst(); } };
+    cloud.collection(col).onSnapshot(
+      (snap) => {
+        const changed = applySnapshot(col, snap);
+        const wasConfirmed = confirmed.has(col);
+        if (!snap.metadata || !snap.metadata.fromCache) confirmed.add(col);
+        if (first) { done(); return; }
+        if (changed || (!wasConfirmed && confirmed.has(col))) notifyChange();
+      },
+      (err) => {
+        const code = err && err.code;
+        done();
+        if (code === 'revoked') { mode = 'unavailable'; notifyChange(); return; }
+        if (code === 'unavailable') { setTimeout(() => subscribe(col, () => {}), 2000 + Math.random() * 2000); return; }
+        console.warn('DentaGest: no se pudo leer la colección', col, err);
+      },
+    );
+  };
+
+  const initCloud = (dbNamespace) => new Promise((resolve) => {
+    cloud = dbNamespace;
+    mode = 'cloud';
+    let remaining = CLOUD_COLLECTIONS.length;
+    CLOUD_COLLECTIONS.forEach((col) => {
+      try {
+        subscribe(col, () => { remaining--; if (remaining === 0) resolve(); });
+      } catch (err) {
+        console.warn('DentaGest: no se pudo suscribir a', col, err);
+        remaining--;
+        if (remaining === 0) resolve();
+      }
+    });
+  });
+
+  /* =====================================================================
+     Navegador (sin claude.ai)
+     ===================================================================== */
+  const persistLocal = () => storage.set(LOCAL_KEY, JSON.stringify(state));
+
+  const securePassword = (user) => {
+    const { password, ...rest } = user;
+    if (!password) return rest;
+    const salt = newSalt();
+    return { ...rest, salt, passwordHash: hashPassword(password, salt) };
+  };
+  const prepareSeed = (seed) => ({ ...seed, users: seed.users.map(securePassword) });
+
+  const normalize = (raw) => {
+    const next = { ...emptyState(), ...raw, settings: { ...DEFAULT_SETTINGS, ...((raw && raw.settings) || {}) } };
+    LISTS.forEach((c) => { next[c] = Array.isArray(next[c]) ? next[c].filter((x) => x && SAFE_ID.test(String(x.id))) : []; });
+    if (!next.odontograms || typeof next.odontograms !== 'object') next.odontograms = {};
+    Object.keys(next.odontograms).forEach((pid) => { if (!SAFE_ID.test(pid)) delete next.odontograms[pid]; });
+    next.activity = next.activity.sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, ACTIVITY_KEEP);
+    return next;
+  };
+
+  const initLocal = () => {
+    mode = 'local';
+    let loaded = null;
+    try { const raw = storage.get(LOCAL_KEY); loaded = raw ? JSON.parse(raw) : null; } catch { loaded = null; }
+    if (!loaded || !Array.isArray(loaded.users) || !loaded.users.length) {
+      loaded = window.DentaSeed ? prepareSeed(window.DentaSeed(new Date())) : emptyState();
+    }
+    state = normalize(loaded);
+    CLOUD_COLLECTIONS.forEach((c) => confirmed.add(c));
+    persistLocal();
+  };
+
+  /* =====================================================================
+     Arranque
+     ===================================================================== */
+  const init = async () => {
+    if (inClaude) {
+      const [dbNamespace, user] = await Promise.all([capability('db'), capability('user')]);
+      if (dbNamespace) {
+        if (user && typeof user.can === 'function') {
+          try { readOnly = (await user.can('data.write')) === false; } catch { readOnly = false; }
+        }
+        await initCloud(dbNamespace);
+        return mode;
+      }
+      if (!window.DentaSeed) { mode = 'unavailable'; return mode; }
+    }
+    initLocal();
+    return mode;
+  };
+
+  /* =====================================================================
+     Persistencia común
+     ===================================================================== */
+  const persistItem = (col, item) => {
+    if (mode === 'local') persistLocal();
+    else if (mode === 'cloud') schedule(`${col}/${item.id}`, item);
+  };
+  const persistDelete = (col, id) => {
+    if (mode === 'local') persistLocal();
+    else if (mode === 'cloud') schedule(`${col}/${id}`, null);
+  };
+  const persistSettings = () => {
+    if (mode === 'local') persistLocal();
+    else if (mode === 'cloud') schedule('config/clinic', state.settings);
+  };
+  const persistOdontogram = (pid) => {
+    if (mode === 'local') { persistLocal(); return; }
+    if (mode !== 'cloud') return;
+    const teeth = state.odontograms[pid];
+    schedule(`odontograms/${pid}`, teeth && Object.keys(teeth).length ? { patientId: pid, teeth } : null);
+  };
+
+  const writable = () => {
+    if (mode !== 'local' && mode !== 'cloud') { U.toast('Los datos de la clínica no están disponibles en esta vista.', 'err'); return false; }
+    if (readOnly) { U.toast('Solo lectura: no tenés permiso para modificar los datos de esta clínica.', 'err'); return false; }
+    return true;
   };
 
   /* ---------- Sesión ---------- */
+  const sessionUserId = () => storage.get(SESSION_KEY) || storage.get(SESSION_KEY, 'session');
   const currentUser = () => {
-    const id = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
+    const id = sessionUserId();
     return id ? state.users.find((u) => u.id === id && u.active) || null : null;
   };
-  const login = (email, password, remember) => {
-    const user = state.users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase() && u.password === password);
-    if (!user) return { error: 'Email o contraseña incorrectos' };
-    if (!user.active) return { error: 'El usuario está inactivo' };
-    (remember ? localStorage : sessionStorage).setItem(SESSION_KEY, user.id);
-    log('login', 'Sesión', 'Inicio de sesión', user);
-    return { user };
-  };
-  const logout = () => {
-    const u = currentUser();
-    if (u) log('logout', 'Sesión', 'Cierre de sesión', u);
-    sessionStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem(SESSION_KEY);
+  const verifyPassword = (user, password) => {
+    if (user.passwordHash) return hashPassword(password, user.salt || '') === user.passwordHash;
+    return typeof user.password === 'string' && user.password === password;
   };
 
   /* ---------- Auditoría ---------- */
   const log = (action, module, detail, user = currentUser()) => {
-    state.activity.unshift({ id: uid('log'), date: new Date().toISOString(), userId: user ? user.id : null, action, module, detail });
-    state.activity = state.activity.slice(0, 500);
-    save();
+    if (readOnly || (mode !== 'local' && mode !== 'cloud')) return;
+    const entry = { id: uid('log'), date: new Date().toISOString(), userId: user ? user.id : null, action, module, detail: String(detail || '') };
+    state.activity.unshift(entry);
+    if (state.activity.length > ACTIVITY_MAX) {
+      const removed = state.activity.splice(ACTIVITY_KEEP);
+      if (mode === 'cloud') removed.forEach((old) => schedule(`activity/${old.id}`, null));
+    }
+    persistItem('activity', entry);
+  };
+
+  const login = (email, password, remember) => {
+    const user = state.users.find((u) => String(u.email).toLowerCase() === String(email).trim().toLowerCase());
+    if (!user || !verifyPassword(user, password)) return { error: 'Email o contraseña incorrectos.' };
+    if (!user.active) return { error: 'Este usuario está desactivado. Pedile a un administrador que lo active.' };
+    storage.remove(SESSION_KEY);
+    storage.remove(SESSION_KEY, 'session');
+    storage.set(SESSION_KEY, user.id, remember ? 'local' : 'session');
+    if (user.password && !user.passwordHash && !readOnly) {
+      const upgraded = securePassword({ ...user });
+      Object.keys(user).forEach((k) => delete user[k]);
+      Object.assign(user, upgraded);
+      persistItem('users', user);
+    }
+    log('login', 'Sesión', 'Inicio de sesión', user);
+    return { user };
+  };
+  const logout = () => {
+    const user = currentUser();
+    if (user) log('logout', 'Sesión', 'Cierre de sesión', user);
+    storage.remove(SESSION_KEY);
+    storage.remove(SESSION_KEY, 'session');
   };
 
   /* ---------- CRUD genérico ---------- */
-  const PREFIX = { users: 'u', patients: 'p', appointments: 'a', treatments: 't', budgets: 'b', payments: 'pay', history: 'h', consents: 'c' };
-  const MODULE_LABEL = { users: 'Usuarios', patients: 'Pacientes', appointments: 'Citas', treatments: 'Tratamientos', budgets: 'Presupuestos', payments: 'Pagos', history: 'Historia clínica', consents: 'Consentimientos' };
-
   const all = (col) => state[col];
   const get = (col, id) => state[col].find((x) => x.id === id) || null;
+
   const insert = (col, data, detail) => {
-    const item = { ...data, id: uid(PREFIX[col]) };
+    if (!writable()) return null;
+    const base = col === 'users' ? securePassword(data) : { ...data };
+    const item = { ...base, id: uid(PREFIX[col]) };
     state[col].push(item);
+    persistItem(col, item);
     log('crear', MODULE_LABEL[col], detail || 'Nuevo registro');
-    save();
     return item;
   };
   const update = (col, id, patch, detail) => {
+    if (!writable()) return null;
     const item = get(col, id);
     if (!item) return null;
-    Object.assign(item, patch);
+    let changes = { ...patch };
+    if (col === 'users') {
+      if (changes.password) changes = securePassword(changes);
+      else delete changes.password;
+      if (changes.passwordHash) delete item.password;
+    }
+    Object.assign(item, changes);
+    persistItem(col, item);
     log('editar', MODULE_LABEL[col], detail || 'Registro actualizado');
-    save();
     return item;
   };
   const remove = (col, id, detail) => {
+    if (!writable()) return false;
     state[col] = state[col].filter((x) => x.id !== id);
+    persistDelete(col, id);
     log('eliminar', MODULE_LABEL[col], detail || 'Registro eliminado');
-    save();
+    return true;
+  };
+
+  /** Elimina un paciente con todo lo asociado (citas, presupuestos, pagos, historia, consentimientos y odontograma). */
+  const removePatient = (pid, detail) => {
+    if (!writable()) return false;
+    ['appointments', 'budgets', 'payments', 'history', 'consents'].forEach((col) => {
+      const gone = state[col].filter((x) => x.patientId === pid);
+      if (!gone.length) return;
+      state[col] = state[col].filter((x) => x.patientId !== pid);
+      gone.forEach((x) => persistDelete(col, x.id));
+    });
+    if (state.odontograms[pid]) { delete state.odontograms[pid]; persistOdontogram(pid); }
+    state.patients = state.patients.filter((x) => x.id !== pid);
+    persistDelete('patients', pid);
+    log('eliminar', 'Pacientes', detail || 'Paciente eliminado');
+    return true;
   };
 
   /* ---------- Consultas de dominio ---------- */
   const budgetTotal = (b) => {
-    const sub = b.items.reduce((s, it) => s + Number(it.qty) * Number(it.price), 0);
-    return Math.round(sub * (1 - (Number(b.discount) || 0) / 100));
+    const subtotal = b.items.reduce((s, it) => s + Number(it.qty) * Number(it.price), 0);
+    return Math.round(subtotal * (1 - (Number(b.discount) || 0) / 100));
   };
   const patientBalance = (patientId) => {
     const charged = state.budgets
@@ -211,46 +433,110 @@
     const paid = state.payments.filter((p) => p.patientId === patientId).reduce((s, p) => s + Number(p.amount), 0);
     return { charged, paid, balance: charged - paid };
   };
-  const nextBudgetNumber = () => state.budgets.reduce((m, b) => Math.max(m, b.number || 0), 1000) + 1;
+  const nextBudgetNumber = () => state.budgets.reduce((m, b) => Math.max(m, Number(b.number) || 0), 1000) + 1;
+  const nextReceipt = () => {
+    const last = state.payments.reduce((m, p) => Math.max(m, Number(String(p.receipt || '').replace(/\D/g, '')) || 0), 2000);
+    return `R-${String(last + 1).padStart(6, '0')}`;
+  };
 
   const getOdontogram = (patientId) => state.odontograms[patientId] || {};
   const setOdontogram = (patientId, data, detail) => {
-    state.odontograms[patientId] = data;
+    if (!writable()) return false;
+    if (Object.keys(data).length) state.odontograms[patientId] = clone(data); else delete state.odontograms[patientId];
+    persistOdontogram(patientId);
     log('editar', 'Odontograma', detail);
-    save();
+    return true;
   };
 
   const settings = () => state.settings;
-  const saveSettings = (patch) => { Object.assign(state.settings, patch); log('editar', 'Configuración', 'Datos de la clínica actualizados'); save(); };
+  const saveSettings = (patch) => {
+    if (!writable()) return false;
+    state.settings = { ...state.settings, ...patch };
+    persistSettings();
+    log('editar', 'Configuración', 'Datos de la clínica actualizados');
+    return true;
+  };
 
-  /* ---------- Respaldo ---------- */
-  const exportBackup = () => JSON.stringify({ app: 'DentaGest', version: 1, exportedAt: new Date().toISOString(), data: state }, null, 2);
+  /** Primera puesta en marcha con la base vacía: crea la clínica y su administrador. */
+  const setupClinic = ({ clinicName, firstName, lastName, email, password }) => {
+    if (!writable()) return null;
+    state.settings = { ...DEFAULT_SETTINGS, clinicName: clinicName || DEFAULT_SETTINGS.clinicName };
+    persistSettings();
+    const admin = { ...securePassword({ firstName, lastName, email: String(email).trim(), password, role: 'admin', specialty: '', phone: '', active: true, color: '#0d9488' }), id: uid('u') };
+    state.users.push(admin);
+    persistItem('users', admin);
+    storage.set(SESSION_KEY, admin.id);
+    log('crear', 'Configuración', 'Clínica configurada por primera vez', admin);
+    return admin;
+  };
+
+  /* ---------- Reemplazo completo (respaldos y reinicios) ---------- */
+  const replaceAll = (raw) => {
+    const prev = state;
+    const next = normalize(raw);
+    state = next;
+    if (mode === 'local') { persistLocal(); return; }
+    if (mode !== 'cloud') return;
+    LISTS.forEach((col) => {
+      const keep = new Set(next[col].map((x) => x.id));
+      prev[col].forEach((x) => { if (!keep.has(x.id)) schedule(`${col}/${x.id}`, null); });
+      next[col].forEach((x) => schedule(`${col}/${x.id}`, x));
+    });
+    Object.keys(prev.odontograms).forEach((pid) => { if (!next.odontograms[pid]) schedule(`odontograms/${pid}`, null); });
+    Object.entries(next.odontograms).forEach(([pid, teeth]) => schedule(`odontograms/${pid}`, { patientId: pid, teeth }));
+    schedule('config/clinic', next.settings);
+  };
+
+  const exportBackup = () => JSON.stringify({ app: 'DentaGest', version: 2, exportedAt: new Date().toISOString(), data: state }, null, 2);
   const importBackup = (text) => {
-    const parsed = JSON.parse(text);
-    const data = parsed.data || parsed;
-    if (!data.users || !data.patients) throw new Error('El archivo no es un respaldo válido');
+    if (!writable()) throw new Error('No tenés permiso para modificar los datos de esta clínica.');
+    let parsed;
+    try { parsed = JSON.parse(text); } catch { throw new Error('El archivo no es un JSON válido.'); }
+    const data = parsed && (parsed.data || parsed);
+    if (!data || !Array.isArray(data.users) || !Array.isArray(data.patients)) throw new Error('El archivo no es un respaldo de DentaGest.');
     const me = currentUser();
-    state = data;
-    log('restaurar', 'Respaldo', 'Sistema restaurado desde archivo', me);
-    save();
-  };
-  const resetDemo = () => { state = seed(); save(); };
-  const wipeForNewClinic = () => {
-    const admin = currentUser();
-    const fresh = seed();
-    state = { ...fresh, patients: [], appointments: [], budgets: [], payments: [], history: [], consents: [], activity: [], odontograms: {}, users: [admin || fresh.users[0]] };
-    log('reiniciar', 'Sistema', 'Sistema reiniciado para nueva clínica', admin);
-    save();
+    replaceAll({ ...clone(data), users: data.users.map((u) => (u.password && !u.passwordHash ? securePassword(u) : u)) });
+    log('restaurar', 'Respaldo', 'Sistema restaurado desde un archivo', me);
   };
 
-  load();
+  /** Borra todo excepto el catálogo de tratamientos y el usuario actual, que recibe email y contraseña nuevos. */
+  const wipeForNewClinic = ({ email, password }) => {
+    if (!writable()) return false;
+    const me = currentUser();
+    const next = emptyState();
+    next.treatments = clone(state.treatments);
+    next.settings = { ...state.settings };
+    delete next.settings.exampleData;
+    delete next.settings.demoAccounts;
+    if (me) {
+      const fresh = securePassword({ ...clone(me), email: String(email || me.email).trim(), password });
+      delete fresh.password;
+      next.users = [fresh];
+    }
+    replaceAll(next);
+    log('reiniciar', 'Sistema', 'Sistema reiniciado para una nueva clínica', me);
+    return true;
+  };
+
+  const canResetDemo = () => mode === 'local' && typeof window.DentaSeed === 'function';
+  const resetDemo = () => {
+    if (!canResetDemo()) return;
+    replaceAll(prepareSeed(window.DentaSeed(new Date())));
+  };
 
   window.DB = {
     ROLES, SPECIALTIES, PAYMENT_METHODS, APPT_STATUS, BUDGET_STATUS, TREATMENT_CATEGORIES,
-    all, get, insert, update, remove, log,
-    currentUser, login, logout,
-    budgetTotal, patientBalance, nextBudgetNumber,
+    init,
+    mode: () => mode,
+    isReadOnly: () => readOnly,
+    isConfirmed: (col) => confirmed.has(col),
+    onChange: (fn) => changeListeners.add(fn),
+    onSync: (fn) => { syncListeners.add(fn); fn(pendingWrites()); },
+    pendingWrites,
+    all, get, insert, update, remove, removePatient, log,
+    currentUser, login, logout, setupClinic,
+    budgetTotal, patientBalance, nextBudgetNumber, nextReceipt,
     getOdontogram, setOdontogram, settings, saveSettings,
-    exportBackup, importBackup, resetDemo, wipeForNewClinic,
+    exportBackup, importBackup, wipeForNewClinic, canResetDemo, resetDemo,
   };
 })();

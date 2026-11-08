@@ -53,15 +53,15 @@
     const singleRoot = upper ? 'M13,17 L20,1 L27,17 Z' : 'M13,39 L20,55 L27,39 Z';
 
     const faceFill = (f) => {
-      if (whole === 'ausente') return '#f1f5f9';
+      if (whole === 'ausente') return 'var(--tooth-absent)';
       if (faces[f]) return STATE[faces[f]].color;
-      if (whole === 'corona') return '#fde68a';
-      return '#fff';
+      if (whole === 'corona') return 'var(--crown-fill)';
+      return 'var(--tooth)';
     };
     let overlay = '';
     const cx = 20; const cy = crownY + 20;
     if (whole === 'extraccion') overlay = `<path d="M${cx - 17},${cy - 17} L${cx + 17},${cy + 17} M${cx + 17},${cy - 17} L${cx - 17},${cy + 17}" stroke="${STATE.extraccion.color}" stroke-width="3.5" stroke-linecap="round"/>`;
-    if (whole === 'ausente') overlay = `<path d="M${cx - 17},${cy - 17} L${cx + 17},${cy + 17} M${cx + 17},${cy - 17} L${cx - 17},${cy + 17}" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>`;
+    if (whole === 'ausente') overlay = `<path d="M${cx - 17},${cy - 17} L${cx + 17},${cy + 17} M${cx + 17},${cy - 17} L${cx - 17},${cy + 17}" style="stroke:var(--tooth-line)" stroke-width="2" stroke-linecap="round"/>`;
     if (whole === 'corona') overlay = `<circle cx="${cx}" cy="${cy}" r="21" fill="none" stroke="${STATE.corona.color}" stroke-width="3"/>`;
     if (whole === 'protesis') overlay = `<path d="M-2,${upper ? crownY - 3 : crownY + 43} L42,${upper ? crownY - 3 : crownY + 43}" stroke="${STATE.protesis.color}" stroke-width="3.5" stroke-linecap="round"/>`;
     if (whole === 'fractura') overlay = `<path d="M8,${crownY + 6} L18,${crownY + 18} L13,${crownY + 22} L32,${crownY + 34}" stroke="${STATE.fractura.color}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
@@ -75,7 +75,7 @@
       rootExtra = ys.map((y) => `<path d="M14,${y} L26,${y}" stroke="${STATE.implante.color}" stroke-width="2.5" stroke-linecap="round"/>`).join('');
     }
 
-    const rootFill = whole === 'implante' ? '#cffafe' : whole === 'ausente' ? '#f1f5f9' : '';
+    const rootFill = whole === 'implante' ? 'var(--implant-root)' : whole === 'ausente' ? 'var(--tooth-absent)' : '';
     return `
       <svg viewBox="0 0 40 56" role="img" aria-label="Pieza ${num}">
         <path class="root" d="${posterior ? rootPath : singleRoot}" ${rootFill ? `style="fill:${rootFill}"` : ''}/>
@@ -108,19 +108,19 @@
 
     const render = () => {
       const row = (list, upper) => {
-        const half = (nums) => `<div class="odo-half">${nums.map((n) => `<div class="tooth" data-tooth="${n}">${upper ? '' : ''}${upper ? toothSVG(n, data[n], true) + `<span class="num">${n}</span>` : `<span class="num">${n}</span>` + toothSVG(n, data[n], false)}</div>`).join('')}</div>`;
+        const half = (nums) => `<div class="odo-half">${nums.map((n) => `<div class="tooth${readOnly ? ' ro' : ''}" data-tooth="${n}">${upper ? toothSVG(n, data[n], true) + `<span class="num">${n}</span>` : `<span class="num">${n}</span>` + toothSVG(n, data[n], false)}</div>`).join('')}</div>`;
         return `<div class="odo-row">${half(list.slice(0, 8))}<div class="odo-mid"></div>${half(list.slice(8))}</div>`;
       };
       const findings = summarize(data);
       container.innerHTML = `
-        ${readOnly ? '' : `
-        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-          <span class="muted" style="font-size:12px;font-weight:600">MODO:</span>
+        ${readOnly ? '<p class="odo-notes" style="margin:0 0 12px">Vista de solo lectura: tu rol no permite editar el odontograma.</p>' : `
+        <div class="odo-toolbar">
+          <span class="label">MODO</span>
           <div class="seg">
             <button type="button" data-mode="pieza" class="${mode === 'pieza' ? 'active' : ''}">Diente completo</button>
             <button type="button" data-mode="cara" class="${mode === 'cara' ? 'active' : ''}">Por cara</button>
           </div>
-          <span class="muted" style="font-size:12px">Elegí un estado y hacé clic en ${mode === 'cara' ? 'la cara' : 'la pieza'}. Volvé a hacer clic para quitarlo.</span>
+          <span class="muted" style="font-size:12.5px">Elegí un estado y tocá ${mode === 'cara' ? 'la cara' : 'la pieza'}. Tocá de nuevo para quitarlo.</span>
         </div>
         <div class="odo-legend">
           ${STATES.map((s) => `<button type="button" data-state="${s.key}" class="${current === s.key ? 'active' : ''}" style="${current === s.key ? `color:${s.color};background:${s.color}14` : ''}"><i style="background:${s.color}"></i>${s.label}</button>`).join('')}
@@ -134,7 +134,7 @@
         </div>
         <div class="odo-notes"><strong>Caras:</strong> Superior/Inferior = Vestibular · Palatina/Lingual &nbsp;|&nbsp; Laterales = Mesial · Distal &nbsp;|&nbsp; Centro = Oclusal/Incisal</div>
         <div style="margin-top:16px">
-          <h4 style="margin:0 0 8px;font-size:13px">Hallazgos registrados (${findings.length})</h4>
+          <h4 style="margin:0 0 8px;font-size:14px">Hallazgos registrados (${findings.length})</h4>
           ${findings.length ? `<div class="table-wrap"><table><thead><tr><th>Pieza</th><th>Hallazgo</th><th>Ubicación</th></tr></thead><tbody>
             ${findings.map((f) => `<tr><td><strong>${f.num}</strong></td><td><span class="badge" style="background:${f.color}1a;color:${f.color}">${esc(f.what)}</span></td><td>${esc(f.where)}</td></tr>`).join('')}
           </tbody></table></div>` : '<div class="empty">Sin hallazgos. Todas las piezas sanas.</div>'}
@@ -142,7 +142,8 @@
     };
 
     const apply = (num, face) => {
-      const tooth = data[num] || { faces: {} };
+      const previous = JSON.parse(JSON.stringify(data));
+      const tooth = data[num] ? JSON.parse(JSON.stringify(data[num])) : { faces: {} };
       tooth.faces = tooth.faces || {};
       const st = STATE[current];
       let detail;
@@ -162,8 +163,8 @@
       }
       if (!tooth.whole && !Object.keys(tooth.faces).length) delete data[num];
       else data[num] = tooth;
+      if (onChange && onChange(data, detail) === false) data = JSON.parse(JSON.stringify(previous));
       render();
-      onChange && onChange(data, detail);
     };
 
     container.addEventListener('click', (e) => {
