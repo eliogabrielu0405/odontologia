@@ -1,7 +1,7 @@
 /* Sonrisas · service worker.
    Permite instalar la app y que abra aunque la conexión falle.
    Con internet siempre carga la versión más nueva; los datos (Supabase) nunca se guardan aquí. */
-const VERSION = 'sonrisas-v1';
+const VERSION = 'sonrisas-v3';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest',
   'css/styles.css',

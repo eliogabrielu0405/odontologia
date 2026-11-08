@@ -57,7 +57,7 @@
   const loadContext = async () => { ctx = await rpc('my_context'); return ctx; };
   const loadPublicSettings = async () => {
     if (!client) return null;
-    try { const { data } = await client.from('platform_settings').select('*').eq('id', 1).maybeSingle(); publicSettings = data || publicSettings; } catch { /* sin conexión */ }
+    try { const { data } = await client.rpc('public_settings'); publicSettings = data || publicSettings; } catch { /* sin conexión */ }
     return publicSettings;
   };
   const platform = () => (ctx && ctx.settings) || publicSettings || {};

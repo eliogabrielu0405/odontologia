@@ -179,8 +179,8 @@ alter table public.clinic_invites enable row level security;
 alter table public.records enable row level security;
 alter table public.payment_reports enable row level security;
 
--- Precio, datos de Pago Móvil y WhatsApp de soporte: visibles para todos; solo el administrador los cambia.
-create policy settings_read on public.platform_settings for select to anon, authenticated using (true);
+-- Precio y datos de Pago Móvil: solo para usuarios con sesión (los visitantes ven public_settings()); solo el administrador los cambia.
+create policy settings_read on public.platform_settings for select to authenticated using (true);
 create policy settings_admin_update on public.platform_settings for update to authenticated
   using ((select public.is_platform_admin())) with check ((select public.is_platform_admin()));
 
@@ -286,6 +286,14 @@ begin
   );
 end;
 $$;
+
+-- Lo único que necesita la pantalla de entrada antes de iniciar sesión.
+create or replace function public.public_settings() returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select jsonb_build_object('trial_days', trial_days, 'support_whatsapp', support_whatsapp, 'monthly_price', monthly_price, 'currency', currency)
+  from public.platform_settings where id = 1;
+$$;
+grant execute on function public.public_settings() to anon, authenticated;
 
 create or replace function public.update_my_clinic(p_name text, p_rif text, p_phone text, p_address text) returns void
 language plpgsql security definer set search_path = '' as $$

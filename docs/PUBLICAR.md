@@ -70,6 +70,18 @@ Con ese código entras a `https://<tu-sitio>/#crear-admin` y creas tu cuenta con
 
 Crear un sitio nuevo y publicar la carpeta `web` (ya está indicado en `netlify.toml`). No hay paso de compilación.
 
+Sitio actual: **https://sonrisas-o958.netlify.app** (equipo `eliogabrielu0405`, junto con otros dos sitios).
+
+### Plan gratuito de Netlify
+
+- **Créditos al mes, compartidos por todos los sitios del equipo.** Cada publicación a producción gasta créditos; las visitas también.
+  Cuando se acaban, Netlify **deja de publicar cambios** (el intento queda como *Skipped due to account credit usage exceeded*).
+  Según su documentación, si el equipo agota el límite del mes **pausa todos sus sitios** hasta el siguiente ciclo o hasta pasar a un plan de pago.
+  El saldo se ve en Netlify → **Usage & billing**. Conviene juntar varios cambios en una sola publicación.
+- **Insignia “Powered by Netlify”.** En el plan gratuito Netlify la agrega abajo a la derecha y no se puede ocultar.
+  Sonrisas le deja libre esa franja (clase `has-host-badge` y variable `--host-badge` en `styles.css`) para que no tape botones;
+  sin la insignia, ese espacio desaparece solo. Para quitarla hay que usar un plan de pago de Netlify u otro alojamiento.
+
 ## 7. Primeros ajustes (en la app, como administrador)
 
 En **Ajustes de cobro**: precio mensual, moneda, días de prueba, días de gracia, días de aviso, datos de Pago Móvil (banco, teléfono, cédula/RIF, titular) y WhatsApp de soporte.

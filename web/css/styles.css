@@ -75,7 +75,10 @@
   --radius: 14px;
   --sidebar: 252px;
   --gutter: 24px;
+  /* Espacio libre abajo para la insignia que Netlify pone en su plan gratuito (ver app.js). */
+  --host-badge: 0px;
 }
+:root.has-host-badge { --host-badge: 64px; }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -255,7 +258,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
   min-height: 100%;
   display: grid;
   place-items: center;
-  padding-block: 32px;
+  padding-block: 32px calc(32px + var(--host-badge));
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   background:
@@ -434,7 +437,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
-  padding-block: 24px 40px;
+  padding-block: 24px calc(40px + var(--host-badge));
   padding-left: max(var(--gutter), env(safe-area-inset-left, 0px));
   padding-right: max(var(--gutter), env(safe-area-inset-right, 0px));
 }
@@ -686,7 +689,7 @@ select.badge-select { width: auto; padding: 4px 8px; border-radius: 999px; font-
   place-items: center;
   background: var(--overlay);
   backdrop-filter: blur(3px);
-  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(max(16px, env(safe-area-inset-bottom, 0px)) + var(--host-badge)) max(16px, env(safe-area-inset-left, 0px));
   animation: fade 0.15s ease;
 }
 .modal { width: 100%; max-width: 560px; max-height: 100%; overflow: auto; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow-lg); animation: pop 0.18s ease; }
@@ -697,12 +700,20 @@ select.badge-select { width: auto; padding: 4px 8px; border-radius: 999px; font-
 .modal-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 22px; border-top: 1px solid var(--border); position: sticky; bottom: 0; background: var(--surface); }
 @keyframes fade { from { opacity: 0; } }
 @keyframes pop { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
-.toast {
+#toast-root {
   position: fixed;
-  right: calc(20px + env(safe-area-inset-right, 0px));
-  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  right: 0;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px) + var(--host-badge));
   z-index: 200;
-  max-width: min(420px, calc(100vw - 40px));
+  display: flex;
+  justify-content: center;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  pointer-events: none;
+}
+.toast {
+  max-width: min(460px, 100%);
   display: flex;
   gap: 10px;
   align-items: center;
@@ -780,6 +791,7 @@ select.badge-select { width: auto; padding: 4px 8px; border-radius: 999px; font-
   :root { --gutter: 16px; }
   .sidebar { transform: translateX(-100%); visibility: hidden; }
   .sidebar.open { transform: none; visibility: visible; box-shadow: 0 0 60px rgba(0, 0, 0, 0.4); }
+  .sidebar { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--host-badge)); }
   .backdrop.open { display: block; position: fixed; inset: 0; background: var(--overlay); z-index: 35; }
   .main { margin-left: 0; }
   .icon-btn.menu-btn { display: grid; }

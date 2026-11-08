@@ -490,6 +490,14 @@
   document.addEventListener('modal:closed', flushIfDirty);
   document.addEventListener('focusout', () => { if (dirty) flushIfDirty(); });
 
+  // Netlify, en su plan gratuito, pone una insignia fija abajo a la derecha que no se puede ocultar.
+  // Mientras esté en la página se deja libre esa franja para que no tape botones (--host-badge en styles.css).
+  const watchHostBadge = () => {
+    const mark = () => document.documentElement.classList.toggle('has-host-badge', !!document.getElementById('nl-badge-frame'));
+    new MutationObserver(mark).observe(document.body, { childList: true });
+    mark();
+  };
+
   const boot = async () => {
     if (!Session.configured) { booted = true; renderNotConfigured(); return; }
     renderLoading(false);
@@ -508,5 +516,6 @@
     booted = true;
     render();
   };
+  watchHostBadge();
   boot();
 })();
