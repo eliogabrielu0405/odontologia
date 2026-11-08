@@ -1,4 +1,4 @@
-# Encabezados de Sonrisas. Los leen Cloudflare Pages y Netlify; este archivo no se publica.
+# Encabezados de Sonrisas. Los leen Cloudflare (Workers y Pages) y Netlify; este archivo no se publica.
 # Ojo: si dos reglas ponen el mismo encabezado a una ruta, Cloudflare junta los valores con coma.
 
 /*

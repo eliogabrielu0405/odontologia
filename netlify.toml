@@ -1,5 +1,5 @@
 # Sonrisas se publica como sitio estático: no hay paso de compilación.
-# Hoy se publica en Cloudflare Pages; este archivo queda por si se vuelve a Netlify.
+# Hoy se publica en Cloudflare (ver wrangler.jsonc); este archivo queda por si se vuelve a Netlify.
 # Los encabezados (seguridad y caché) están en web/_headers, que leen los dos.
 [build]
   publish = "web"

@@ -1,0 +1,12 @@
+// Sonrisas en Cloudflare Workers: solo archivos estáticos, sin código de servidor.
+// Cloudflare publica la carpeta web cada vez que llega un cambio a la rama principal del repositorio.
+// "name" tiene que ser igual al nombre del Worker en el panel de Cloudflare.
+// Los encabezados de seguridad y caché están en web/_headers.
+{
+  "name": "odontologia",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./web"
+  }
+}

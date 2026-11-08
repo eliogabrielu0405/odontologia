@@ -47,7 +47,7 @@ La interfaz se adapta al celular y al modo claro u oscuro del dispositivo.
 | Página web | HTML, CSS y JavaScript sin compilación | `web/` |
 | Base de datos, cuentas y fotos | Supabase (Postgres con seguridad por filas, Auth, Storage, Realtime) | `supabase/migrations/` |
 | Acciones de servidor | Supabase Edge Function `sonrisas-api` | `supabase/functions/` |
-| Publicación | Cloudflare Pages: publica la carpeta `web` sola desde GitHub | `web/_headers` |
+| Publicación | Cloudflare Workers (solo archivos): publica la carpeta `web` sola desde GitHub | `wrangler.jsonc`, `web/_headers` |
 
 ```
 web/index.html          Página

@@ -1,12 +1,12 @@
 # Publicar Sonrisas
 
-Pasos para poner Sonrisas en línea con Supabase (base de datos, cuentas y fotos) y Cloudflare Pages (la página web).
+Pasos para poner Sonrisas en línea con Supabase (base de datos, cuentas y fotos) y Cloudflare (la página web).
 Están escritos para hacerlos con Claude en una sesión que tenga conectada la cuenta de Supabase correcta.
 
 ## 0. Antes de empezar
 
 - En **https://claude.ai/customize/connectors**, conecta Supabase con la cuenta donde quieres crear Sonrisas.
-- La página se publica sola desde GitHub con Cloudflare Pages (paso 6); eso lo haces tú una vez desde el panel de Cloudflare.
+- La página se publica sola desde GitHub con Cloudflare (paso 6). Conectar el repositorio se hace una sola vez, desde el panel de Cloudflare.
 - Abre una sesión nueva sobre el repositorio `odontologia`, rama `ccr-ebf5c4db-f0w0qu`, y pide: *“Publica Sonrisas siguiendo docs/PUBLICAR.md”*.
 
 ## 1. Crear el proyecto en Supabase
@@ -67,29 +67,23 @@ update public.platform_secrets
 
 Con ese código entras a `https://<tu-sitio>/#crear-admin` y creas tu cuenta con tu correo y contraseña. El código sirve una sola vez.
 
-## 6. Publicar en Cloudflare Pages
+## 6. Publicar en Cloudflare
 
-La página es la carpeta `web`, sin paso de compilación. Cloudflare Pages la toma directo de GitHub:
+Sonrisas se publica como un **Worker de Cloudflare que solo sirve archivos** (la carpeta `web`, sin código de servidor),
+conectado al repositorio de GitHub: cada cambio que llega a la rama principal (`ccr-ebf5c4db-f0w0qu`) se publica solo.
 
-1. Entra a **https://dash.cloudflare.com** → **Workers & Pages** → **Create application** → pestaña **Pages** → **Import an existing Git repository**.
-2. La primera vez, autoriza a Cloudflare en GitHub. Elige el repositorio **`odontologia`** → **Begin setup**.
-3. Llena así:
+| Qué | Dónde |
+|-----|-------|
+| Nombre del Worker y carpeta a publicar | `wrangler.jsonc` (el `name` tiene que ser igual al del panel: `odontologia`) |
+| Encabezados de seguridad y caché | `web/_headers` |
+| Dirección | `https://odontologia.<tu-subdominio>.workers.dev` (en el panel: Workers & Pages → `odontologia`) |
+| Estado de cada publicación | Panel → `odontologia` → **Deployments**, o el check de Cloudflare en cada commit de GitHub |
 
-   | Campo | Valor |
-   |-------|-------|
-   | Project name | `sonrisas` (la dirección será `sonrisas.pages.dev` si está libre) |
-   | Production branch | `ccr-ebf5c4db-f0w0qu` |
-   | Framework preset | None |
-   | Build command | *(vacío)* |
-   | Build output directory | `web` |
+Para crearlo desde cero: **https://dash.cloudflare.com** → **Workers & Pages** → **Create application** → importar el repositorio `odontologia` →
+dejar el comando de publicación por defecto (`npx wrangler deploy`) → **Deploy**.
 
-4. **Save and Deploy**.
-
-Desde ahí, cada cambio que llega a esa rama se publica solo; las otras ramas generan vistas previas aparte.
-Los encabezados de seguridad y caché están en `web/_headers`.
-
-Plan gratuito de Cloudflare Pages: sin insignia, visitas a la página sin límite y 500 publicaciones al mes.
-Si un mes se llega a ese número, la página sigue en línea; solo hay que esperar para publicar cambios.
+Plan gratuito: sin insignia, y las visitas a archivos estáticos no tienen límite ni costo.
+Para probar localmente como lo sirve Cloudflare: `npx wrangler dev` en la raíz del repositorio.
 
 ### Antes estaba en Netlify
 
