@@ -1,11 +1,12 @@
 # Publicar Sonrisas
 
-Pasos para poner Sonrisas en línea con Supabase (base de datos, cuentas y fotos) y Netlify (la página web).
+Pasos para poner Sonrisas en línea con Supabase (base de datos, cuentas y fotos) y Cloudflare Pages (la página web).
 Están escritos para hacerlos con Claude en una sesión que tenga conectada la cuenta de Supabase correcta.
 
 ## 0. Antes de empezar
 
-- En **https://claude.ai/customize/connectors**, conecta Supabase con la cuenta donde quieres crear Sonrisas, y Netlify con tu cuenta.
+- En **https://claude.ai/customize/connectors**, conecta Supabase con la cuenta donde quieres crear Sonrisas.
+- La página se publica sola desde GitHub con Cloudflare Pages (paso 6); eso lo haces tú una vez desde el panel de Cloudflare.
 - Abre una sesión nueva sobre el repositorio `odontologia`, rama `ccr-ebf5c4db-f0w0qu`, y pide: *“Publica Sonrisas siguiendo docs/PUBLICAR.md”*.
 
 ## 1. Crear el proyecto en Supabase
@@ -66,21 +67,43 @@ update public.platform_secrets
 
 Con ese código entras a `https://<tu-sitio>/#crear-admin` y creas tu cuenta con tu correo y contraseña. El código sirve una sola vez.
 
-## 6. Publicar en Netlify
+## 6. Publicar en Cloudflare Pages
 
-Crear un sitio nuevo y publicar la carpeta `web` (ya está indicado en `netlify.toml`). No hay paso de compilación.
+La página es la carpeta `web`, sin paso de compilación. Cloudflare Pages la toma directo de GitHub:
 
-Sitio actual: **https://sonrisas-o958.netlify.app** (equipo `eliogabrielu0405`, junto con otros dos sitios).
+1. Entra a **https://dash.cloudflare.com** → **Workers & Pages** → **Create application** → pestaña **Pages** → **Import an existing Git repository**.
+2. La primera vez, autoriza a Cloudflare en GitHub. Elige el repositorio **`odontologia`** → **Begin setup**.
+3. Llena así:
 
-### Plan gratuito de Netlify
+   | Campo | Valor |
+   |-------|-------|
+   | Project name | `sonrisas` (la dirección será `sonrisas.pages.dev` si está libre) |
+   | Production branch | `ccr-ebf5c4db-f0w0qu` |
+   | Framework preset | None |
+   | Build command | *(vacío)* |
+   | Build output directory | `web` |
 
-- **Créditos al mes, compartidos por todos los sitios del equipo.** Cada publicación a producción gasta créditos; las visitas también.
-  Cuando se acaban, Netlify **deja de publicar cambios** (el intento queda como *Skipped due to account credit usage exceeded*).
-  Según su documentación, si el equipo agota el límite del mes **pausa todos sus sitios** hasta el siguiente ciclo o hasta pasar a un plan de pago.
-  El saldo se ve en Netlify → **Usage & billing**. Conviene juntar varios cambios en una sola publicación.
-- **Insignia “Powered by Netlify”.** En el plan gratuito Netlify la agrega abajo a la derecha y no se puede ocultar.
+4. **Save and Deploy**.
+
+Desde ahí, cada cambio que llega a esa rama se publica solo; las otras ramas generan vistas previas aparte.
+Los encabezados de seguridad y caché están en `web/_headers`.
+
+Plan gratuito de Cloudflare Pages: sin insignia, visitas a la página sin límite y 500 publicaciones al mes.
+Si un mes se llega a ese número, la página sigue en línea; solo hay que esperar para publicar cambios.
+
+### Antes estaba en Netlify
+
+La primera versión se publicó en **https://sonrisas-o958.netlify.app** (equipo `eliogabrielu0405`, que comparte créditos con otros dos sitios).
+Se cambió por dos motivos del plan gratuito de Netlify:
+
+- **Créditos al mes, compartidos por todos los sitios del equipo.** Cada publicación y las visitas gastan créditos.
+  Cuando se acaban, Netlify deja de publicar cambios (*Skipped due to account credit usage exceeded*) y,
+  si el equipo agota el límite, pausa todos sus sitios hasta el siguiente ciclo o hasta pasar a un plan de pago.
+- **Insignia “Powered by Netlify”** abajo a la derecha, que en el plan gratuito no se puede ocultar.
   Sonrisas le deja libre esa franja (clase `has-host-badge` y variable `--host-badge` en `styles.css`) para que no tape botones;
-  sin la insignia, ese espacio desaparece solo. Para quitarla hay que usar un plan de pago de Netlify u otro alojamiento.
+  donde no hay insignia, ese espacio no aparece.
+
+`netlify.toml` sigue en el repositorio por si algún día se vuelve a Netlify.
 
 ## 7. Primeros ajustes (en la app, como administrador)
 
@@ -94,7 +117,7 @@ En **Ajustes de cobro**: precio mensual, moneda, días de prueba, días de graci
 
 ## Instalar la app en los teléfonos
 
-Una vez publicada en Netlify (con https), Sonrisas ya es instalable:
+Una vez publicada (con https), Sonrisas ya es instalable:
 
 - **Android:** abrir el enlace en Chrome y tocar **Instalar la app**.
 - **iPhone:** abrir el enlace en Safari → Compartir → **Agregar a pantalla de inicio**.

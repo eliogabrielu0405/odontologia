@@ -1,33 +1,5 @@
 # Sonrisas se publica como sitio estático: no hay paso de compilación.
+# Hoy se publica en Cloudflare Pages; este archivo queda por si se vuelve a Netlify.
+# Los encabezados (seguridad y caché) están en web/_headers, que leen los dos.
 [build]
   publish = "web"
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Content-Type-Options = "nosniff"
-    X-Frame-Options = "DENY"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(self), microphone=(), geolocation=()"
-
-[[headers]]
-  for = "/js/*"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
-
-[[headers]]
-  for = "/vendor/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/sw.js"
-  [headers.values]
-    Cache-Control = "no-cache"
-    Service-Worker-Allowed = "/"
-
-[[headers]]
-  for = "/manifest.webmanifest"
-  [headers.values]
-    Cache-Control = "no-cache"
-    Content-Type = "application/manifest+json"

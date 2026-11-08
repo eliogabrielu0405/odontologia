@@ -1,9 +1,10 @@
 /* Sonrisas · service worker.
    Permite instalar la app y que abra aunque la conexión falle.
+   La página se guarda como './' (no 'index.html'): Cloudflare redirige /index.html a /.
    Con internet siempre carga la versión más nueva; los datos (Supabase) nunca se guardan aquí. */
 const VERSION = 'sonrisas-v3';
 const SHELL = [
-  './', 'index.html', 'manifest.webmanifest',
+  './', 'manifest.webmanifest',
   'css/styles.css',
   'js/config.js', 'js/utils.js', 'js/pwa.js', 'js/data.js', 'js/account.js', 'js/odontogram.js', 'js/views.js', 'js/admin.js', 'js/app.js',
   'vendor/supabase-2.118.0.js',
@@ -48,6 +49,6 @@ self.addEventListener('fetch', (event) => {
     fetch(request)
       .then((res) => save(request, res))
       .catch(() => caches.match(request, { ignoreSearch: true })
-        .then((hit) => hit || (request.mode === 'navigate' ? caches.match('index.html') : Response.error()))),
+        .then((hit) => hit || (request.mode === 'navigate' ? caches.match('./') : Response.error()))),
   );
 });
