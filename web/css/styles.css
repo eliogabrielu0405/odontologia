@@ -1,4 +1,4 @@
-/* DentaGest — sistema visual.
+/* Sonrisas (EU Digital Solutions) — sistema visual.
    Layout: barra lateral oscura fija + área de trabajo con tarjetas; en celular la barra se desliza desde la izquierda.
    Paleta: verde azulado clínico sobre neutros con un leve tinte del mismo tono. Tipos: Bricolage Grotesque (títulos y cifras) + Figtree (interfaz). */
 :root {
@@ -806,4 +806,122 @@ select.badge-select { width: auto; padding: 4px 8px; border-radius: 999px; font-
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+/* =====================================================================
+   Sonrisas: acceso, suscripción, administración
+   ===================================================================== */
+.auth-card { width: 100%; max-width: 460px; background: var(--surface); color: var(--text); border-radius: 22px; padding: 30px 28px; box-shadow: var(--shadow-lg); display: grid; gap: 18px; }
+.auth-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 4px; }
+.auth-tabs a { text-align: center; padding: 8px 6px; border-radius: 9px; font-weight: 700; font-size: 12.5px; color: var(--muted); }
+.auth-tabs a:hover { text-decoration: none; color: var(--text); }
+.auth-tabs a.active { background: var(--surface); color: var(--accent-text); box-shadow: var(--shadow); }
+.login-wrap { gap: 14px; align-content: center; }
+.login-foot { margin: 0; color: #e7f6f3; font-size: 12.5px; text-align: center; opacity: 0.9; }
+.trial-pill { display: inline-flex; align-items: center; gap: 6px; justify-self: center; padding: 6px 12px; border-radius: 999px; background: var(--ok-soft); color: var(--ok-text); font-weight: 700; font-size: 12.5px; }
+.trial-pill svg { width: 14px; height: 14px; }
+.code-input { text-transform: uppercase; letter-spacing: 0.2em; font-weight: 700; text-align: center; font-size: 18px; }
+.link-btn { background: none; border: 0; color: var(--accent-text); font-weight: 600; cursor: pointer; padding: 0; font-size: 13px; }
+.link-btn.center { justify-self: center; }
+.splash-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+.splash-card code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; }
+
+.banner-danger { background: var(--danger-soft); border-color: var(--danger-border); color: var(--danger-text); }
+.banner .btn { flex-shrink: 0; }
+.nav a { position: relative; }
+.nav-dot { width: 8px; height: 8px; border-radius: 50%; background: #fb7185; margin-left: auto; box-shadow: 0 0 0 3px rgba(251, 113, 133, 0.25); }
+.side-company { margin: 0; font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--side-muted); text-align: center; }
+.spacer-mobile { display: none; }
+.badge.b-dark { background: var(--text); color: var(--surface); }
+.danger-text { color: var(--danger-text); }
+.icon-btn.sm { width: 32px; height: 32px; border-radius: 8px; }
+.icon-btn.sm svg { width: 16px; height: 16px; }
+a.icon-btn:hover { text-decoration: none; }
+.wa-mini { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; color: var(--ok-text); vertical-align: -5px; }
+.wa-mini svg { width: 15px; height: 15px; }
+.doc-actions.left { justify-content: flex-start; border-top: 0; padding-top: 0; margin-top: 4px; }
+.span-2 { grid-column: span 2; }
+.stat-link { color: inherit; }
+.stat-link:hover { text-decoration: none; border-color: var(--primary-border); }
+tr.clickable { cursor: pointer; }
+.count-pill:not(:empty) { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--danger); color: var(--on-danger); font-size: 11px; margin-left: 4px; }
+.link-row { background: none; border: 0; padding: 0; text-align: left; cursor: pointer; color: var(--text); display: grid; gap: 1px; }
+.link-row strong { color: var(--accent-text); }
+.link-row small { color: var(--muted); font-size: 11.5px; }
+.link-row:hover strong { text-decoration: underline; }
+
+/* Primeros pasos */
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; padding: 14px 16px 16px; }
+.step { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; color: var(--text); background: var(--surface); }
+.step:hover { text-decoration: none; border-color: var(--primary-border); background: var(--primary-soft); }
+.step > span:nth-child(2) { flex: 1; min-width: 0; }
+.step strong { display: block; font-size: 13px; }
+.step small { display: block; color: var(--muted); font-size: 11.5px; }
+.step > svg { width: 16px; height: 16px; color: var(--muted); flex-shrink: 0; }
+.step-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border-strong); display: grid; place-items: center; flex-shrink: 0; }
+.step-check svg { width: 13px; height: 13px; }
+.step.done { opacity: 0.6; }
+.step.done strong { text-decoration: line-through; }
+.step.done .step-check { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+
+/* Suscripción */
+.sub-card { display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; flex-wrap: wrap; padding: 22px; margin-bottom: 16px; border-left-width: 1px; }
+.sub-main { display: grid; gap: 6px; min-width: 0; }
+.sub-main .badge { justify-self: start; }
+.sub-main h2 { font-family: var(--font-display); font-size: 34px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.sub-main h2 small { font-size: 15px; font-weight: 600; color: var(--muted); }
+.sub-main p { margin: 0; color: var(--text-2); max-width: 52ch; }
+.sub-meta { display: grid; grid-template-columns: auto auto; gap: 4px 14px; margin: 0; font-size: 13px; }
+.sub-meta dt { color: var(--muted); }
+.sub-meta dd { margin: 0; font-weight: 700; }
+.sub-por_vencer, .sub-vencida { border-color: var(--warn-border); }
+.sub-sin_acceso, .sub-suspendida { border-color: var(--danger-border); }
+.sub-grid { align-items: start; }
+.pm-card { display: grid; gap: 14px; }
+.pm-head { display: flex; gap: 12px; align-items: center; }
+.pm-head h3 { font-size: 16px; }
+.pm-logo { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: var(--primary-soft); color: var(--accent-text); flex-shrink: 0; }
+.pm-logo svg { width: 20px; height: 20px; }
+.pm-rows { display: grid; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.pm-row { display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.pm-row:last-child { border-bottom: 0; }
+.pm-row span { color: var(--muted); font-size: 12.5px; }
+.pm-row strong { font-size: 15px; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.pm-row.total { background: var(--primary-soft); }
+.pm-row.total strong { font-family: var(--font-display); font-size: 19px; color: var(--accent-text); }
+.pm-note { margin: 0; font-size: 12.5px; color: var(--muted); background: var(--surface-2); padding: 10px 12px; border-radius: 10px; }
+.upload-field input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.upload-box { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 92px; padding: 16px; border: 2px dashed var(--border-strong); border-radius: 14px; background: var(--surface-2); color: var(--text-2); font-weight: 600; font-size: 13.5px; text-align: center; cursor: pointer; }
+.upload-box svg { width: 22px; height: 22px; color: var(--accent-text); flex-shrink: 0; }
+.upload-field:focus-within .upload-box, .upload-box:hover { border-color: var(--primary); background: var(--primary-soft); }
+.upload-preview { max-height: 220px; width: auto; max-width: 100%; border-radius: 10px; border: 1px solid var(--border); justify-self: start; }
+.receipt-view { display: grid; place-items: center; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 10px; min-height: 160px; }
+.receipt-view img { max-width: 100%; max-height: 60vh; border-radius: 8px; display: block; }
+.review-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.kv.compact { grid-template-columns: 120px minmax(0, 1fr); gap: 6px 12px; margin-top: 12px; }
+.code-box { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px dashed var(--border-strong); border-radius: 12px; background: var(--surface-2); }
+.code-box code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 17px; font-weight: 700; overflow-wrap: anywhere; }
+.code-box.big { justify-content: center; }
+.code-box.big code { font-size: 30px; letter-spacing: 0.18em; color: var(--accent-text); }
+.code-inline { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 700; letter-spacing: 0.08em; background: var(--surface-2); padding: 2px 6px; border-radius: 6px; }
+
+/* Administración */
+.clinic-summary { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); }
+.clinic-summary > div:first-child { display: grid; gap: 6px; min-width: 0; }
+.clinic-summary .badge { justify-self: start; }
+.big-date { font-family: var(--font-display); font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.action-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.action-row.tight { gap: 6px; justify-content: flex-end; }
+
+@media (max-width: 860px) {
+  .spacer-mobile { display: block; flex: 1; }
+  .review-grid { grid-template-columns: minmax(0, 1fr); }
+  .span-2 { grid-column: auto; }
+}
+@media (max-width: 560px) {
+  .auth-card { padding: 24px 18px; }
+  .auth-tabs a { font-size: 12px; padding: 8px 4px; }
+  .pm-row { grid-template-columns: 90px minmax(0, 1fr) auto; }
+  .sub-main h2 { font-size: 28px; }
+  .grid-4 > .span-2 { grid-column: 1 / -1; }
 }

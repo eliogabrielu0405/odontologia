@@ -113,14 +113,14 @@
       };
       const findings = summarize(data);
       container.innerHTML = `
-        ${readOnly ? '<p class="odo-notes" style="margin:0 0 12px">Vista de solo lectura: tu rol no permite editar el odontograma.</p>' : `
+        ${readOnly ? '<p class="odo-notes" style="margin:0 0 12px">Solo lectura: los odontólogos de la clínica pueden editar el odontograma.</p>' : `
         <div class="odo-toolbar">
           <span class="label">MODO</span>
           <div class="seg">
             <button type="button" data-mode="pieza" class="${mode === 'pieza' ? 'active' : ''}">Diente completo</button>
             <button type="button" data-mode="cara" class="${mode === 'cara' ? 'active' : ''}">Por cara</button>
           </div>
-          <span class="muted" style="font-size:12.5px">Elegí un estado y tocá ${mode === 'cara' ? 'la cara' : 'la pieza'}. Tocá de nuevo para quitarlo.</span>
+          <span class="muted" style="font-size:12.5px">Elige un estado y toca ${mode === 'cara' ? 'la cara' : 'la pieza'}. Toca de nuevo para quitarlo.</span>
         </div>
         <div class="odo-legend">
           ${STATES.map((s) => `<button type="button" data-state="${s.key}" class="${current === s.key ? 'active' : ''}" style="${current === s.key ? `color:${s.color};background:${s.color}14` : ''}"><i style="background:${s.color}"></i>${s.label}</button>`).join('')}
