@@ -74,7 +74,7 @@
 
   const logoMark = (size = '') => `<div class="logo-mark ${size}">${icon('tooth')}</div>`;
   const brandBlock = (subtitle) => `<div class="login-logo">${logoMark('lg')}<h1>Sonrisas</h1><p>${subtitle}</p></div>`;
-  const footer = () => `<p class="login-foot">Sonrisas es un producto de <strong>${esc(COMPANY)}</strong></p>`;
+  const footer = () => `<div class="login-install" data-install-slot="login"></div><p class="login-foot">Sonrisas es un producto de <strong>${esc(COMPANY)}</strong></p>`;
   const supportLink = (text) => {
     const phone = (Session.platform() || {}).support_whatsapp;
     return phone ? `<a href="${esc(waLink(phone, text))}" target="_blank" rel="noopener">${icon('whatsapp')}Escríbenos por WhatsApp</a>` : '';
@@ -324,6 +324,7 @@
               <div class="avatar sm" style="background:${esc(who.color || '#0d9488')}">${esc(initials(who.firstName, who.lastName))}</div>
               <div><strong>${esc(who.firstName)} ${esc(who.lastName)}</strong><small>${esc(who.roleLabel)}</small></div>
             </div>
+            <div data-install-slot="side"></div>
             <button class="side-btn" data-logout>${icon('logout')}Cerrar sesión</button>
             <p class="side-company">${esc(COMPANY)}</p>
           </div>
@@ -413,6 +414,7 @@
         runRoute(CLINIC_ROUTES, 'inicio', CLINIC_NAV, { brandSub: ctx.clinic.name, who, search: true, banners: subscriptionBanner() });
       }
     }
+    if (window.PWA) PWA.paint(app);
     window.scrollTo(0, keepScroll ? scrollY : 0);
   };
 

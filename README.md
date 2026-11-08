@@ -24,6 +24,16 @@ Hecho para Venezuela: cédula, RIF, teléfonos 04xx, montos en dólares o bolív
 - **Bloqueada**: nadie de esa clínica entra; se muestra el WhatsApp de soporte.
 - Al **aprobar un pago**, la suscripción se extiende los meses pagados y la clínica se reactiva sola.
 
+## Se instala como aplicación
+
+Sonrisas es una **aplicación web instalable (PWA)**: la misma página se instala en el celular o la computadora con su ícono, abre a pantalla completa y carga aunque falle la conexión. Las actualizaciones llegan solas a todos los clientes, sin pasar por tiendas.
+
+- **Android (Chrome):** botón **Instalar la app** en la pantalla de entrada o en el menú lateral.
+- **iPhone (Safari):** el mismo botón explica los pasos: Compartir → *Agregar a pantalla de inicio*.
+- **Computadora (Chrome o Edge):** botón **Instalar la app** o el ícono de instalar en la barra de direcciones.
+
+Archivos: `web/manifest.webmanifest`, `web/sw.js`, `web/js/pwa.js` y `web/icons/`.
+
 ## Módulos de la clínica
 
 Inicio con “Primeros pasos”, agenda por día o semana con recordatorios por WhatsApp, pacientes, ficha del paciente (información, **odontograma** interactivo, historia clínica, consentimientos, cuenta corriente, citas y cobros), presupuestos y recibos con impresión, tratamientos con catálogo sugerido, reportes, equipo, actividad, configuración y respaldo.

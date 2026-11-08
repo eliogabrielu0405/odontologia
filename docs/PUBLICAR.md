@@ -80,6 +80,18 @@ En **Ajustes de cobro**: precio mensual, moneda, días de prueba, días de graci
   Las cuentas se crean desde la función `sonrisas-api`; así nadie crea cuentas sueltas desde fuera de la app.
 - **Database → Backups**: confirmar que los respaldos automáticos estén activos (en el plan gratuito son diarios y se guardan pocos días).
 
+## Instalar la app en los teléfonos
+
+Una vez publicada en Netlify (con https), Sonrisas ya es instalable:
+
+- **Android:** abrir el enlace en Chrome y tocar **Instalar la app**.
+- **iPhone:** abrir el enlace en Safari → Compartir → **Agregar a pantalla de inicio**.
+
+### Si más adelante la quieres en las tiendas
+
+- **Google Play:** se puede empaquetar esta misma app como *Trusted Web Activity* (con PWABuilder o Bubblewrap). Requiere una cuenta de desarrollador de Google Play (pago único) y publicar el archivo `.well-known/assetlinks.json` en el sitio.
+- **App Store (iPhone):** requiere la cuenta de desarrollador de Apple (pago anual) y su revisión. Ojo: Apple y Google suelen exigir que las suscripciones digitales se cobren con su propio sistema de pagos, con comisión, y pueden rechazar una app que pida pagar por Pago Móvil desde adentro. Antes de publicar en tiendas hay que revisar sus reglas vigentes.
+
 ## Comprobación final
 
 1. Crear la cuenta de administrador con el código.

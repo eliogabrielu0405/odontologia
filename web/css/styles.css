@@ -925,3 +925,14 @@ tr.clickable { cursor: pointer; }
   .sub-main h2 { font-size: 28px; }
   .grid-4 > .span-2 { grid-column: 1 / -1; }
 }
+
+/* Instalar como app */
+.login-install:empty { display: none; }
+.btn-light { background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.35); color: #ffffff; }
+.btn-light:hover { background: rgba(255, 255, 255, 0.22); }
+.install-steps { margin: 0 0 14px; padding-left: 22px; display: grid; gap: 10px; line-height: 1.5; }
+.inline-icon { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--border); vertical-align: -6px; }
+.inline-icon svg { width: 14px; height: 14px; }
+@media (display-mode: standalone) {
+  .login-wrap, .splash { padding-top: max(32px, env(safe-area-inset-top, 0px)); }
+}
