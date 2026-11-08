@@ -74,13 +74,13 @@ conectado al repositorio de GitHub: cada cambio que llega a la rama principal (`
 
 | Qué | Dónde |
 |-----|-------|
-| Nombre del Worker y carpeta a publicar | `wrangler.jsonc` (el `name` tiene que ser igual al del panel: `odontologia`) |
+| Nombre del Worker y carpeta a publicar | `wrangler.jsonc` (el `name` tiene que ser igual al del panel: `sonrisas`) |
 | Encabezados de seguridad y caché | `web/_headers` |
-| Dirección | `https://odontologia.<tu-subdominio>.workers.dev` (en el panel: Workers & Pages → `odontologia`) |
-| Estado de cada publicación | Panel → `odontologia` → **Deployments**, o el check de Cloudflare en cada commit de GitHub |
+| Dirección | `https://sonrisas.<tu-subdominio>.workers.dev` (en el panel: Workers & Pages → `sonrisas`) |
+| Estado de cada publicación | Panel → `sonrisas` → **Deployments**, o el check de Cloudflare en cada commit de GitHub |
 
 Para crearlo desde cero: **https://dash.cloudflare.com** → **Workers & Pages** → **Create application** → importar el repositorio `odontologia` →
-dejar el comando de publicación por defecto (`npx wrangler deploy`) → **Deploy**.
+nombre del Worker `sonrisas` y el comando de publicación por defecto (`npx wrangler deploy`) → **Deploy**.
 
 Plan gratuito: sin insignia, y las visitas a archivos estáticos no tienen límite ni costo.
 Para probar localmente como lo sirve Cloudflare: `npx wrangler dev` en la raíz del repositorio.
