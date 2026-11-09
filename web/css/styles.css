@@ -226,6 +226,8 @@
 
 /* ---------- Base ---------- */
 * { box-sizing: border-box; }
+/* Lo marcado como escondido queda escondido aunque su clase le dé otro display (botones, contadores, formularios). */
+[hidden] { display: none !important; }
 html, body { height: 100%; }
 body {
   margin: 0;
