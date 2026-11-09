@@ -2,7 +2,7 @@
    Las vistas trabajan sobre una copia en memoria; cada cambio se envía en segundo plano,
    se reintenta si se corta la conexión y llega en vivo a las demás personas de la clínica. */
 (function () {
-  const LISTS = ['patients', 'appointments', 'treatments', 'budgets', 'payments', 'history', 'consents', 'activity'];
+  const LISTS = ['patients', 'appointments', 'treatments', 'budgets', 'payments', 'history', 'consents', 'photos', 'activity'];
   const ACTIVITY_KEEP = 300;
   const ACTIVITY_MAX = 360;
   const MAX_PARALLEL_WRITES = 4;
@@ -18,11 +18,11 @@
     email: '', openTime: '08:00', closeTime: '17:00', workDays: 'Lunes a viernes', slotMinutes: 30,
     receiptFooter: 'Gracias por confiar en nosotros.', currency: 'USD',
   };
-  const PREFIX = { patients: 'p', appointments: 'a', treatments: 't', budgets: 'b', payments: 'pay', history: 'h', consents: 'c', activity: 'log' };
-  const MODULE_LABEL = { patients: 'Pacientes', appointments: 'Citas', treatments: 'Tratamientos', budgets: 'Presupuestos', payments: 'Pagos', history: 'Historia clínica', consents: 'Consentimientos' };
+  const PREFIX = { patients: 'p', appointments: 'a', treatments: 't', budgets: 'b', payments: 'pay', history: 'h', consents: 'c', photos: 'ph', activity: 'log' };
+  const MODULE_LABEL = { patients: 'Pacientes', appointments: 'Citas', treatments: 'Tratamientos', budgets: 'Presupuestos', payments: 'Pagos', history: 'Historia clínica', consents: 'Consentimientos', photos: 'Fotos' };
 
   const emptyState = () => ({
-    patients: [], appointments: [], treatments: [], budgets: [], payments: [], history: [], consents: [], activity: [],
+    patients: [], appointments: [], treatments: [], budgets: [], payments: [], history: [], consents: [], photos: [], activity: [],
     odontograms: {}, config: {},
   });
 
@@ -365,7 +365,11 @@
     return true;
   };
   const removePatient = (pid, detail) => {
-    ['appointments', 'budgets', 'payments', 'history', 'consents'].forEach((col) => {
+    const patient = get('patients', pid);
+    const files = [patient && patient.photo, ...state.photos.filter((x) => x.patientId === pid).flatMap((x) => [x.path, x.thumb])].filter(Boolean);
+    const unique = [...new Set(files)];
+    if (unique.length && window.Photos) Photos.remove(unique).catch(() => {});
+    ['appointments', 'budgets', 'payments', 'history', 'consents', 'photos'].forEach((col) => {
       const gone = state[col].filter((x) => x.patientId === pid);
       if (!gone.length) return;
       state[col] = state[col].filter((x) => x.patientId !== pid);
@@ -428,6 +432,8 @@
     if (!data || !Array.isArray(data.patients)) throw new Error('El archivo no es un respaldo de Sonrisas.');
     const SAFE = /^[A-Za-z0-9_-]{1,120}$/;
     LISTS.forEach((col) => {
+      // Los respaldos anteriores a las fotos no traen "photos": se conservan las que hay.
+      if (col === 'photos' && !Array.isArray(data.photos)) return;
       const incoming = (Array.isArray(data[col]) ? data[col] : []).filter((x) => x && SAFE.test(String(x.id)));
       const keep = new Set(incoming.map((x) => x.id));
       state[col].forEach((x) => { if (!keep.has(x.id)) persistDelete(col, x.id); });

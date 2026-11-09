@@ -225,7 +225,7 @@ const actions: Record<string, (body: Body, req: Request) => Promise<unknown>> = 
     return { ok: true, password };
   },
 
-  /** El administrador elimina una clínica completa: cuentas, datos y comprobantes. */
+  /** El administrador elimina una clínica completa: cuentas, datos, comprobantes y fotos de pacientes. */
   async admin_eliminar_clinica(body, req) {
     const me = await caller(req);
     await requirePlatformAdmin(me.id);
@@ -234,6 +234,13 @@ const actions: Record<string, (body: Body, req: Request) => Promise<unknown>> = 
     if (!clinic) throw new Fail(404, 'No encontramos esa clínica.');
     const { data: files } = await db.storage.from('comprobantes').list(clinicId, { limit: 1000 });
     if (files && files.length) await db.storage.from('comprobantes').remove(files.map((f) => `${clinicId}/${f.name}`));
+    // Fotos de pacientes: <clínica>/<paciente>/<archivo>.
+    const { data: patientFolders } = await db.storage.from('pacientes').list(clinicId, { limit: 10000 });
+    for (const folder of patientFolders ?? []) {
+      const prefix = `${clinicId}/${folder.name}`;
+      const { data: photos } = await db.storage.from('pacientes').list(prefix, { limit: 10000 });
+      if (photos && photos.length) await db.storage.from('pacientes').remove(photos.map((f) => `${prefix}/${f.name}`));
+    }
     const { data: members } = await db.from('profiles').select('id').eq('clinic_id', clinicId);
     const { error } = await db.from('clinics').delete().eq('id', clinicId);
     if (error) throw new Fail(500, 'No se pudo eliminar la clínica.');

@@ -22,7 +22,10 @@
   const apptBadge = (s) => `<span class="badge ${APPT_BADGE[s] || 'b-muted'}">${esc(DB.APPT_STATUS[s] || s)}</span>`;
   const budgetBadge = (s) => `<span class="badge ${BUDGET_BADGE[s] || 'b-muted'}">${esc(DB.BUDGET_STATUS[s] || s)}</span>`;
 
-  const avatarFor = (p) => `<div class="avatar sm">${esc(initials(p.firstName, p.lastName))}</div>`;
+  const photoAttr = (path) => (path ? ` data-photo="${esc(path)}" data-photo-alt=""` : '');
+  const avatarFor = (p) => `<div class="avatar sm"${photoAttr(p.photo)}><span>${esc(initials(p.firstName, p.lastName))}</span></div>`;
+  /** Número de pieza FDI: permanentes 11–48, temporales 51–85. */
+  const validTooth = (t) => /^([1-4][1-8]|[5-8][1-5])$/.test(String(t).trim());
   const patientHref = (id, tab = 'info') => `#paciente-${id}${tab === 'info' ? '' : `-${tab}`}`;
   const patientCell = (p) => (p
     ? `<a href="${patientHref(p.id)}" class="cell-user">${avatarFor(p)}<div><strong>${esc(fullName(p))}</strong><small>C.I. ${esc(p.dni)}</small></div></a>`
@@ -458,7 +461,7 @@
      FICHA DEL PACIENTE
      ===================================================================== */
   const PATIENT_TABS = [
-    ['info', 'Información'], ['odontograma', 'Odontograma'], ['historia', 'Historia clínica'], ['consentimientos', 'Consentimientos'],
+    ['info', 'Información'], ['odontograma', 'Odontograma'], ['historia', 'Historia clínica'], ['fotos', 'Fotos'], ['consentimientos', 'Consentimientos'],
     ['cuenta', 'Cuenta corriente'], ['citas', 'Citas'], ['pagos', 'Cobros'],
   ];
 
@@ -466,13 +469,14 @@
     let p = patientById(id);
     if (!p) { el.innerHTML = '<div class="card empty">No encontramos este paciente. Puede que lo hayan eliminado. <a href="#pacientes">Volver a pacientes</a></div>'; return; }
     if (!PATIENT_TABS.some(([k]) => k === tab)) tab = 'info';
+    let photoFilter = '';
 
     const renderHeader = () => {
       const { balance } = DB.patientBalance(p.id);
       const alerts = [p.allergies && `Alergia: ${esc(p.allergies)}`, p.conditions && esc(p.conditions), p.medications && `Medicación: ${esc(p.medications)}`].filter(Boolean);
       return `<div class="patient-head">
         <a href="#pacientes" class="icon-btn" title="Volver a pacientes" aria-label="Volver a pacientes">${icon('back')}</a>
-        <div class="avatar lg">${esc(initials(p.firstName, p.lastName))}</div>
+        <button type="button" class="avatar lg avatar-edit" data-avatar${photoAttr(p.photo)} title="${p.photo ? 'Cambiar foto de perfil' : 'Agregar foto de perfil'}" aria-label="${p.photo ? 'Cambiar foto de perfil' : 'Agregar foto de perfil'}"><span>${esc(initials(p.firstName, p.lastName))}</span><i class="avatar-cam" aria-hidden="true">${icon('camera')}</i></button>
         <div class="grow"><h1>${esc(fullName(p))}</h1><div class="muted">C.I. ${esc(p.dni)}${p.birthDate ? ` · ${ageFrom(p.birthDate)} años` : ''} · ${esc(p.insurance || 'Particular')}${p.phone ? ` · <a href="${esc(U.waLink(p.phone))}" target="_blank" rel="noopener">${esc(p.phone)}</a>` : ''}</div></div>
         <div class="balance-box ${balance > 0 ? 'balance-debt' : 'balance-ok'}"><small>Saldo</small><strong>${balance > 0 ? money(balance) : 'Al día'}</strong></div>
       </div>
@@ -489,6 +493,24 @@
           return `<div class="card"><div class="card-head"><h3>Historia clínica</h3>${can('clinical') ? `<button class="btn btn-primary btn-sm" data-new-h>${icon('plus')}Nueva evolución</button>` : ''}</div>
             <div class="card-body">${list.length ? `<div class="timeline">${list.map((h) => `<div class="tl-item"><div class="date">${fmtDate(h.date)} · ${esc(userName(h.dentistId))}</div><h4>${esc(h.title)}</h4><p>${esc(h.notes)}</p>
               ${can('clinical') ? `<div class="act"><button data-edit-h="${h.id}" title="Editar" aria-label="Editar">${icon('edit')}</button>${can('delete') ? `<button class="del" data-del-h="${h.id}" title="Eliminar" aria-label="Eliminar">${icon('trash')}</button>` : ''}</div>` : ''}</div>`).join('')}</div>` : `<div class="empty">Todavía no hay evoluciones en la historia clínica.${can('clinical') ? '' : ' Solo los odontólogos pueden agregarlas.'}</div>`}</div></div>`;
+        }
+        case 'fotos': {
+          const photos = DB.all('photos').filter((x) => x.patientId === p.id)
+            .sort((a, b) => `${b.date}${b.createdAt || ''}`.localeCompare(`${a.date}${a.createdAt || ''}`));
+          const counts = photos.reduce((acc, x) => { acc[x.category] = (acc[x.category] || 0) + 1; return acc; }, {});
+          const cats = Object.keys(counts);
+          if (photoFilter && !counts[photoFilter]) photoFilter = '';
+          const list = photoFilter ? photos.filter((x) => x.category === photoFilter) : photos;
+          const chips = cats.length > 1
+            ? `<div class="chips" role="group" aria-label="Filtrar fotos">${[['', 'Todas', photos.length], ...cats.map((c) => [c, c, counts[c]])].map(([v, l, n]) => `<button type="button" class="chip ${v === photoFilter ? 'active' : ''}" data-photo-filter="${esc(v)}" aria-pressed="${v === photoFilter}">${esc(l)} <span>${n}</span></button>`).join('')}</div>`
+            : '';
+          return `<div class="card"><div class="card-head"><h3>Fotos clínicas</h3>${can('clinical') ? `<button class="btn btn-primary btn-sm" data-new-photo>${icon('camera')}Agregar fotos</button>` : ''}</div>
+            ${chips}
+            <div class="card-body">${list.length ? `<div class="photo-grid">${list.map((x) => `<button type="button" class="photo-tile" data-open-photo="${x.id}">
+                <div class="photo-thumb"${photoAttr(x.thumb || x.path)}></div>
+                <div class="photo-cap"><strong>${esc(x.category)}${x.tooth ? ` · Pieza ${esc(x.tooth)}` : ''}</strong><small>${fmtDate(x.date)}</small></div>
+              </button>`).join('')}</div>`
+              : `<div class="empty">Todavía no hay fotos de este paciente.${can('clinical') ? ' Agrega fotos de caries, fracturas o del antes y después de un tratamiento.' : ' Solo los odontólogos pueden agregarlas.'}</div>`}</div></div>`;
         }
         case 'consentimientos': {
           const list = DB.all('consents').filter((c) => c.patientId === p.id).sort((a, b) => b.date.localeCompare(a.date));
@@ -586,11 +608,142 @@
       },
     });
 
+    const previewFiles = (input, box) => {
+      box.innerHTML = '';
+      [...input.files].slice(0, 12).forEach((f) => {
+        if (!f.type.startsWith('image/')) return;
+        const img = new Image();
+        img.alt = '';
+        img.src = URL.createObjectURL(f);
+        img.onload = () => URL.revokeObjectURL(img.src);
+        box.appendChild(img);
+      });
+    };
+
+    const profilePhotoModal = () => openModal({
+      title: 'Foto de perfil',
+      body: `<div class="stack">
+        <div class="profile-preview"><div class="avatar xl" data-preview${photoAttr(p.photo)}><span>${esc(initials(p.firstName, p.lastName))}</span></div></div>
+        <label class="field"><span>Elige una foto o tómala con la cámara <span class="req">*</span></span><input type="file" name="file" accept="image/*" required></label>
+        ${p.photo ? `<button type="button" class="btn btn-sm btn-danger-soft" data-remove-photo>${icon('trash')}Quitar la foto actual</button>` : ''}
+      </div>`,
+      submitLabel: 'Guardar foto',
+      onMount: (form) => {
+        const input = form.querySelector('[name=file]');
+        const box = form.querySelector('[data-preview]');
+        input.addEventListener('change', () => {
+          const f = input.files[0];
+          if (!f || !f.type.startsWith('image/')) return;
+          box.querySelectorAll('img').forEach((x) => x.remove());
+          const img = new Image();
+          img.alt = '';
+          img.src = URL.createObjectURL(f);
+          box.appendChild(img);
+          box.classList.add('has-photo');
+        });
+        const removeBtn = form.querySelector('[data-remove-photo]');
+        if (removeBtn) removeBtn.addEventListener('click', () => {
+          const old = p.photo;
+          DB.update('patients', p.id, { photo: '' }, `Foto de perfil de ${fullName(p)} quitada`);
+          Photos.remove([old]).catch(() => {});
+          U.closeModal();
+          toast('Foto de perfil quitada');
+          render();
+        });
+      },
+      onSubmit: async (data, form) => {
+        const file = form.querySelector('[name=file]').files[0];
+        const { path } = await Photos.upload(p.id, file, 'perfil');
+        const old = p.photo;
+        DB.update('patients', p.id, { photo: path }, `Foto de perfil de ${fullName(p)} actualizada`);
+        if (old) Photos.remove([old]).catch(() => {});
+        toast('Foto de perfil guardada');
+        render();
+        return undefined;
+      },
+    });
+
+    const addPhotosModal = () => openModal({
+      title: 'Agregar fotos',
+      body: `<div class="stack">
+        <label class="field"><span>Fotos <span class="req">*</span></span><input type="file" name="files" accept="image/*" multiple required></label>
+        <div class="photo-picks" data-picks></div>
+        <div class="form-grid form-grid-3">
+          <label class="field">Tipo<select name="category">${Photos.CATEGORIES.map((c) => `<option>${c}</option>`).join('')}</select></label>
+          <label class="field">Pieza dental<input name="tooth" inputmode="numeric" maxlength="2" placeholder="Ej: 36"></label>
+          <label class="field">Fecha<input type="date" name="date" value="${isoDate()}" required></label>
+        </div>
+        <label class="field">Nota<textarea name="note" rows="3" placeholder="Ej: Caries oclusal profunda, se indica restauración"></textarea></label>
+        <p class="hint">Las fotos son privadas: solo las ve el equipo de tu clínica. Puedes elegir varias a la vez.</p>
+      </div>`,
+      submitLabel: 'Subir fotos',
+      onMount: (form) => {
+        const input = form.querySelector('[name=files]');
+        input.addEventListener('change', () => previewFiles(input, form.querySelector('[data-picks]')));
+      },
+      onSubmit: async (data, form) => {
+        const tooth = String(data.tooth || '').trim();
+        if (tooth && !validTooth(tooth)) { toast('Escribe la pieza en numeración FDI: de 11 a 48, o de 51 a 85 en dientes de leche.', 'err'); return false; }
+        const files = [...form.querySelector('[name=files]').files];
+        const submit = form.querySelector('[data-submit]');
+        const me = App.user();
+        let saved = 0;
+        let firstError = '';
+        for (const file of files) {
+          if (submit) submit.textContent = `Subiendo ${saved + 1} de ${files.length}…`;
+          try {
+            const { path, thumb } = await Photos.upload(p.id, file, 'foto');
+            DB.insert('photos', {
+              patientId: p.id, path, thumb, category: data.category, tooth, date: data.date,
+              note: String(data.note || '').trim(), by: me ? me.id : '', createdAt: new Date().toISOString(),
+            }, `Foto (${data.category}${tooth ? `, pieza ${tooth}` : ''}) agregada a ${fullName(p)}`);
+            saved += 1;
+          } catch (err) { if (!firstError) firstError = err.message; }
+        }
+        if (saved) { toast(saved === 1 ? 'Foto guardada' : `${saved} fotos guardadas`); render(); }
+        if (firstError) { toast(saved ? `${firstError} (${files.length - saved} sin subir)` : firstError, 'err'); return saved ? undefined : false; }
+        return undefined;
+      },
+    });
+
+    const viewPhoto = (ph) => {
+      const title = `${ph.category}${ph.tooth ? ` · Pieza ${ph.tooth}` : ''}`;
+      openModal({
+        title, size: 'lg', hideFooter: true,
+        body: `<div class="photo-view">
+          <div class="photo-full"${photoAttr(ph.path)}></div>
+          <dl class="kv">
+            <dt>Fecha</dt><dd>${fmtDate(ph.date)}</dd>
+            <dt>Subida por</dt><dd>${esc(userName(ph.by))}</dd>
+            ${ph.note ? `<dt>Nota</dt><dd>${esc(ph.note)}</dd>` : ''}
+          </dl>
+          <div class="photo-actions">
+            <a class="btn btn-sm" data-full target="_blank" rel="noopener" hidden>${icon('eye')}Abrir en tamaño completo</a>
+            ${can('delete') ? `<button type="button" class="btn btn-sm btn-danger-soft" data-del-photo>${icon('trash')}Eliminar foto</button>` : ''}
+          </div>
+        </div>`,
+        onMount: (form) => {
+          Photos.url(ph.path).then((u) => { const a = form.querySelector('[data-full]'); if (u && a) { a.href = u; a.hidden = false; } }).catch(() => {});
+          const del = form.querySelector('[data-del-photo]');
+          if (del) del.addEventListener('click', () => confirmDialog('¿Eliminar esta foto? No se puede deshacer.', () => {
+            DB.remove('photos', ph.id, `Foto (${ph.category}) de ${fullName(p)} eliminada`);
+            Photos.remove([...new Set([ph.path, ph.thumb].filter(Boolean))]).catch(() => {});
+            toast('Foto eliminada');
+            render();
+          }));
+        },
+      });
+    };
+
     el.addEventListener('click', (e) => {
       const b = e.target.closest('button');
       if (!b) return;
       const d = b.dataset;
       if (d.tab) { App.go(patientHref(p.id, d.tab).slice(1)); return; }
+      if ('avatar' in d) { profilePhotoModal(); return; }
+      if ('newPhoto' in d) { addPhotosModal(); return; }
+      if (d.openPhoto) { const ph = DB.get('photos', d.openPhoto); if (ph) viewPhoto(ph); return; }
+      if ('photoFilter' in d) { photoFilter = d.photoFilter; render(); return; }
       if ('editP' in d) openPatientModal(p, render);
       if ('newH' in d) historyModal(null);
       if (d.editH) historyModal(DB.get('history', d.editH));

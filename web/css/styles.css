@@ -948,3 +948,63 @@ tr.clickable { cursor: pointer; }
 @media (display-mode: standalone) {
   .login-wrap, .splash { padding-top: max(32px, env(safe-area-inset-top, 0px)); }
 }
+
+/* =====================================================================
+   Fotos de pacientes: perfil y fotos clínicas
+   ===================================================================== */
+.avatar { position: relative; overflow: hidden; }
+.avatar > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.2s ease; }
+.avatar.has-photo > img { opacity: 1; }
+.avatar.xl { width: 120px; height: 120px; font-size: 38px; border-radius: 28px; font-family: var(--font-display); }
+.avatar-edit { border: 0; padding: 0; cursor: pointer; font: inherit; font-size: 19px; font-family: var(--font-display); }
+.avatar-edit:focus-visible { outline: 3px solid var(--accent-text); outline-offset: 2px; }
+.avatar-cam {
+  position: absolute; right: 0; bottom: 0; width: 22px; height: 22px; display: grid; place-items: center;
+  background: rgba(15, 42, 40, 0.72); color: #ffffff; border-top-left-radius: 8px;
+}
+.avatar-cam svg { width: 13px; height: 13px; }
+.profile-preview { display: flex; justify-content: center; padding: 4px 0; }
+
+.btn-danger-soft { background: var(--danger-soft); border-color: transparent; color: var(--danger-text); width: fit-content; }
+.btn-danger-soft:hover { filter: brightness(0.97); }
+.hint { margin: 0; color: var(--muted); font-size: 12.5px; }
+.form-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 20px 0; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 13px; font-weight: 600;
+}
+.chip span { color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.active { background: var(--accent-text); border-color: var(--accent-text); color: #ffffff; }
+.chip.active span { color: rgba(255, 255, 255, 0.85); }
+
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.photo-tile {
+  display: grid; gap: 0; padding: 0; text-align: left; cursor: pointer; font: inherit; color: inherit;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; min-width: 0;
+}
+.photo-tile:hover { border-color: var(--border-strong); }
+.photo-tile:focus-visible { outline: 3px solid var(--accent-text); outline-offset: 2px; }
+.photo-thumb { position: relative; aspect-ratio: 1; max-width: 100%; background: var(--surface-2); overflow: hidden; }
+.photo-thumb > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.2s ease; }
+.photo-thumb.has-photo > img { opacity: 1; }
+.photo-cap { display: grid; gap: 2px; padding: 9px 11px 10px; min-width: 0; }
+.photo-cap strong { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.photo-cap small { color: var(--muted); font-size: 12px; }
+
+.photo-picks { display: flex; flex-wrap: wrap; gap: 8px; }
+.photo-picks:empty { display: none; }
+.photo-picks img { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; border: 1px solid var(--border); }
+
+.photo-view { display: grid; gap: 16px; }
+.photo-full { position: relative; min-height: 220px; max-height: 70vh; border-radius: 12px; background: var(--surface-2); overflow: hidden; display: grid; place-items: center; }
+.photo-full > img { display: block; max-width: 100%; max-height: 70vh; object-fit: contain; opacity: 0; transition: opacity 0.2s ease; }
+.photo-full.has-photo > img { opacity: 1; }
+.photo-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+@media (max-width: 560px) {
+  .form-grid-3 { grid-template-columns: minmax(0, 1fr); }
+  .photo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .chips { padding: 12px 16px 0; }
+}

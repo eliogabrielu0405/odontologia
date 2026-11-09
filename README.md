@@ -36,7 +36,7 @@ Archivos: `web/manifest.webmanifest`, `web/sw.js`, `web/js/pwa.js` y `web/icons/
 
 ## Módulos de la clínica
 
-Inicio con “Primeros pasos”, agenda por día o semana con recordatorios por WhatsApp, pacientes, ficha del paciente (información, **odontograma** interactivo, historia clínica, consentimientos, cuenta corriente, citas y cobros), presupuestos y recibos con impresión, tratamientos con catálogo sugerido, reportes, equipo, actividad, configuración y respaldo.
+Inicio con “Primeros pasos”, agenda por día o semana con recordatorios por WhatsApp, pacientes, ficha del paciente (información, **foto de perfil**, **odontograma** interactivo, historia clínica, **fotos clínicas** de caries, fracturas o del antes y después con pieza dental y nota, consentimientos, cuenta corriente, citas y cobros), presupuestos y recibos con impresión, tratamientos con catálogo sugerido, reportes, equipo, actividad, configuración y respaldo.
 
 La interfaz se adapta al celular y al modo claro u oscuro del dispositivo.
 
@@ -56,6 +56,7 @@ web/js/config.js        URL y clave pública de Supabase
 web/js/utils.js         Formato (Venezuela), modales, avisos, WhatsApp, fotos
 web/js/data.js          Datos de la clínica: carga, guardado en segundo plano y tiempo real
 web/js/account.js       Sesión, registro, invitaciones, perfil, equipo y Mi suscripción
+web/js/photos.js        Fotos de pacientes: subir, mostrar con enlaces temporales y borrar
 web/js/views.js         Pantallas de la clínica
 web/js/odontogram.js    Odontograma
 web/js/admin.js         Panel de EU Digital Solutions
@@ -70,6 +71,7 @@ web/vendor/             supabase-js 2.118.0
 - Recepción no puede modificar historia clínica, odontogramas ni el catálogo; solo el titular puede borrar registros.
 - Nadie de una clínica puede cambiar su propia fecha de pago ni aprobar sus pagos.
 - Los comprobantes están en un almacenamiento privado: cada clínica ve los suyos y el administrador ve todos.
+- Las fotos de pacientes también son privadas y solo las ve el equipo de su clínica. La recepción puede cambiar la foto de perfil, pero solo los odontólogos suben fotos clínicas y solo el titular las borra.
 - Las contraseñas las maneja Supabase Auth.
 
 ## Publicarlo
