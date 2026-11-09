@@ -586,6 +586,10 @@
     const render = () => {
       p = patientById(id) || p;
       el.innerHTML = renderHeader() + `<div>${body()}</div>`;
+      // En el celular las pestañas se deslizan de lado: la abierta queda siempre a la vista.
+      const tabsBar = el.querySelector('.tabs');
+      const activeTab = tabsBar && tabsBar.querySelector('.active');
+      if (activeTab && tabsBar.scrollWidth > tabsBar.clientWidth) tabsBar.scrollLeft = activeTab.offsetLeft - tabsBar.offsetLeft - (tabsBar.clientWidth - activeTab.offsetWidth) / 2;
       if (tab === 'odontograma') {
         Odontogram.mount(el.querySelector('[data-odo]'), DB.getOdontogram(p.id), (data, detail) => DB.setOdontogram(p.id, data, `${fullName(p)} · ${detail}`), !can('clinical'));
       }
