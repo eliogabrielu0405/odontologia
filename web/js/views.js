@@ -167,10 +167,13 @@
   };
 
   const openBudgetModal = (budget, preset = {}, after) => {
-    const b = budget ? JSON.parse(JSON.stringify(budget)) : { patientId: preset.patientId || '', dentistId: '', date: isoDate(), status: 'pendiente', discount: 0, notes: '', items: [] };
+    const b = budget ? JSON.parse(JSON.stringify(budget)) : {
+      patientId: preset.patientId || '', dentistId: preset.dentistId || '', date: isoDate(), status: 'pendiente', discount: 0,
+      notes: preset.notes || '', items: preset.items ? JSON.parse(JSON.stringify(preset.items)) : [],
+    };
     const treatments = DB.all('treatments');
     if (!DB.all('patients').length) { toast('Primero registra un paciente.', 'err'); return; }
-    if (!treatments.length) { toast('Primero carga tus tratamientos en el catálogo.', 'err'); App.go('tratamientos'); return; }
+    if (!treatments.length && !b.items.length) { toast('Primero carga tus tratamientos en el catálogo.', 'err'); App.go('tratamientos'); return; }
     openModal({
       title: budget ? `Editar presupuesto #${budget.number}` : 'Nuevo presupuesto', size: 'lg',
       body: `<div class="form-grid">
@@ -460,6 +463,57 @@
   /* =====================================================================
      FICHA DEL PACIENTE
      ===================================================================== */
+  /** El titular elige qué tratamiento del catálogo se cobra por cada tipo de hallazgo del odontograma. */
+  const findingPricesModal = (after) => {
+    const treatments = [...DB.all('treatments')].sort((a, b) => a.name.localeCompare(b.name));
+    const mapping = DB.settings().findingTreatments || {};
+    const kinds = Odontogram.STATES.filter((st) => st.key !== 'sano');
+    const priceText = (key, value) => {
+      if (value === '') return '—';
+      if (value === '__auto') {
+        const label = Odontogram.autoLabel(key, treatments);
+        if (!label) return '—';
+        // Mismo orden que los nombres del tratamiento automático.
+        return label.split(' / ').map((name) => { const t = treatments.find((x) => x.name === name); return t ? money(t.price) : '—'; }).join(' / ');
+      }
+      const t = treatments.find((x) => x.id === value);
+      return t ? money(t.price) : '—';
+    };
+    openModal({
+      title: 'Precios de los hallazgos', size: 'lg',
+      body: `<div class="stack">
+        <p class="hint">Elige qué tratamiento de tu catálogo se cobra por cada hallazgo. El precio es el del catálogo y lo cambias en <a href="#tratamientos">Tratamientos</a>. En cada paciente también puedes cambiar el tratamiento o el precio de un hallazgo.</p>
+        <div class="table-wrap"><table><thead><tr><th>Hallazgo</th><th>Se cobra</th><th class="num">Precio</th></tr></thead><tbody>
+        ${kinds.map((st) => {
+          const value = mapping[st.key] === undefined ? '__auto' : mapping[st.key];
+          const auto = Odontogram.autoLabel(st.key, treatments);
+          return `<tr>
+            <td><span class="badge" style="background:${st.color}1a;color:${st.color}">${esc(st.label)}</span></td>
+            <td><select class="cell-input finding-map" name="map_${st.key}" data-kind="${st.key}" aria-label="Tratamiento que se cobra por ${esc(st.label)}">
+              <option value="__auto" ${value === '__auto' ? 'selected' : ''}>Automático${auto ? `: ${esc(auto)}` : ' (no se cobra)'}</option>
+              <option value="" ${value === '' ? 'selected' : ''}>No se cobra</option>
+              ${treatments.map((t) => `<option value="${esc(t.id)}" ${value === t.id ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}
+            </select></td>
+            <td class="num" data-price-for="${st.key}">${priceText(st.key, value)}</td></tr>`;
+        }).join('')}
+        </tbody></table></div>
+      </div>`,
+      submitLabel: 'Guardar',
+      onMount: (form) => form.addEventListener('change', (e) => {
+        const sel = e.target.closest('[data-kind]');
+        if (sel) form.querySelector(`[data-price-for="${sel.dataset.kind}"]`).textContent = priceText(sel.dataset.kind, sel.value);
+      }),
+      onSubmit: (data) => {
+        const map = {};
+        kinds.forEach((st) => { const v = data[`map_${st.key}`]; if (v !== undefined && v !== '__auto') map[st.key] = v; });
+        DB.saveConfig({ findingTreatments: map });
+        toast('Precios de los hallazgos guardados');
+        if (after) after();
+        return undefined;
+      },
+    });
+  };
+
   const PATIENT_TABS = [
     ['info', 'Información'], ['odontograma', 'Odontograma'], ['historia', 'Historia clínica'], ['fotos', 'Fotos'], ['consentimientos', 'Consentimientos'],
     ['cuenta', 'Cuenta corriente'], ['citas', 'Citas'], ['pagos', 'Cobros'],
@@ -591,7 +645,17 @@
       const activeTab = tabsBar && tabsBar.querySelector('.active');
       if (activeTab && tabsBar.scrollWidth > tabsBar.clientWidth) tabsBar.scrollLeft = activeTab.offsetLeft - tabsBar.offsetLeft - (tabsBar.clientWidth - activeTab.offsetWidth) / 2;
       if (tab === 'odontograma') {
-        Odontogram.mount(el.querySelector('[data-odo]'), DB.getOdontogram(p.id), (data, detail) => DB.setOdontogram(p.id, data, `${fullName(p)} · ${detail}`), !can('clinical'));
+        const me = App.user();
+        Odontogram.mount(el.querySelector('[data-odo]'), DB.getOdontogram(p.id), (data, detail) => DB.setOdontogram(p.id, data, `${fullName(p)} · ${detail}`), !can('clinical'), {
+          treatments: [...DB.all('treatments')].sort((a, b) => a.name.localeCompare(b.name)),
+          mapping: DB.settings().findingTreatments || {},
+          money,
+          onCreateBudget: (items) => openBudgetModal(null, {
+            patientId: p.id, items, dentistId: me && isDentist(me) ? me.id : '',
+            notes: `Según los hallazgos del odontograma del ${fmtDate(isoDate())}.`,
+          }, () => App.go(patientHref(p.id, 'pagos').slice(1))),
+          onEditPrices: can('settings') ? () => findingPricesModal(render) : null,
+        });
       }
     };
 

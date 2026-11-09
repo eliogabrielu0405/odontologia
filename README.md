@@ -42,7 +42,7 @@ Archivos: `web/manifest.webmanifest`, `web/sw.js`, `web/js/pwa.js` y `web/icons/
 
 ## Módulos de la clínica
 
-Inicio con “Primeros pasos”, agenda por día o semana con recordatorios por WhatsApp, pacientes, ficha del paciente (información, **foto de perfil**, **odontograma** interactivo, historia clínica, **fotos clínicas** de caries, fracturas o del antes y después con pieza dental y nota, consentimientos, cuenta corriente, citas y cobros), presupuestos y recibos con impresión, tratamientos con catálogo sugerido, reportes, equipo, actividad, configuración y respaldo.
+Inicio con “Primeros pasos”, agenda por día o semana con recordatorios por WhatsApp, pacientes, ficha del paciente (información, **foto de perfil**, **odontograma** interactivo (cada hallazgo trae su tratamiento y precio del catálogo, se suman y pasan a un presupuesto con un botón), historia clínica, **fotos clínicas** de caries, fracturas o del antes y después con pieza dental y nota, consentimientos, cuenta corriente, citas y cobros), presupuestos y recibos con impresión, tratamientos con catálogo sugerido, reportes, equipo, actividad, configuración y respaldo.
 
 La interfaz se adapta al celular y al modo claro u oscuro del dispositivo.
 
