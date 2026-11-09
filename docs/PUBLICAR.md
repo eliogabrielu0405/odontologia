@@ -76,7 +76,7 @@ conectado al repositorio de GitHub: cada cambio que llega a la rama principal (`
 |-----|-------|
 | Nombre del Worker y carpeta a publicar | `wrangler.jsonc` (el `name` tiene que ser igual al del panel: `sonrisas`) |
 | Encabezados de seguridad y caché | `web/_headers` |
-| Dirección | `https://sonrisas.<tu-subdominio>.workers.dev` (en el panel: Workers & Pages → `sonrisas`) |
+| Dirección | **https://sonrisas.eliogabrielu04.workers.dev** (en el panel: Workers & Pages → `sonrisas`) |
 | Estado de cada publicación | Panel → `sonrisas` → **Deployments**, o el check de Cloudflare en cada commit de GitHub |
 
 Para crearlo desde cero: **https://dash.cloudflare.com** → **Workers & Pages** → **Create application** → importar el repositorio `odontologia` →

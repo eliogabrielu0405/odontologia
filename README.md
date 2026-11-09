@@ -76,4 +76,6 @@ web/vendor/             supabase-js 2.118.0
 
 ## Publicarlo
 
+En línea: **https://sonrisas.eliogabrielu04.workers.dev** (Cloudflare, se publica sola desde GitHub).
+
 Ver **[docs/PUBLICAR.md](docs/PUBLICAR.md)**.
