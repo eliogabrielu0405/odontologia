@@ -2,11 +2,11 @@
    Permite instalar la app y que abra aunque la conexión falle.
    La página se guarda como './' (no 'index.html'): Cloudflare redirige /index.html a /.
    Con internet siempre carga la versión más nueva; los datos (Supabase) nunca se guardan aquí. */
-const VERSION = 'sonrisas-v4';
+const VERSION = 'sonrisas-v5';
 const SHELL = [
   './', 'manifest.webmanifest',
   'css/styles.css',
-  'js/config.js', 'js/utils.js', 'js/pwa.js', 'js/data.js', 'js/account.js', 'js/photos.js', 'js/odontogram.js', 'js/views.js', 'js/admin.js', 'js/app.js',
+  'js/config.js', 'js/utils.js', 'js/pwa.js', 'js/data.js', 'js/account.js', 'js/photos.js', 'js/suggestions.js', 'js/odontogram.js', 'js/views.js', 'js/admin.js', 'js/app.js',
   'vendor/supabase-2.118.0.js',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png', 'icons/favicon-32.png',
 ];

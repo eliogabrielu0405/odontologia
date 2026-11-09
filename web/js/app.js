@@ -24,18 +24,22 @@
     { route: 'equipo', label: 'Mi equipo', icon: 'shield', perm: 'team' },
     { route: 'configuracion', label: 'Configuración', icon: 'settings', perm: 'settings' },
     { route: 'actividad', label: 'Actividad', icon: 'activity', perm: 'activity' },
+    { route: 'sugerencias', label: 'Sugerencias', icon: 'bulb', count: true },
     { route: 'perfil', label: 'Mi perfil', icon: 'user' },
   ];
   const LOCKED_NAV = [
     { section: 'Mi clínica' },
     { route: 'suscripcion', label: 'Mi suscripción', icon: 'wallet', perm: 'billing' },
+    { route: 'sugerencias', label: 'Sugerencias', icon: 'bulb', count: true },
     { route: 'perfil', label: 'Mi perfil', icon: 'user' },
   ];
+  const LOCKED_ROUTES = ['suscripcion', 'sugerencias', 'perfil'];
   const ADMIN_NAV = [
     { section: COMPANY },
     { route: 'admin', label: 'Resumen', icon: 'dashboard' },
     { route: 'admin-clinicas', label: 'Clínicas', icon: 'building' },
     { route: 'admin-pagos', label: 'Pagos recibidos', icon: 'upload' },
+    { route: 'admin-sugerencias', label: 'Sugerencias', icon: 'bulb', count: true },
     { route: 'admin-ajustes', label: 'Ajustes de cobro', icon: 'settings' },
   ];
 
@@ -52,12 +56,14 @@
     { re: /^equipo$/, view: () => Session.views.team, nav: 'equipo', perm: 'team' },
     { re: /^configuracion$/, view: () => Views.settings, nav: 'configuracion', perm: 'settings' },
     { re: /^actividad$/, view: () => Views.activity, nav: 'actividad', perm: 'activity' },
+    { re: /^sugerencias$/, view: () => Suggestions.clinicView, nav: 'sugerencias' },
     { re: /^perfil$/, view: () => Session.views.profile, nav: 'perfil' },
   ];
   const ADMIN_ROUTES = [
     { re: /^(?:admin)?$/, view: () => Admin.home, nav: 'admin' },
     { re: /^admin-clinicas$/, view: () => Admin.clinics, nav: 'admin-clinicas' },
     { re: /^admin-pagos$/, view: () => Admin.payments, nav: 'admin-pagos' },
+    { re: /^admin-sugerencias$/, view: () => Suggestions.adminView, nav: 'admin-sugerencias' },
     { re: /^admin-ajustes$/, view: () => Admin.settings, nav: 'admin-ajustes' },
   ];
 
@@ -307,6 +313,12 @@
     el.textContent = text;
   };
 
+  /** Número junto a una opción del menú (por ejemplo, sugerencias nuevas). Se actualiza solo cuando cambia. */
+  const navCount = (route) => {
+    const n = window.Suggestions ? Suggestions.navCount(route) : 0;
+    return `<span class="nav-count" data-nav-count="${route}" ${n ? '' : 'hidden'}>${n || ''}</span>`;
+  };
+
   const renderLayout = (navItems, activeNav, { brandSub, who, search, banners = '' }) => {
     const sub = Session.subscription();
     const alertDot = sub && ['por_vencer', 'vencida', 'sin_acceso', 'suspendida'].includes(sub.state);
@@ -317,7 +329,7 @@
           <nav class="nav">
             ${navItems.filter((n) => !n.perm || can(n.perm) || mode === 'admin').map((n) => (n.section
               ? `<div class="nav-section">${esc(n.section)}</div>`
-              : `<a href="#${n.route}" class="${activeNav === n.route ? 'active' : ''}" ${activeNav === n.route ? 'aria-current="page"' : ''}>${icon(n.icon)}<span>${n.label}</span>${n.alert && alertDot ? '<i class="nav-dot" aria-label="Requiere atención"></i>' : ''}</a>`)).join('')}
+              : `<a href="#${n.route}" class="${activeNav === n.route ? 'active' : ''}" ${activeNav === n.route ? 'aria-current="page"' : ''}>${icon(n.icon)}<span>${n.label}</span>${n.alert && alertDot ? '<i class="nav-dot" aria-label="Requiere atención"></i>' : ''}${n.count ? navCount(n.route) : ''}</a>`)).join('')}
           </nav>
           <div class="sidebar-foot">
             <div class="sidebar-user">
@@ -332,7 +344,7 @@
         <div class="backdrop" data-backdrop></div>
         <div class="main">
           <header class="topbar">
-            <button class="icon-btn menu-btn" data-menu aria-label="Abrir menú">${icon('menu')}</button>
+            <button class="icon-btn menu-btn" data-menu aria-label="Abrir menú">${icon('menu')}<i class="menu-dot" data-menu-dot ${window.Suggestions && navItems.some((n) => n.count && Suggestions.navCount(n.route)) ? '' : 'hidden'}></i></button>
             <div class="who"><strong>${esc(brandSub)}</strong><small>${esc(who.firstName)} ${esc(who.lastName)} · ${esc(who.roleLabel)}</small></div>
             <div class="spacer"></div>
             ${search ? '<span class="sync" data-sync></span>' : ''}
@@ -408,8 +420,8 @@
       const who = { ...user, roleLabel: DB.ROLES[user.role] };
       if (mode === 'locked') {
         const route = currentRoute();
-        if (!['suscripcion', 'perfil'].includes(route)) { location.replace(`#${Session.canPay() ? 'suscripcion' : 'perfil'}`); return; }
-        runRoute(CLINIC_ROUTES.filter((r) => ['suscripcion', 'perfil'].includes(r.nav)), 'suscripcion', LOCKED_NAV, { brandSub: ctx.clinic.name, who, search: false, banners: lockedNotice() });
+        if (!LOCKED_ROUTES.includes(route)) { location.replace(`#${Session.canPay() ? 'suscripcion' : 'perfil'}`); return; }
+        runRoute(CLINIC_ROUTES.filter((r) => LOCKED_ROUTES.includes(r.nav)), 'suscripcion', LOCKED_NAV, { brandSub: ctx.clinic.name, who, search: false, banners: lockedNotice() });
       } else {
         runRoute(CLINIC_ROUTES, 'inicio', CLINIC_NAV, { brandSub: ctx.clinic.name, who, search: true, banners: subscriptionBanner() });
       }
@@ -439,6 +451,7 @@
         try { await Session.loadMyReports(); } catch { /* el aviso de pago es opcional */ }
       }
       if (mode === 'admin' && !currentRoute().startsWith('admin')) location.replace('#admin');
+      refreshCounts();
     } catch (err) {
       errorMessage = Session.friendly(err);
       mode = 'error';
@@ -447,6 +460,14 @@
     booted = true;
     render();
   };
+
+  /** Avisos del menú (sugerencias): no frenan la carga; se pintan cuando llegan. */
+  const refreshCounts = () => {
+    if (!window.Suggestions) return;
+    const job = mode === 'admin' ? Suggestions.refreshFresh() : ['clinic', 'locked'].includes(mode) ? Suggestions.refreshUnseen() : null;
+    if (job) job.catch(() => {});
+  };
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshCounts(); });
 
   /** La suscripción cambió (pago aprobado, suspensión…): recarga el contexto y redibuja. */
   let refreshing = false;
@@ -478,6 +499,7 @@
 
   const logout = async () => {
     DB.teardown();
+    if (window.Suggestions) Suggestions.reset();
     await Session.signOut();
     user = null;
     mode = 'public';

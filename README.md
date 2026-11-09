@@ -10,8 +10,8 @@ Hecho para Venezuela: cédula, RIF, teléfonos 04xx, montos en dólares o bolív
 
 | Persona | Qué puede hacer |
 |---------|-----------------|
-| **Administrador (EU Digital Solutions)** | Ver todas las clínicas con el correo y teléfono del doctor; revisar comprobantes y aprobar o rechazar pagos; suspender, bloquear, reactivar, extender o eliminar clínicas; enviar recordatorios de pago por WhatsApp; restablecer contraseñas; configurar precio, días de prueba y de gracia, datos de Pago Móvil y WhatsApp de soporte. |
-| **Odontólogo titular** | Se registra con su correo y contraseña (con días de prueba gratis). Usa todo el sistema, invita a su equipo con un código, ve **Mi suscripción** y sube el comprobante. |
+| **Administrador (EU Digital Solutions)** | Ver todas las clínicas con el correo y teléfono del doctor; revisar comprobantes y aprobar o rechazar pagos; suspender, bloquear, reactivar, extender o eliminar clínicas; enviar recordatorios de pago por WhatsApp; restablecer contraseñas; configurar precio, días de prueba y de gracia, datos de Pago Móvil y WhatsApp de soporte; leer y responder las **sugerencias** de las clínicas. |
+| **Odontólogo titular** | Se registra con su correo y contraseña (con días de prueba gratis). Usa todo el sistema, invita a su equipo con un código, ve **Mi suscripción** y sube el comprobante. Envía **sugerencias** para mejorar la app y ve las respuestas. |
 | **Recepción** | Se une con el código que le da el titular. Agenda, pacientes, presupuestos y cobros; también ve **Mi suscripción** y puede subir el comprobante. No edita la historia clínica ni el odontograma. |
 | **Otros odontólogos** | Se unen con código. Agenda, pacientes, historia clínica, odontograma, presupuestos y reportes. |
 
@@ -23,6 +23,12 @@ Hecho para Venezuela: cédula, RIF, teléfonos 04xx, montos en dólares o bolív
 - **Sin acceso / suspendida**: solo se ve “Mi suscripción” para reportar el pago. Los datos quedan guardados.
 - **Bloqueada**: nadie de esa clínica entra; se muestra el WhatsApp de soporte.
 - Al **aprobar un pago**, la suscripción se extiende los meses pagados y la clínica se reactiva sola.
+
+## Sugerencias
+
+Cualquier persona de una clínica (también si la suscripción está pausada) puede enviar ideas, mejoras o problemas desde **Sugerencias**: tipo, parte de la app, una frase y detalles.
+El administrador las ve en su panel con la clínica y el autor, cambia el estado (*nueva, en revisión, planeada, hecha, descartada*), responde y puede escribirle por WhatsApp.
+La clínica ve el estado y la respuesta, con un aviso en el menú. Hay un tope de 10 sugerencias por persona al día.
 
 ## Se instala como aplicación
 
@@ -57,6 +63,7 @@ web/js/utils.js         Formato (Venezuela), modales, avisos, WhatsApp, fotos
 web/js/data.js          Datos de la clínica: carga, guardado en segundo plano y tiempo real
 web/js/account.js       Sesión, registro, invitaciones, perfil, equipo y Mi suscripción
 web/js/photos.js        Fotos de pacientes: subir, mostrar con enlaces temporales y borrar
+web/js/suggestions.js   Sugerencias de las clínicas y respuestas del administrador
 web/js/views.js         Pantallas de la clínica
 web/js/odontogram.js    Odontograma
 web/js/admin.js         Panel de EU Digital Solutions

@@ -220,6 +220,8 @@
   const home = async (el) => {
     loadingCard(el, 'Resumen');
     try { await load(); } catch (err) { failCard(el, 'Resumen', err); return; }
+    try { await Suggestions.refreshFresh(); } catch { /* el aviso de sugerencias es opcional */ }
+    const newIdeas = Suggestions.freshCount();
     const s = data.settings;
     const subs = data.clinics.map((c) => ({ clinic: c, sub: subOf(c) }));
     const count = (states) => subs.filter((x) => states.includes(x.sub.state)).length;
@@ -234,6 +236,7 @@
 
     el.innerHTML = `
       ${pageHead('Resumen', `Sonrisas · EU Digital Solutions · ${esc(U.fmtDateLong(new Date()))}`)}
+      ${newIdeas ? `<div class="banner banner-info">${icon('bulb')}<div class="grow"><strong>${newIdeas === 1 ? 'Tienes 1 sugerencia nueva' : `Tienes ${newIdeas} sugerencias nuevas`}</strong> de las clínicas para mejorar Sonrisas.</div><a class="btn btn-sm" href="#admin-sugerencias">Ver sugerencias</a></div>` : ''}
       ${missingSetup ? `<div class="banner banner-warn">${icon('alert')}<div class="grow"><strong>Falta configurar el cobro.</strong> Carga el precio mensual y tus datos de Pago Móvil para que los odontólogos sepan cuánto y a dónde pagar.</div><a class="btn btn-sm" href="#admin-ajustes">Configurar</a></div>` : ''}
       <div class="grid grid-4">
         ${statTile('teal', 'building', data.clinics.length, 'Clínicas registradas', '#admin-clinicas')}

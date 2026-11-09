@@ -16,7 +16,7 @@ Están escritos para hacerlos con Claude en una sesión que tenga conectada la c
 
 ## 2. Crear la base de datos
 
-Aplicar en orden las migraciones de `supabase/migrations/` (`20261108000000_sonrisas.sql`, `20261108010000_endurecer_funciones.sql`, `20261109000000_fotos_pacientes.sql`). Crean:
+Aplicar en orden las migraciones de `supabase/migrations/` (`20261108000000_sonrisas.sql`, `20261108010000_endurecer_funciones.sql`, `20261109000000_fotos_pacientes.sql`, `20261109010000_sugerencias.sql`). Crean:
 
 | Tabla | Para qué sirve |
 |-------|----------------|
@@ -28,6 +28,7 @@ Aplicar en orden las migraciones de `supabase/migrations/` (`20261108000000_sonr
 | `clinic_invites` | Códigos para que la recepción u otros odontólogos se unan |
 | `records` | Datos clínicos de cada consultorio (pacientes, citas, presupuestos, cobros, odontogramas…) |
 | `payment_reports` | Pagos de la mensualidad reportados con foto del comprobante |
+| `suggestions` | Sugerencias de las clínicas para mejorar la app y las respuestas del administrador |
 
 Además crean los buckets privados `comprobantes` y `pacientes` (fotos de pacientes), todas las reglas de seguridad por filas y las funciones `my_context`, `approve_payment`, `reject_payment`, `update_my_clinic`, `update_my_profile` y `update_member`.
 
