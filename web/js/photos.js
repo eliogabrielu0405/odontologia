@@ -69,24 +69,31 @@
     if (error) throw new Error(`No se pudo borrar la foto: ${Session.friendly(error)}`);
   };
 
-  /** Pone las fotos reales en los elementos marcados con data-photo="ruta" dentro de root. */
+  /**
+   * Pone las fotos reales en los elementos marcados con data-photo="ruta" dentro de root.
+   * Cada elemento se marca antes de pedir el enlace, para no pedirlo ni mostrarlo dos veces
+   * si la pantalla cambia mientras la foto viene en camino.
+   */
   const hydrate = async (root) => {
     if (!root) return;
-    const els = [...root.querySelectorAll('[data-photo]')].filter((el) => !el.dataset.photoDone);
+    const els = [...root.querySelectorAll('[data-photo]')].filter((el) => !el.dataset.photoState);
     if (!els.length) return;
+    els.forEach((el) => { el.dataset.photoState = 'loading'; });
     let map = {};
-    try { map = await urls(els.map((el) => el.dataset.photo)); } catch { return; }
+    try { map = await urls(els.map((el) => el.dataset.photo)); } catch { map = {}; }
     els.forEach((el) => {
+      if (el.dataset.photoState !== 'loading') return; // alguien la cambió mientras tanto (por ejemplo, una vista previa)
       const u = map[el.dataset.photo];
-      if (!u) return;
+      if (!u) { el.dataset.photoState = 'failed'; return; }
       const img = new Image();
       img.alt = el.dataset.photoAlt || '';
       img.loading = 'lazy';
       img.decoding = 'async';
       img.onload = () => { el.classList.add('has-photo'); };
       img.src = u;
+      el.querySelectorAll(':scope > img').forEach((old) => old.remove());
       el.appendChild(img);
-      el.dataset.photoDone = '1';
+      el.dataset.photoState = 'done';
     });
   };
 

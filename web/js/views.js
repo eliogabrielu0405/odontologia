@@ -638,6 +638,8 @@
         input.addEventListener('change', () => {
           const f = input.files[0];
           if (!f || !f.type.startsWith('image/')) return;
+          box.removeAttribute('data-photo');
+          box.dataset.photoState = 'local';
           box.querySelectorAll('img').forEach((x) => x.remove());
           const img = new Image();
           img.alt = '';
