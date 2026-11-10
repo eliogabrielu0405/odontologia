@@ -78,8 +78,8 @@
   const currentRoute = () => { try { return decodeURIComponent(location.hash.replace(/^#/, '')); } catch { return ''; } };
   const go = (name) => { if (currentRoute() === name) render(); else location.hash = name; };
 
-  const logoMark = (size = '') => `<div class="logo-mark ${size}">${icon('tooth')}</div>`;
-  const brandBlock = (subtitle) => `<div class="login-logo">${logoMark('lg')}<h1>Sonrisas</h1><p>${subtitle}</p></div>`;
+  const brandTile = (size = '') => `<div class="brand-tile ${size}">${Logo.mark()}</div>`;
+  const brandBlock = (subtitle) => `<div class="login-logo"><h1 class="login-brand">${Logo.full()}</h1><p>${subtitle}</p></div>`;
   const footer = () => `<div class="login-install" data-install-slot="login"></div><p class="login-foot">Sonrisas es un producto de <strong>${esc(COMPANY)}</strong></p>`;
   const supportLink = (text) => {
     const phone = (Session.platform() || {}).support_whatsapp;
@@ -89,8 +89,12 @@
   /* =====================================================================
      Pantallas sin acceso al sistema
      ===================================================================== */
+  // Sin ícono propio va el logo: completo en la pantalla de carga, el diente en las demás.
   const splash = (title, body, extra = '', ic = 'tooth') => {
-    app.innerHTML = `<div class="splash"><div class="splash-card" role="status"><div class="logo-mark lg">${icon(ic)}</div><h1>${title}</h1>${body ? `<p>${body}</p>` : ''}${extra}</div></div>`;
+    const head = ic !== 'tooth' ? `<div class="logo-mark lg">${icon(ic)}</div><h1>${title}</h1>`
+      : title === 'Sonrisas' ? `<h1 class="splash-logo">${Logo.full()}</h1>`
+        : `${brandTile('lg')}<h1>${title}</h1>`;
+    app.innerHTML = `<div class="splash"><div class="splash-card" role="status">${head}${body ? `<p>${body}</p>` : ''}${extra}</div></div>`;
   };
   const renderLoading = (slow) => splash('Sonrisas', 'Cargando tu consultorio…', `<div class="loader" aria-hidden="true"></div>${slow ? '<p class="muted small">Está tardando más de lo normal. Revisa tu conexión a internet.</p>' : ''}`);
   const logoutButton = '<button class="btn" data-logout>Cerrar sesión</button>';
@@ -325,7 +329,7 @@
     app.innerHTML = `
       <div class="layout">
         <aside class="sidebar" data-sidebar aria-label="Menú principal">
-          <div class="sidebar-brand">${logoMark()}<div><strong>Sonrisas</strong><small>${esc(brandSub)}</small></div></div>
+          <div class="sidebar-brand">${brandTile()}<div><strong>Sonrisas</strong><small>${esc(brandSub)}</small></div></div>
           <nav class="nav">
             ${navItems.filter((n) => !n.perm || can(n.perm) || mode === 'admin').map((n) => (n.section
               ? `<div class="nav-section">${esc(n.section)}</div>`

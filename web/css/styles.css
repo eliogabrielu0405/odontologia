@@ -55,6 +55,8 @@
   --side-accent: #5eead4;
   --side-hover: rgba(255, 255, 255, 0.06);
   --side-line: rgba(255, 255, 255, 0.08);
+  --logo-ink: #012f75;
+  --logo-accent: #02b8c7;
   --login-a: #0f766e;
   --login-b: #123f3c;
   --login-glow-1: #5eead4;
@@ -92,6 +94,7 @@
     --text: #e4efed;
     --text-2: #bfd1ce;
     --muted: #8aa29e;
+    --logo-ink: #f1f6ff;
     --primary: #14b8a6;
     --primary-strong: #2dd4bf;
     --on-primary: #04211e;
@@ -164,6 +167,7 @@
   --text: #e4efed;
   --text-2: #bfd1ce;
   --muted: #8aa29e;
+  --logo-ink: #f1f6ff;
   --primary: #14b8a6;
   --primary-strong: #2dd4bf;
   --on-primary: #04211e;
@@ -257,7 +261,8 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
 
 /* ---------- Pantallas de acceso y carga ---------- */
 .login-wrap, .splash {
-  min-height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
   padding-block: 32px calc(32px + var(--host-badge));
@@ -298,6 +303,25 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
 }
 .logo-mark svg { width: 58%; height: 58%; }
 .logo-mark.lg { width: 60px; height: 60px; border-radius: 18px; }
+/* Logo de Sonrisas (vector en js/logo.js). En el cuadro blanco siempre va en azul. */
+.logo-ink { fill: var(--logo-ink); }
+.logo-accent { fill: var(--logo-accent); }
+.brand-tile {
+  --logo-ink: #012f75;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+.brand-tile svg { display: block; width: 86%; height: auto; }
+.brand-tile.lg { width: 64px; height: 64px; border-radius: 18px; }
+.login-brand, .splash-logo { margin: 0; line-height: 0; }
+.login-brand .logo-full { width: 200px; max-width: 64vw; height: auto; }
+.splash-logo .logo-full { width: 190px; max-width: 60vw; height: auto; }
 .demo-accounts { border: 1px dashed var(--border-strong); border-radius: 12px; padding: 12px 14px; display: grid; gap: 10px; }
 .demo-accounts h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
 .demo-account { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px; }

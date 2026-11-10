@@ -38,7 +38,7 @@ Sonrisas es una **aplicación web instalable (PWA)**: la misma página se instal
 - **iPhone (Safari):** el mismo botón explica los pasos: Compartir → *Agregar a pantalla de inicio*.
 - **Computadora (Chrome o Edge):** botón **Instalar la app** o el ícono de instalar en la barra de direcciones.
 
-Archivos: `web/manifest.webmanifest`, `web/sw.js`, `web/js/pwa.js` y `web/icons/`.
+Archivos: `web/manifest.webmanifest`, `web/sw.js`, `web/js/pwa.js` y `web/icons/`. Los íconos salen del logo en vector que está en `docs/marca/` (completo y solo el diente).
 
 ## Módulos de la clínica
 
@@ -60,6 +60,7 @@ web/index.html          Página
 web/css/styles.css      Estilos (modo claro y oscuro, celular)
 web/js/config.js        URL y clave pública de Supabase
 web/js/utils.js         Formato (Venezuela), modales, avisos, WhatsApp, fotos
+web/js/logo.js          Logo de Sonrisas en vector (en modo oscuro las letras van en blanco)
 web/js/data.js          Datos de la clínica: carga, guardado en segundo plano y tiempo real
 web/js/account.js       Sesión, registro, invitaciones, perfil, equipo y Mi suscripción
 web/js/photos.js        Fotos de pacientes: subir, mostrar con enlaces temporales y borrar
