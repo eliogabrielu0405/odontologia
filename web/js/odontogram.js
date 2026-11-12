@@ -213,7 +213,12 @@
                 : `<select class="cell-input" data-plan-t="${f.num}:${f.loc}" aria-label="Tratamiento para la pieza ${f.num}, ${esc(f.where)}"><option value="">No se cobra</option>${treatments.map((t) => `<option value="${esc(t.id)}" ${f.plan.treatment && f.plan.treatment.id === t.id ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}</select>`}</td>
               <td class="num">${readOnly
                 ? (f.plan.charged ? money(f.plan.price) : '—')
-                : `<input type="number" min="0" step="0.01" inputmode="decimal" class="cell-input" data-plan-p="${f.num}:${f.loc}" data-default="${f.plan.treatment ? Number(f.plan.treatment.price) || 0 : ''}" value="${f.plan.charged ? f.plan.price : ''}" placeholder="0" aria-label="Precio para la pieza ${f.num}, ${esc(f.where)}">`}</td>
+                : (() => {
+                  // Tratamiento sin precio en el catálogo: la casilla va vacía y marcada para escribirlo.
+                  const needsPrice = !!f.plan.treatment && !f.plan.customPrice && !(f.plan.price > 0);
+                  const value = f.plan.charged && (f.plan.customPrice || f.plan.price > 0) ? f.plan.price : '';
+                  return `<input type="number" min="0" step="0.01" inputmode="decimal" class="cell-input${needsPrice ? ' needs-price' : ''}" data-plan-p="${f.num}:${f.loc}" data-default="${f.plan.treatment ? Number(f.plan.treatment.price) || 0 : ''}" value="${value}" placeholder="${needsPrice ? 'Sin precio' : '0'}" aria-label="Precio para la pieza ${f.num}, ${esc(f.where)}">`;
+                })()}</td>
             </tr>`).join('')}
           </tbody>
           <tfoot><tr><td colspan="4"><strong>Total</strong> <span class="muted">· ${charged.length} ${charged.length === 1 ? 'hallazgo se cobra' : 'hallazgos se cobran'}</span></td><td class="num"><strong data-odo-total>${money(total)}</strong></td></tr></tfoot>

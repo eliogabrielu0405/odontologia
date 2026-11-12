@@ -1120,7 +1120,7 @@ tr.clickable { cursor: pointer; }
 .price-name .badge { margin-left: 4px; vertical-align: 1px; }
 .price-field { display: flex; align-items: center; gap: 6px; flex: none; color: var(--muted); font-size: 13px; }
 .price-field input { width: 112px; min-width: 0; text-align: right; font-variant-numeric: tabular-nums; }
-.price-field input:placeholder-shown { border-color: var(--warn-border); background: var(--warn-soft); }
+.price-field input:placeholder-shown, .odo-findings input.needs-price:placeholder-shown { border-color: var(--warn-border); background: var(--warn-soft); }
 /* En el celular cada hallazgo es una fila apilada: pieza, hallazgo y ubicación arriba; tratamiento y precio abajo. */
 @media (max-width: 640px) {
   .odo-findings .table-wrap { overflow-x: visible; }
