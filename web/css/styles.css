@@ -1121,6 +1121,16 @@ tr.clickable { cursor: pointer; }
 .price-field { display: flex; align-items: center; gap: 6px; flex: none; color: var(--muted); font-size: 13px; }
 .price-field input { width: 112px; min-width: 0; text-align: right; font-variant-numeric: tabular-nums; }
 .price-field input:placeholder-shown, .odo-findings input.needs-price:placeholder-shown { border-color: var(--warn-border); background: var(--warn-soft); }
+/* Tratamientos en el celular: categoría y duración pasan debajo del nombre, así el precio
+   y los botones de editar y borrar se ven sin deslizar la tabla. */
+.treat-meta { display: none; }
+@media (max-width: 640px) {
+  .treat-table th:nth-child(2), .treat-table td:nth-child(2), .treat-table th:nth-child(3), .treat-table td:nth-child(3) { display: none; }
+  .treat-table td, .treat-table th { padding-left: 10px; padding-right: 10px; }
+  .treat-table td:nth-child(4) { white-space: nowrap; }
+  .treat-table td:last-child { padding-left: 0; padding-right: 4px; width: 1%; }
+  .treat-meta { display: block; margin-top: 2px; font-size: 12px; }
+}
 /* En el celular cada hallazgo es una fila apilada: pieza, hallazgo y ubicación arriba; tratamiento y precio abajo. */
 @media (max-width: 640px) {
   .odo-findings .table-wrap { overflow-x: visible; }

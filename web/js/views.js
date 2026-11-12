@@ -1051,7 +1051,7 @@
       el.querySelector('[data-hint]').innerHTML = noPrice && can('catalog') ? `<div class="banner banner-warn">${icon('alert')}<div class="grow">${U.plural(noPrice, 'tratamiento no tiene', 'tratamientos no tienen')} precio.</div><button type="button" class="btn btn-sm" data-prices>Ponerles precio</button></div>` : '';
       const pricesBtn = el.querySelector('.page-actions [data-prices]');
       if (pricesBtn) pricesBtn.hidden = !all.length;
-      el.querySelector('[data-body]').innerHTML = list.map((t) => `<tr ${can('catalog') ? `class="clickable" data-edit="${t.id}"` : ''}><td><strong>${esc(t.name)}</strong>${t.description ? `<br><small class="muted">${esc(t.description)}</small>` : ''}</td><td><span class="badge b-muted">${esc(t.category)}</span></td><td class="num">${t.duration} min</td><td class="num">${Number(t.price) > 0 ? `<span class="money">${money(t.price)}</span>` : '<span class="badge b-warn">Sin precio</span>'}</td>
+      el.querySelector('[data-body]').innerHTML = list.map((t) => `<tr ${can('catalog') ? `class="clickable" data-edit="${t.id}"` : ''}><td><strong>${esc(t.name)}</strong><small class="muted treat-meta">${esc(t.category)} · ${t.duration} min</small>${t.description ? `<br><small class="muted">${esc(t.description)}</small>` : ''}</td><td><span class="badge b-muted">${esc(t.category)}</span></td><td class="num">${t.duration} min</td><td class="num">${Number(t.price) > 0 ? `<span class="money">${money(t.price)}</span>` : '<span class="badge b-warn">Sin precio</span>'}</td>
         <td><div class="act">${can('catalog') ? `<button data-edit="${t.id}" aria-label="Editar">${icon('edit')}</button><button class="del" data-del="${t.id}" aria-label="Eliminar">${icon('trash')}</button>` : ''}</div></td></tr>`).join('')
         || (all.length ? '<tr><td colspan="5" class="empty">Ningún tratamiento coincide con la búsqueda.</td></tr>'
           : `<tr><td colspan="5" class="empty">El catálogo está vacío.${can('catalog') ? ` Agrega tus tratamientos uno por uno o <button class="link-btn" data-suggested>carga el catálogo sugerido</button> y después ponle tus precios.` : ''}</td></tr>`);
@@ -1059,7 +1059,7 @@
     el.innerHTML = `${pageHead('Tratamientos', 'Tu catálogo con precios y duraciones', can('catalog') ? `<button class="btn" data-prices>${icon('cash')}Poner precios</button><button class="btn btn-primary" data-new>${icon('plus')}Nuevo tratamiento</button>` : '')}
       <div data-hint></div>
       <div class="card"><div class="toolbar"><input class="grow" data-q type="search" placeholder="Buscar tratamiento…" aria-label="Buscar tratamiento"><select data-cat aria-label="Categoría"><option value="">Todas las categorías</option>${DB.TREATMENT_CATEGORIES.map((c) => `<option>${c}</option>`).join('')}</select></div>
-      <div class="table-wrap"><table><thead><tr><th>Tratamiento</th><th>Categoría</th><th class="num">Duración</th><th class="num">Precio</th><th><span class="sr-only">Acciones</span></th></tr></thead><tbody data-body></tbody></table></div></div>`;
+      <div class="table-wrap"><table class="treat-table"><thead><tr><th>Tratamiento</th><th>Categoría</th><th class="num">Duración</th><th class="num">Precio</th><th><span class="sr-only">Acciones</span></th></tr></thead><tbody data-body></tbody></table></div></div>`;
     el.querySelector('[data-q]').addEventListener('input', (e) => { q = e.target.value; render(); });
     el.querySelector('[data-cat]').addEventListener('change', (e) => { cat = e.target.value; render(); });
     const newBtn = el.querySelector('[data-new]');
