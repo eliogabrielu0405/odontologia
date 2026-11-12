@@ -350,6 +350,23 @@
     log('crear', MODULE_LABEL[col], detail || 'Nuevo registro');
     return item;
   };
+  /** Varios registros de una vez, con una sola línea en la actividad. */
+  const insertMany = (col, list, detail) => {
+    const items = list.map((data) => ({ ...clone(data), id: uid(PREFIX[col]) }));
+    items.forEach((item) => { state[col].push(item); persistItem(col, item); });
+    if (items.length) log('crear', MODULE_LABEL[col], detail || 'Nuevos registros');
+    return items;
+  };
+  /** changes: [{ id, patch }]. Una sola línea en la actividad. */
+  const updateMany = (col, changes, detail) => {
+    const items = changes.map(({ id, patch }) => {
+      const item = get(col, id);
+      if (item) { Object.assign(item, clone(patch)); persistItem(col, item); }
+      return item;
+    }).filter(Boolean);
+    if (items.length) log('editar', MODULE_LABEL[col], detail || 'Registros actualizados');
+    return items;
+  };
   const update = (col, id, patch, detail) => {
     const item = get(col, id);
     if (!item) return null;
@@ -415,12 +432,12 @@
     phone: clinic ? clinic.phone : '',
     address: clinic ? clinic.address : '',
   });
-  const saveConfig = (patch) => {
+  const saveConfig = (patch, { silent = false } = {}) => {
     const { clinicName, rif, phone, address, ...rest } = patch;
     state.config = { ...DEFAULT_CONFIG, ...state.config, ...rest };
     schedule('config/clinic', state.config);
     U.setCurrency(state.config.currency);
-    log('editar', 'Configuración', 'Ajustes de la clínica actualizados');
+    if (!silent) log('editar', 'Configuración', 'Ajustes de la clínica actualizados');
   };
   const setClinic = (next) => { clinic = { ...clinic, ...next }; };
 
@@ -456,7 +473,7 @@
     onSync: (fn) => { syncListeners.add(fn); fn({ pending: pendingWrites(), offline }); },
     onAccountChange: (fn) => accountListeners.add(fn),
     pendingWrites,
-    all, get, insert, update, remove, removePatient, log,
+    all, get, insert, insertMany, update, updateMany, remove, removePatient, log,
     currentUser, role, clinic: () => clinic,
     budgetTotal, patientBalance, nextBudgetNumber, nextReceipt,
     getOdontogram, setOdontogram, settings, saveConfig, setClinic,

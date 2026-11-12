@@ -309,7 +309,7 @@
     const treatments = DB.all('treatments');
     const steps = [
       { done: !!(s.rif || s.address), label: 'Completa los datos de tu clínica', hint: 'Aparecen en presupuestos y recibos.', href: '#configuracion' },
-      { done: treatments.length > 0 && treatments.some((t) => Number(t.price) > 0), label: 'Carga tus tratamientos y precios', hint: 'Puedes empezar con el catálogo sugerido.', href: '#tratamientos' },
+      { done: treatments.length > 0 && treatments.some((t) => Number(t.price) > 0), label: 'Ponle precio a tus tratamientos', hint: treatments.length ? 'Ya están cargados los más comunes: solo falta tu precio.' : 'Puedes empezar con el catálogo sugerido.', href: '#tratamientos' },
       { done: DB.all('users').length > 1, label: 'Invita a tu recepción', hint: 'Cada persona entra con su propio correo.', href: '#equipo' },
       { done: DB.all('patients').length > 0, label: 'Registra tu primer paciente', hint: 'Con su cédula, teléfono y alergias.', href: '#pacientes' },
       { done: DB.all('appointments').length > 0, label: 'Agenda tu primera cita', hint: 'Toca un horario libre en la agenda.', href: '#agenda' },
@@ -468,16 +468,16 @@
     const treatments = [...DB.all('treatments')].sort((a, b) => a.name.localeCompare(b.name));
     const mapping = DB.settings().findingTreatments || {};
     const kinds = Odontogram.STATES.filter((st) => st.key !== 'sano');
+    const priceOf = (t) => (!t ? '—' : Number(t.price) > 0 ? money(t.price) : 'Sin precio');
     const priceText = (key, value) => {
       if (value === '') return '—';
       if (value === '__auto') {
         const label = Odontogram.autoLabel(key, treatments);
         if (!label) return '—';
         // Mismo orden que los nombres del tratamiento automático.
-        return label.split(' / ').map((name) => { const t = treatments.find((x) => x.name === name); return t ? money(t.price) : '—'; }).join(' / ');
+        return label.split(' / ').map((name) => priceOf(treatments.find((x) => x.name === name))).join(' / ');
       }
-      const t = treatments.find((x) => x.id === value);
-      return t ? money(t.price) : '—';
+      return priceOf(treatments.find((x) => x.id === value));
     };
     openModal({
       title: 'Precios de los hallazgos', size: 'lg',
@@ -655,6 +655,11 @@
             notes: `Según los hallazgos del odontograma del ${fmtDate(isoDate())}.`,
           }, () => App.go(patientHref(p.id, 'pagos').slice(1))),
           onEditPrices: can('settings') ? () => findingPricesModal(render) : null,
+          onCatalogPrices: can('catalog') ? () => catalogPricesModal(render) : null,
+          onCatalogPrice: can('catalog') ? (t, price) => {
+            DB.update('treatments', t.id, { price }, `Precio de "${t.name}": ${money(price)} (desde el odontograma)`);
+            toast(`Listo: ${t.name} queda en ${money(price)} para todos tus pacientes`);
+          } : null,
         });
       }
     };
@@ -959,6 +964,65 @@
     ['Control de ortodoncia', 'Ortodoncia', 30], ['Instalación de brackets', 'Ortodoncia', 90],
     ['Implante dental', 'Implantes', 120], ['Blanqueamiento en consultorio', 'Estética', 60],
   ];
+  // Hallazgos del odontograma que se cobran solos y el tratamiento sugerido que les toca
+  // (la pieza de ejemplo decide entre uni y multirradicular, y entre exodoncia simple y de cordal).
+  const FINDING_NEEDS = [
+    ['caries', 16, 'Restauración con resina (1 cara)'], ['fractura', 16, 'Restauración con resina (2 o más caras)'],
+    ['endodoncia', 11, 'Endodoncia unirradicular'], ['endodoncia', 36, 'Endodoncia multirradicular'],
+    ['extraccion', 11, 'Exodoncia simple'], ['extraccion', 38, 'Exodoncia de cordal'],
+    ['corona', 11, 'Corona de porcelana'], ['implante', 11, 'Implante dental'], ['protesis', 11, 'Prótesis parcial removible'],
+  ];
+
+  /**
+   * Tratamientos automáticos. La primera vez que entra el titular, un catálogo vacío se llena con los
+   * tratamientos más comunes, sin precio; si ya tenía catálogo, se agregan solo los que el odontograma
+   * necesita y no encuentra. Pasa una sola vez por clínica: si después borran alguno, no vuelve.
+   * Devuelve cuántos agregó.
+   */
+  const ensureCatalog = () => {
+    if (!can('catalog') || !can('settings') || DB.settings().catalogReady) return 0;
+    const current = DB.all('treatments');
+    const wanted = current.length
+      ? new Set(FINDING_NEEDS.filter(([state, num]) => !Odontogram.autoTreatment(state, num, current)).map(([, , name]) => name))
+      : null;
+    const rows = SUGGESTED_TREATMENTS.filter(([name]) => !wanted || wanted.has(name))
+      .map(([name, category, duration]) => ({ name, category, duration, price: 0, description: '' }));
+    if (rows.length) DB.insertMany('treatments', rows, `${U.plural(rows.length, 'tratamiento cargado', 'tratamientos cargados')} solos en el catálogo, sin precio`);
+    DB.saveConfig({ catalogReady: true }, { silent: true });
+    return rows.length;
+  };
+
+  /** Precios de todo el catálogo en una sola pantalla: escribes cada precio y guardas una vez. */
+  const catalogPricesModal = (after) => {
+    const all = DB.all('treatments');
+    const odo = new Set(FINDING_NEEDS.map(([state, num]) => Odontogram.autoTreatment(state, num, all)).filter(Boolean).map((t) => t.id));
+    const rank = (c) => { const i = DB.TREATMENT_CATEGORIES.indexOf(c); return i < 0 ? 99 : i; };
+    const list = [...all].sort((a, b) => rank(a.category) - rank(b.category) || a.name.localeCompare(b.name));
+    const unit = DB.settings().currency === 'VES' ? 'Bs.' : '$';
+    const groups = [...new Set(list.map((t) => t.category))];
+    openModal({
+      title: 'Ponle precio a tus tratamientos', size: 'lg',
+      body: `<div class="stack">
+        <p class="hint">Escribe el precio de cada tratamiento y toca <strong>Guardar precios</strong>. Los que dicen <strong>Odontograma</strong> se cobran solos cuando marcas ese hallazgo en un paciente.</p>
+        ${groups.map((g) => `<section class="price-group"><h4>${esc(g)}</h4>
+          ${list.filter((t) => t.category === g).map((t) => `<label class="price-row">
+            <span class="price-name">${esc(t.name)}${odo.has(t.id) ? ' <span class="badge b-info">Odontograma</span>' : ''}</span>
+            <span class="price-field"><span>${unit}</span><input class="cell-input" type="number" name="p_${esc(t.id)}" min="0" step="0.01" inputmode="decimal" value="${Number(t.price) > 0 ? Number(t.price) : ''}" placeholder="Sin precio" aria-label="Precio de ${esc(t.name)}"></span>
+          </label>`).join('')}</section>`).join('')}
+      </div>`,
+      submitLabel: 'Guardar precios',
+      onSubmit: (data) => {
+        const changes = list.map((t) => {
+          const raw = String(data[`p_${t.id}`] || '').trim();
+          return { id: t.id, before: Number(t.price) || 0, patch: { price: raw === '' ? 0 : U.cents(Math.max(0, Number(raw) || 0)) } };
+        }).filter((c) => c.patch.price !== c.before);
+        if (changes.length) DB.updateMany('treatments', changes, `Precios del catálogo: ${U.plural(changes.length, 'tratamiento cambió', 'tratamientos cambiaron')} de precio`);
+        toast(changes.length ? `Listo: ${U.plural(changes.length, 'precio guardado', 'precios guardados')}` : 'No cambiaste ningún precio');
+        if (after) after();
+        return undefined;
+      },
+    });
+  };
 
   const treatments = (el) => {
     let q = ''; let cat = '';
@@ -984,13 +1048,15 @@
       const all = DB.all('treatments');
       const list = all.filter((t) => (!q || t.name.toLowerCase().includes(q.toLowerCase())) && (!cat || t.category === cat)).sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
       const noPrice = all.filter((t) => !(Number(t.price) > 0)).length;
-      el.querySelector('[data-hint]').innerHTML = noPrice && can('catalog') ? `<div class="banner banner-warn">${icon('alert')}<div class="grow">${U.plural(noPrice, 'tratamiento no tiene', 'tratamientos no tienen')} precio. Tócalos para cargarlo.</div></div>` : '';
+      el.querySelector('[data-hint]').innerHTML = noPrice && can('catalog') ? `<div class="banner banner-warn">${icon('alert')}<div class="grow">${U.plural(noPrice, 'tratamiento no tiene', 'tratamientos no tienen')} precio.</div><button type="button" class="btn btn-sm" data-prices>Ponerles precio</button></div>` : '';
+      const pricesBtn = el.querySelector('.page-actions [data-prices]');
+      if (pricesBtn) pricesBtn.hidden = !all.length;
       el.querySelector('[data-body]').innerHTML = list.map((t) => `<tr ${can('catalog') ? `class="clickable" data-edit="${t.id}"` : ''}><td><strong>${esc(t.name)}</strong>${t.description ? `<br><small class="muted">${esc(t.description)}</small>` : ''}</td><td><span class="badge b-muted">${esc(t.category)}</span></td><td class="num">${t.duration} min</td><td class="num">${Number(t.price) > 0 ? `<span class="money">${money(t.price)}</span>` : '<span class="badge b-warn">Sin precio</span>'}</td>
         <td><div class="act">${can('catalog') ? `<button data-edit="${t.id}" aria-label="Editar">${icon('edit')}</button><button class="del" data-del="${t.id}" aria-label="Eliminar">${icon('trash')}</button>` : ''}</div></td></tr>`).join('')
         || (all.length ? '<tr><td colspan="5" class="empty">Ningún tratamiento coincide con la búsqueda.</td></tr>'
           : `<tr><td colspan="5" class="empty">El catálogo está vacío.${can('catalog') ? ` Agrega tus tratamientos uno por uno o <button class="link-btn" data-suggested>carga el catálogo sugerido</button> y después ponle tus precios.` : ''}</td></tr>`);
     };
-    el.innerHTML = `${pageHead('Tratamientos', 'Tu catálogo con precios y duraciones', can('catalog') ? `<button class="btn btn-primary" data-new>${icon('plus')}Nuevo tratamiento</button>` : '')}
+    el.innerHTML = `${pageHead('Tratamientos', 'Tu catálogo con precios y duraciones', can('catalog') ? `<button class="btn" data-prices>${icon('cash')}Poner precios</button><button class="btn btn-primary" data-new>${icon('plus')}Nuevo tratamiento</button>` : '')}
       <div data-hint></div>
       <div class="card"><div class="toolbar"><input class="grow" data-q type="search" placeholder="Buscar tratamiento…" aria-label="Buscar tratamiento"><select data-cat aria-label="Categoría"><option value="">Todas las categorías</option>${DB.TREATMENT_CATEGORIES.map((c) => `<option>${c}</option>`).join('')}</select></div>
       <div class="table-wrap"><table><thead><tr><th>Tratamiento</th><th>Categoría</th><th class="num">Duración</th><th class="num">Precio</th><th><span class="sr-only">Acciones</span></th></tr></thead><tbody data-body></tbody></table></div></div>`;
@@ -1000,11 +1066,12 @@
     if (newBtn) newBtn.addEventListener('click', () => modal(null));
     el.addEventListener('click', (e) => {
       if (e.target.closest('[data-suggested]')) {
-        SUGGESTED_TREATMENTS.forEach(([name, category, duration]) => DB.insert('treatments', { name, category, duration, price: 0, description: '' }, `Tratamiento "${name}" agregado del catálogo sugerido`));
-        toast('Catálogo cargado. Ahora ponle tus precios.');
+        DB.insertMany('treatments', SUGGESTED_TREATMENTS.map(([name, category, duration]) => ({ name, category, duration, price: 0, description: '' })), `${U.plural(SUGGESTED_TREATMENTS.length, 'tratamiento agregado', 'tratamientos agregados')} del catálogo sugerido`);
         render();
+        catalogPricesModal(render);
         return;
       }
+      if (e.target.closest('[data-prices]')) { catalogPricesModal(render); return; }
       const del = e.target.closest('[data-del]');
       if (del) { e.stopPropagation(); const t = DB.get('treatments', del.dataset.del); confirmDialog(`¿Eliminar "${t.name}" del catálogo? Los presupuestos que ya lo incluyen no cambian.`, () => { DB.remove('treatments', t.id, `Tratamiento "${t.name}" eliminado`); render(); }); return; }
       const edit = e.target.closest('[data-edit]');
@@ -1271,5 +1338,5 @@
     });
   };
 
-  window.Views = { dashboard, patients, patientDetail, agenda, treatments, budgets, payments, reports, activity, settings, openPatientModal };
+  window.Views = { dashboard, patients, patientDetail, agenda, treatments, budgets, payments, reports, activity, settings, openPatientModal, ensureCatalog };
 })();

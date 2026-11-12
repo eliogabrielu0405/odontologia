@@ -427,6 +427,9 @@
         if (!LOCKED_ROUTES.includes(route)) { location.replace(`#${Session.canPay() ? 'suscripcion' : 'perfil'}`); return; }
         runRoute(CLINIC_ROUTES.filter((r) => LOCKED_ROUTES.includes(r.nav)), 'suscripcion', LOCKED_NAV, { brandSub: ctx.clinic.name, who, search: false, banners: lockedNotice() });
       } else {
+        // Tratamientos automáticos: una sola vez por clínica. El aviso espera a que pase el de bienvenida.
+        const added = Views.ensureCatalog();
+        if (added) setTimeout(() => toast(`Cargamos ${U.plural(added, 'tratamiento', 'tratamientos')} en tu catálogo. Solo falta ponerles precio en Tratamientos.`), 3200);
         runRoute(CLINIC_ROUTES, 'inicio', CLINIC_NAV, { brandSub: ctx.clinic.name, who, search: true, banners: subscriptionBanner() });
       }
     }

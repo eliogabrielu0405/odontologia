@@ -1111,6 +1111,16 @@ tr.clickable { cursor: pointer; }
 .odo-hint { margin: 0; font-size: 12.5px; color: var(--muted); }
 .odo-actions { justify-content: flex-start; }
 .finding-map { min-width: 220px; }
+/* Precios de todo el catálogo en una sola pantalla (los vacíos se marcan para verlos rápido) */
+.price-group { display: grid; }
+.price-group h4 { margin: 4px 0 2px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.price-row { display: flex; align-items: center; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+.price-group .price-row:last-child { border-bottom: 0; }
+.price-name { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; color: var(--text); }
+.price-name .badge { margin-left: 4px; vertical-align: 1px; }
+.price-field { display: flex; align-items: center; gap: 6px; flex: none; color: var(--muted); font-size: 13px; }
+.price-field input { width: 112px; min-width: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.price-field input:placeholder-shown { border-color: var(--warn-border); background: var(--warn-soft); }
 /* En el celular cada hallazgo es una fila apilada: pieza, hallazgo y ubicación arriba; tratamiento y precio abajo. */
 @media (max-width: 640px) {
   .odo-findings .table-wrap { overflow-x: visible; }

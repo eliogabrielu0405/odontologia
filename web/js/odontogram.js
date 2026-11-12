@@ -219,7 +219,9 @@
           <tfoot><tr><td colspan="4"><strong>Total</strong> <span class="muted">· ${charged.length} ${charged.length === 1 ? 'hallazgo se cobra' : 'hallazgos se cobran'}</span></td><td class="num"><strong data-odo-total>${money(total)}</strong></td></tr></tfoot>
           </table></div>` : '<div class="empty">Sin hallazgos. Todas las piezas sanas.</div>'}
           ${findings.length && !treatments.length ? '<p class="odo-hint">Para cobrar los hallazgos, primero carga tu catálogo en <a href="#tratamientos">Tratamientos</a>.</p>' : ''}
-          ${charged.some((f) => !f.plan.price) ? '<p class="odo-hint">Hay tratamientos sin precio. Ponles precio en <a href="#tratamientos">Tratamientos</a> o escríbelo aquí.</p>' : ''}
+          ${charged.some((f) => !f.plan.price) ? `<p class="odo-hint">Hay tratamientos sin precio. ${opts.onCatalogPrices
+            ? 'Escribe el precio aquí y queda guardado en tu catálogo, o <button type="button" class="link-btn" data-odo-catalog>ponles precio a todos</button>.'
+            : 'Ponles precio en <a href="#tratamientos">Tratamientos</a> o escríbelo aquí.'}</p>` : ''}
           ${findings.length && (opts.onCreateBudget || opts.onEditPrices) ? `<div class="action-row odo-actions">
             ${opts.onCreateBudget ? `<button type="button" class="btn btn-primary" data-odo-budget ${charged.length ? '' : 'disabled'}>${icon('file')}Crear presupuesto con estos hallazgos</button>` : ''}
             ${opts.onEditPrices ? `<button type="button" class="btn" data-odo-prices>${icon('settings')}Precios de los hallazgos</button>` : ''}
@@ -294,6 +296,16 @@
       if (input) {
         const raw = String(input.value).trim();
         const price = raw === '' ? undefined : U.cents(Math.max(0, Number(raw) || 0));
+        // Si el tratamiento todavía no tiene precio en el catálogo, el que se escribe queda como su precio:
+        // así el próximo paciente ya sale con ese precio.
+        const [numText, loc] = input.dataset.planP.split(':');
+        const row = summarize(data).find((r) => String(r.num) === numText && r.loc === loc);
+        const plan = row && planFor(data, row, opts);
+        if (price && opts.onCatalogPrice && plan && plan.treatment && !(Number(plan.treatment.price) > 0) && !plan.customPrice) {
+          opts.onCatalogPrice(plan.treatment, price);
+          render();
+          return;
+        }
         setPlan(input.dataset.planP, { price }, `${placeOf(input.dataset.planP)}: precio ${price === undefined ? 'del catálogo' : money(price)}`);
       }
     });
@@ -312,6 +324,7 @@
     container.addEventListener('click', (e) => {
       if (e.target.closest('[data-odo-budget]') && opts.onCreateBudget) { opts.onCreateBudget(budgetItems(data, opts)); return; }
       if (e.target.closest('[data-odo-prices]') && opts.onEditPrices) { opts.onEditPrices(); return; }
+      if (e.target.closest('[data-odo-catalog]') && opts.onCatalogPrices) { opts.onCatalogPrices(); return; }
       if (readOnly) return;
       const modeBtn = e.target.closest('[data-mode]');
       if (modeBtn) { mode = modeBtn.dataset.mode; render(); return; }
@@ -332,5 +345,5 @@
     render();
   };
 
-  window.Odontogram = { mount, STATES, summarize, planFor, budgetItems, autoLabel };
+  window.Odontogram = { mount, STATES, summarize, planFor, budgetItems, autoLabel, autoTreatment };
 })();
