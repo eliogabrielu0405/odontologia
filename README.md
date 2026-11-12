@@ -1,7 +1,7 @@
 # Sonrisas · EU Digital Solutions
 
-Sistema en la nube para consultorios odontológicos que se cobra como **suscripción mensual**.
-Cada odontólogo crea su cuenta, invita a su recepción y paga la mensualidad por **Pago Móvil** subiendo la foto del comprobante.
+Sistema en la nube para consultorios odontológicos que se cobra como **suscripción mensual o anual**.
+Cada odontólogo crea su cuenta, invita a su recepción y paga la mensualidad o el plan anual (12 meses) por **Pago Móvil** subiendo la foto del comprobante.
 EU Digital Solutions administra todas las cuentas desde su propio panel.
 
 Hecho para Venezuela: cédula, RIF, teléfonos 04xx, montos en dólares o bolívares y métodos de pago locales.

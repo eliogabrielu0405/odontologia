@@ -909,6 +909,8 @@ tr.clickable { cursor: pointer; }
 .sub-main h2 { font-family: var(--font-display); font-size: 34px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .sub-main h2 small { font-size: 15px; font-weight: 600; color: var(--muted); }
 .sub-main p { margin: 0; color: var(--text-2); max-width: 52ch; }
+.sub-main p.sub-annual { display: flex; align-items: center; gap: 6px; color: var(--ok-text); font-size: 13.5px; font-weight: 600; }
+.sub-annual svg { width: 16px; height: 16px; flex: none; }
 .sub-meta { display: grid; grid-template-columns: auto auto; gap: 4px 14px; margin: 0; font-size: 13px; }
 .sub-meta dt { color: var(--muted); }
 .sub-meta dd { margin: 0; font-weight: 700; }

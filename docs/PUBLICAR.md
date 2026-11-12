@@ -16,18 +16,18 @@ Están escritos para hacerlos con Claude en una sesión que tenga conectada la c
 
 ## 2. Crear la base de datos
 
-Aplicar en orden las migraciones de `supabase/migrations/` (`20261108000000_sonrisas.sql`, `20261108010000_endurecer_funciones.sql`, `20261109000000_fotos_pacientes.sql`, `20261109010000_sugerencias.sql`). Crean:
+Aplicar en orden las migraciones de `supabase/migrations/` (`20261108000000_sonrisas.sql`, `20261108010000_endurecer_funciones.sql`, `20261109000000_fotos_pacientes.sql`, `20261109010000_sugerencias.sql`, `20261112000000_plan_anual.sql`). Crean:
 
 | Tabla | Para qué sirve |
 |-------|----------------|
-| `platform_settings` | Precio mensual, moneda, días de prueba y de gracia, datos de Pago Móvil, WhatsApp de soporte |
+| `platform_settings` | Precio mensual y del plan anual, moneda, días de prueba y de gracia, datos de Pago Móvil, WhatsApp de soporte |
 | `platform_admins` | Quién es administrador de EU Digital Solutions |
 | `platform_secrets` | Código de un solo uso para crear al administrador (solo su hash) |
 | `clinics` | Cada odontólogo que contrata: estado (activa, suspendida, bloqueada) y fecha hasta la que pagó |
 | `profiles` | Personas de cada clínica: titular, odontólogos y recepción |
 | `clinic_invites` | Códigos para que la recepción u otros odontólogos se unan |
 | `records` | Datos clínicos de cada consultorio (pacientes, citas, presupuestos, cobros, odontogramas…) |
-| `payment_reports` | Pagos de la mensualidad reportados con foto del comprobante |
+| `payment_reports` | Pagos reportados con foto del comprobante (meses que cubren; 12 = plan anual) |
 | `suggestions` | Sugerencias de las clínicas para mejorar la app y las respuestas del administrador |
 
 Además crean los buckets privados `comprobantes` y `pacientes` (fotos de pacientes), todas las reglas de seguridad por filas y las funciones `my_context`, `approve_payment`, `reject_payment`, `update_my_clinic`, `update_my_profile` y `update_member`.
@@ -102,7 +102,7 @@ Se cambió por dos motivos del plan gratuito de Netlify:
 
 ## 7. Primeros ajustes (en la app, como administrador)
 
-En **Ajustes de cobro**: precio mensual, moneda, días de prueba, días de gracia, días de aviso, datos de Pago Móvil (banco, teléfono, cédula/RIF, titular) y WhatsApp de soporte.
+En **Ajustes de cobro**: precio mensual, precio del plan anual (12 meses; en 0 no se ofrece), moneda, días de prueba, días de gracia, días de aviso, datos de Pago Móvil (banco, teléfono, cédula/RIF, titular) y WhatsApp de soporte.
 
 ## 8. Recomendado en el panel de Supabase
 

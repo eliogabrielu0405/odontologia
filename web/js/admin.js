@@ -22,6 +22,7 @@
   const membersOf = (clinicId) => data.profiles.filter((p) => p.clinic_id === clinicId);
   const ownerOf = (clinic) => data.profiles.find((p) => p.id === clinic.owner_id) || membersOf(clinic.id).find((p) => p.role === 'titular') || null;
   const subOf = (clinic) => Session.subscriptionOf(clinic, data.settings, today());
+  const annualOn = () => Number(data.settings.annual_price) > 0;
   const lastApproved = (clinicId) => data.reports.find((r) => r.clinic_id === clinicId && r.status === 'aprobado') || null;
   const pendingReports = () => data.reports.filter((r) => r.status === 'pendiente');
   const personName = (p) => (p ? `${p.first_name} ${p.last_name}`.trim() : '—');
@@ -57,7 +58,7 @@
     const pm = [s.pm_bank, s.pm_phone, s.pm_id_doc, s.pm_holder].filter((v) => String(v || '').trim()).join(' · ');
     return [
       `Hola${name ? ` ${name}` : ''}, te escribimos de EU Digital Solutions: ${when}.`,
-      s.monthly_price ? `Monto mensual: ${money(s.monthly_price, s.currency)}.` : '',
+      s.monthly_price ? `Monto: ${money(s.monthly_price, s.currency)} al mes${Number(s.annual_price) > 0 ? ` o ${money(s.annual_price, s.currency)} el plan anual (12 meses)` : ''}.` : '',
       pm ? `Pago Móvil: ${pm}.` : '',
       `Cuando pagues, sube la foto del comprobante en Sonrisas, sección Mi suscripción: ${appUrl()}`,
       '¡Gracias!',
@@ -97,7 +98,7 @@
           <div class="stack">
             <dl class="kv compact">
               <dt>Monto</dt><dd><strong>${money(report.amount, report.currency)}</strong></dd>
-              <dt>Meses</dt><dd>${report.months}</dd>
+              <dt>Meses</dt><dd>${report.months === 12 && annualOn() ? '12 (plan anual)' : report.months}</dd>
               <dt>Referencia</dt><dd>${esc(report.reference) || '—'}</dd>
               <dt>Banco</dt><dd>${esc(report.bank) || '—'}</dd>
               <dt>Teléfono</dt><dd>${esc(report.payer_phone) || '—'}</dd>
@@ -106,7 +107,7 @@
               <dt>Estado</dt><dd>${{ pendiente: 'En revisión', aprobado: 'Aprobado', rechazado: 'Rechazado' }[report.status]}${report.admin_note ? ` · ${esc(report.admin_note)}` : ''}</dd>
             </dl>
             ${report.status === 'pendiente' ? `
-            <label class="field">Meses a activar<select data-months>${[1, 2, 3, 6, 12].map((m) => `<option value="${m}" ${m === report.months ? 'selected' : ''}>${m} ${m === 1 ? 'mes' : 'meses'}</option>`).join('')}</select></label>
+            <label class="field">Meses a activar<select data-months>${[1, 2, 3, 6, 12].map((m) => `<option value="${m}" ${m === report.months ? 'selected' : ''}>${m} ${m === 1 ? 'mes' : 'meses'}${m === 12 && annualOn() ? ' (plan anual)' : ''}</option>`).join('')}</select></label>
             <div class="doc-actions left"><button type="button" class="btn btn-primary" data-approve>${icon('check')}Aprobar pago</button><button type="button" class="btn btn-danger" data-reject>${icon('x')}Rechazar</button></div>` : ''}
           </div></div>`,
       onMount: async (form) => {
@@ -370,9 +371,10 @@
     el.innerHTML = `
       ${pageHead('Ajustes de cobro', 'Precio, Pago Móvil y plazos que ven todas las clínicas')}
       <form class="card" data-form novalidate>
-        <div class="card-head"><h3>Plan mensual</h3></div>
+        <div class="card-head"><h3>Planes</h3></div>
         <div class="card-body form-grid">
           <label class="field">Precio mensual<input type="number" name="monthly_price" min="0" step="0.01" inputmode="decimal" value="${esc(s.monthly_price)}"></label>
+          <label class="field">Precio del plan anual (12 meses)<input type="number" name="annual_price" min="0" step="0.01" inputmode="decimal" value="${esc(s.annual_price || 0)}"><small class="hint">En 0 no se ofrece el plan anual.</small></label>
           <label class="field">Moneda<select name="currency"><option value="USD" ${s.currency === 'USD' ? 'selected' : ''}>Dólares ($)</option><option value="VES" ${s.currency === 'VES' ? 'selected' : ''}>Bolívares (Bs.)</option></select></label>
           <label class="field">Días de prueba gratis para clínicas nuevas<input type="number" name="trial_days" min="0" max="90" value="${esc(s.trial_days)}"></label>
           <label class="field">Días de gracia después del vencimiento<input type="number" name="grace_days" min="0" max="60" value="${esc(s.grace_days)}"></label>
@@ -393,7 +395,7 @@
       e.preventDefault();
       const d = Object.fromEntries(new FormData(e.target).entries());
       const patch = {
-        monthly_price: U.cents(d.monthly_price), currency: d.currency,
+        monthly_price: U.cents(d.monthly_price), annual_price: U.cents(d.annual_price), currency: d.currency,
         trial_days: Math.max(0, Math.min(90, Number(d.trial_days) || 0)), grace_days: Math.max(0, Math.min(60, Number(d.grace_days) || 0)),
         reminder_days: Math.max(0, Math.min(30, Number(d.reminder_days) || 0)),
         pm_bank: d.pm_bank.trim(), pm_phone: d.pm_phone.trim(), pm_id_doc: d.pm_id_doc.trim(), pm_holder: d.pm_holder.trim(),

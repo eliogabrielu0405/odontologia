@@ -2,7 +2,7 @@
    Permite instalar la app y que abra aunque la conexión falle.
    La página se guarda como './' (no 'index.html'): Cloudflare redirige /index.html a /.
    Con internet siempre carga la versión más nueva; los datos (Supabase) nunca se guardan aquí. */
-const VERSION = 'sonrisas-v9';
+const VERSION = 'sonrisas-v10';
 const SHELL = [
   './', 'manifest.webmanifest',
   'css/styles.css',

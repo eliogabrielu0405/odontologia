@@ -88,8 +88,12 @@
     else if (clinicRow.trial) state = 'prueba';
     else if (daysLeft <= reminder) state = 'por_vencer';
     else state = 'al_dia';
-    return { state, ...STATES[state], daysLeft, graceLeft: grace + daysLeft, paidUntil: clinicRow.paid_until, price: Number(s.monthly_price || 0), currency: s.currency || 'USD' };
+    return { state, ...STATES[state], daysLeft, graceLeft: grace + daysLeft, paidUntil: clinicRow.paid_until, price: Number(s.monthly_price || 0), annualPrice: Number(s.annual_price || 0), currency: s.currency || 'USD' };
   };
+  /** Lo que se paga por esos meses: 12 meses con plan anual cuestan el precio anual. */
+  const planAmount = (sub, months) => (months === 12 && sub.annualPrice ? sub.annualPrice : U.cents(sub.price * months));
+  /** Cuánto se ahorra con el plan anual frente a pagar 12 meses sueltos. */
+  const annualSaving = (sub) => (sub.price && sub.annualPrice ? Math.max(0, U.cents(sub.price * 12 - sub.annualPrice)) : 0);
   const subscription = () => (ctx && ctx.clinic ? subscriptionOf(ctx.clinic, ctx.settings) : null);
   const canPay = () => !!(ctx && ctx.profile && ['titular', 'recepcion'].includes(ctx.profile.role));
   const hasAccess = () => !!(ctx && ctx.has_access);
@@ -181,6 +185,7 @@
       <div class="sub-main">
         <span class="badge ${sub.badge}">${esc(sub.label)}</span>
         <h2>${sub.price ? money(sub.price, sub.currency) : 'Plan Sonrisas'}<small>${sub.price ? ' / mes' : ''}</small></h2>
+        ${sub.annualPrice ? `<p class="sub-annual">${icon('check')}<span>Plan anual: <strong>${money(sub.annualPrice, sub.currency)}</strong> por 12 meses${annualSaving(sub) ? ` · ahorras ${money(annualSaving(sub), sub.currency)}` : ''}</span></p>` : ''}
         <p>${esc(detail)}</p>
       </div>
       <dl class="sub-meta"><dt>Vence</dt><dd>${fmtDate(sub.paidUntil)}</dd><dt>Clínica</dt><dd>${esc(ctx.clinic.name)}</dd></dl>
@@ -198,7 +203,8 @@
     return `<div class="card card-pad pm-card">
       <div class="pm-head"><div class="pm-logo">${icon('phone')}</div><div><h3>Pago Móvil</h3><p class="muted no-margin">Paga con estos datos y luego envía el comprobante.</p></div></div>
       <div class="pm-rows">${rows}
-        ${sub.price ? `<div class="pm-row total"><span>Monto</span><strong>${money(sub.price, sub.currency)}</strong><button type="button" class="icon-btn sm" data-copy="${esc(U.number2(sub.price))}" aria-label="Copiar monto">${icon('copy')}</button></div>` : ''}
+        ${[[sub.annualPrice ? 'Monto mensual' : 'Monto', sub.price], ['Plan anual (12 meses)', sub.annualPrice]].filter(([, value]) => value).map(([label, value]) => `
+        <div class="pm-row total"><span>${label}</span><strong>${money(value, sub.currency)}</strong><button type="button" class="icon-btn sm" data-copy="${esc(U.number2(value))}" aria-label="Copiar ${label.toLowerCase()}">${icon('copy')}</button></div>`).join('')}
       </div>
       ${s.payment_note ? `<p class="pm-note">${esc(s.payment_note)}</p>` : ''}
       ${support ? `<div class="doc-actions left">${support}</div>` : ''}
@@ -215,7 +221,11 @@
           <span class="upload-box" data-drop>${icon('camera')}<span data-file-label>Toca para tomar o elegir la foto del comprobante</span></span>
           <img class="upload-preview" data-preview alt="Vista previa del comprobante" hidden>
         </label>
-        <label class="field">Meses que pagas<select name="months">${[1, 2, 3, 6, 12].map((m) => `<option value="${m}">${m} ${m === 1 ? 'mes' : 'meses'}</option>`).join('')}</select></label>
+        <label class="field">Qué pagas<select name="months">${[1, 2, 3, 6, 12].map((m) => {
+          const name = m === 12 && sub.annualPrice ? 'Plan anual (12 meses)' : `${m} ${m === 1 ? 'mes' : 'meses'}`;
+          const amount = planAmount(sub, m);
+          return `<option value="${m}">${name}${amount ? ` · ${money(amount, sub.currency)}` : ''}</option>`;
+        }).join('')}</select></label>
         <label class="field">Moneda<select name="currency"><option value="USD" ${sub.currency === 'USD' ? 'selected' : ''}>Dólares ($)</option><option value="VES" ${sub.currency === 'VES' ? 'selected' : ''}>Bolívares (Bs.)</option></select></label>
         <label class="field"><span>Monto pagado <span class="req">*</span></span><input type="number" name="amount" min="0.01" step="0.01" inputmode="decimal" required value="${sub.price ? sub.price : ''}"></label>
         <label class="field"><span>Fecha del pago <span class="req">*</span></span><input type="date" name="paidOn" required value="${isoDate()}"></label>
@@ -232,7 +242,7 @@
   const historyCard = (reports) => `
     <div class="card"><div class="card-head"><h3>Pagos reportados</h3></div>
       <div class="table-wrap"><table><thead><tr><th>Enviado</th><th class="num">Monto</th><th>Meses</th><th>Referencia</th><th>Estado</th><th><span class="sr-only">Comprobante</span></th></tr></thead><tbody>
-      ${reports.map((r) => `<tr><td class="nowrap">${fmtDateTime(r.created_at)}</td><td class="num money">${money(r.amount, r.currency)}</td><td>${r.months}</td><td>${esc(r.reference) || '—'}</td>
+      ${reports.map((r) => `<tr><td class="nowrap">${fmtDateTime(r.created_at)}</td><td class="num money">${money(r.amount, r.currency)}</td><td>${r.months === 12 && Number(platform().annual_price) > 0 ? '12 (anual)' : r.months}</td><td>${esc(r.reference) || '—'}</td>
         <td><span class="badge ${REPORT_BADGE[r.status]}">${REPORT_LABEL[r.status]}</span>${r.admin_note ? `<br><small class="muted">${esc(r.admin_note)}</small>` : ''}</td>
         <td><div class="act"><button data-receipt="${r.id}" title="Ver comprobante" aria-label="Ver comprobante">${icon('eye')}</button></div></td></tr>`).join('') || '<tr><td colspan="6" class="empty">Todavía no reportaste pagos.</td></tr>'}
       </tbody></table></div></div>`;
@@ -270,7 +280,10 @@
       preview.hidden = false;
       label.textContent = `${file.name} · toca para cambiarla`;
     });
-    form.months.addEventListener('change', () => { if (sub.price && form.currency.value === sub.currency) form.amount.value = U.cents(sub.price * Number(form.months.value)); });
+    form.months.addEventListener('change', () => {
+      const amount = planAmount(sub, Number(form.months.value));
+      if (amount && form.currency.value === sub.currency) form.amount.value = amount;
+    });
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(form).entries());
