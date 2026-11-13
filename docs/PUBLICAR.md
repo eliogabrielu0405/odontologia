@@ -16,7 +16,7 @@ Están escritos para hacerlos con Claude en una sesión que tenga conectada la c
 
 ## 2. Crear la base de datos
 
-Aplicar en orden las migraciones de `supabase/migrations/` (`20261108000000_sonrisas.sql`, `20261108010000_endurecer_funciones.sql`, `20261109000000_fotos_pacientes.sql`, `20261109010000_sugerencias.sql`, `20261112000000_plan_anual.sql`). Crean:
+Aplicar en orden las migraciones de `supabase/migrations/` (`20261108000000_sonrisas.sql`, `20261108010000_endurecer_funciones.sql`, `20261109000000_fotos_pacientes.sql`, `20261109010000_sugerencias.sql`, `20261112000000_plan_anual.sql`, `20261113000000_precios_publicos.sql`). Crean:
 
 | Tabla | Para qué sirve |
 |-------|----------------|

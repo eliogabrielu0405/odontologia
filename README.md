@@ -38,6 +38,8 @@ Sonrisas es una **aplicación web instalable (PWA)**: la misma página se instal
 - **iPhone (Safari):** el mismo botón explica los pasos: Compartir → *Agregar a pantalla de inicio*.
 - **Computadora (Chrome o Edge):** botón **Instalar la app** o el ícono de instalar en la barra de direcciones.
 
+**Página de descarga:** https://sonrisas.eliogabrielu04.workers.dev/descargar/ explica cómo instalarla en Android, iPhone y computadora (con el botón de instalar cuando el navegador lo permite), muestra un odontograma de prueba, las funciones, los precios en vivo y un código QR para abrirla en el celular. Es el enlace para compartir por WhatsApp (trae imagen de vista previa). Archivos en `web/descargar/`.
+
 Archivos: `web/manifest.webmanifest`, `web/sw.js`, `web/js/pwa.js` y `web/icons/`. Los íconos salen del logo en vector que está en `docs/marca/` (completo y solo el diente).
 
 ## Módulos de la clínica

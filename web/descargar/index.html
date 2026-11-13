@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Descarga Sonrisas · App para consultorios odontológicos</title>
+  <meta name="description" content="Instala Sonrisas en Android, iPhone o computadora: agenda con recordatorios por WhatsApp, fichas de pacientes, odontograma con precios, presupuestos y cobros. Pruébala gratis." />
+  <meta name="theme-color" content="#012f75" />
+  <link rel="canonical" href="https://sonrisas.eliogabrielu04.workers.dev/descargar/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="es_VE" />
+  <meta property="og:site_name" content="Sonrisas" />
+  <meta property="og:title" content="Sonrisas: la app para tu consultorio odontológico" />
+  <meta property="og:description" content="Agenda, pacientes, odontograma, presupuestos y cobros. Instálala en Android, iPhone o computadora y pruébala gratis." />
+  <meta property="og:url" content="https://sonrisas.eliogabrielu04.workers.dev/descargar/" />
+  <meta property="og:image" content="https://sonrisas.eliogabrielu04.workers.dev/descargar/img/compartir.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Logo de Sonrisas y el texto: del odontograma al presupuesto, en un toque" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Figtree:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="descargar.css" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-title" content="Sonrisas" />
+</head>
+<body>
+  <a class="skip" href="#contenido">Saltar al contenido</a>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="#contenido" aria-label="Sonrisas">
+        <img src="img/diente.svg" alt="" width="47" height="30" />
+        <img src="img/palabra.svg" alt="" width="117" height="30" />
+      </a>
+      <nav class="nav-links" aria-label="Secciones">
+        <a href="#descargar">Descargar</a>
+        <a href="#funciones">Funciones</a>
+        <a href="#precios">Precios</a>
+        <a href="#preguntas">Preguntas</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="btn btn-quiet btn-sm nav-enter" href="/">Entrar</a>
+        <a class="btn btn-primary btn-sm" href="#descargar" data-download>Descargar</a>
+        <details class="nav-menu">
+          <summary aria-label="Abrir menú">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
+            <span class="tip" aria-hidden="true">Abrir menú</span>
+          </summary>
+          <div class="nav-menu-panel">
+            <a href="#descargar">Descargar</a>
+            <a href="#funciones">Funciones</a>
+            <a href="#precios">Precios</a>
+            <a href="#preguntas">Preguntas</a>
+            <a href="/">Entrar a Sonrisas</a>
+          </div>
+        </details>
+      </div>
+    </div>
+  </header>
+
+  <main id="contenido">
+    <section class="hero" aria-labelledby="titulo">
+      <div class="hero-copy">
+        <h1 id="titulo" class="rise">Del odontograma al presupuesto, en un toque.</h1>
+        <p class="lead rise">Sonrisas es la app para tu consultorio odontológico: agenda con recordatorios por WhatsApp, fichas de pacientes, cobros en dólares o bolívares y reportes. Se instala en Android, iPhone y computadora.</p>
+        <div class="actions rise">
+          <a class="btn btn-primary btn-lg" href="#descargar" data-download>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5 5 5-5M12 15V3" /></svg>
+            <span data-download-label>Descargar Sonrisas</span>
+          </a>
+          <a class="btn btn-outline btn-lg" href="/#registro">Probar en el navegador</a>
+        </div>
+        <p class="fine rise" data-trial-line>Pruébala <span data-trial>15</span> días gratis. No necesitas tarjeta.</p>
+      </div>
+
+      <figure class="demo rise" aria-labelledby="demo-titulo">
+        <div class="demo-card">
+          <div class="demo-top">
+            <div>
+              <p class="demo-title" id="demo-titulo">Odontograma</p>
+              <p class="demo-patient">Valentina Rojas, arcada superior derecha</p>
+            </div>
+            <div class="demo-tools" role="group" aria-label="Hallazgo que vas a marcar">
+              <button type="button" class="chip" aria-pressed="true" data-pick="caries"><i class="dot dot-caries"></i>Caries</button>
+              <button type="button" class="chip" aria-pressed="false" data-pick="endodoncia"><i class="dot dot-endo"></i>Endodoncia</button>
+              <button type="button" class="chip" aria-pressed="false" data-pick="corona"><i class="dot dot-corona"></i>Corona</button>
+            </div>
+          </div>
+          <div class="teeth" data-teeth></div>
+          <ol class="findings" data-findings aria-label="Hallazgos registrados">
+            <li><span class="f-num">16</span><span class="f-what"><i class="dot dot-caries"></i>Caries</span><span class="f-tx">Resina (1 cara)</span><span class="f-price">$35</span></li>
+            <li><span class="f-num">15</span><span class="f-what"><i class="dot dot-endo"></i>Endodoncia</span><span class="f-tx">Endodoncia unirradicular</span><span class="f-price">$120</span></li>
+          </ol>
+          <div class="demo-total"><span>Presupuesto</span><strong data-total aria-live="polite">$155</strong></div>
+        </div>
+        <figcaption>Toca un diente para marcarlo. Los precios son de ejemplo: en la app pones los tuyos.</figcaption>
+      </figure>
+    </section>
+
+    <section id="descargar" class="install" aria-labelledby="descargar-titulo">
+      <div class="section-head">
+        <h2 id="descargar-titulo">Descárgala en tu equipo</h2>
+        <p>Sonrisas se instala desde el navegador, sin pasar por la tienda de aplicaciones. Queda con su ícono como cualquier app, ocupa muy poco espacio y se actualiza sola.</p>
+      </div>
+
+      <div class="install-grid">
+        <div class="install-main">
+          <div class="tabs" role="tablist" aria-label="Elige tu equipo">
+            <button type="button" role="tab" id="tab-android" aria-controls="panel-android" aria-selected="true" data-tab="android">Android</button>
+            <button type="button" role="tab" id="tab-ios" aria-controls="panel-ios" aria-selected="false" data-tab="ios">iPhone y iPad</button>
+            <button type="button" role="tab" id="tab-pc" aria-controls="panel-pc" aria-selected="false" data-tab="pc">Computadora</button>
+          </div>
+
+          <div class="panel" role="tabpanel" id="panel-android" aria-labelledby="tab-android" data-panel="android" tabindex="-1">
+            <ol class="steps">
+              <li><strong>Abre esta página en Chrome.</strong> Si llegaste desde WhatsApp, toca los tres puntos de arriba y elige <em>Abrir en Chrome</em>.</li>
+              <li><strong>Instálala.</strong> Toca <em>Instalar en este teléfono</em>. Si no ves ese botón, abre el menú de los tres puntos y elige <em>Instalar app</em> o <em>Agregar a la pantalla principal</em>.</li>
+              <li><strong>Ábrela desde tu pantalla de inicio.</strong> Crea tu cuenta con tu correo o entra con la que ya tienes.</li>
+            </ol>
+            <div class="panel-actions" data-actions="android"></div>
+          </div>
+
+          <div class="panel" role="tabpanel" id="panel-ios" aria-labelledby="tab-ios" data-panel="ios" tabindex="-1">
+            <ol class="steps">
+              <li><strong>Abre Sonrisas en Safari.</strong> Usa el botón <em>Abrir Sonrisas</em>. Si estás en WhatsApp o en otro navegador, copia el enlace y pégalo en Safari.</li>
+              <li><strong>Toca Compartir.</strong> Es el cuadrito con una flecha hacia arriba, en la barra de Safari.</li>
+              <li><strong>Elige <em>Agregar a pantalla de inicio</em></strong> y luego <em>Agregar</em>. El ícono de Sonrisas queda junto a tus otras apps.</li>
+            </ol>
+            <div class="panel-actions" data-actions="ios"></div>
+          </div>
+
+          <div class="panel" role="tabpanel" id="panel-pc" aria-labelledby="tab-pc" data-panel="pc" tabindex="-1">
+            <ol class="steps">
+              <li><strong>Abre esta página en Chrome o Edge.</strong> Sirve en Windows, Mac y Linux.</li>
+              <li><strong>Instálala.</strong> Toca <em>Instalar en esta computadora</em> o el ícono de instalar al final de la barra de direcciones.</li>
+              <li><strong>Úsala en su propia ventana.</strong> Sonrisas queda en tu escritorio o en el menú de inicio. En una Mac con Safari: menú <em>Archivo</em>, <em>Agregar al Dock</em>.</li>
+            </ol>
+            <div class="panel-actions" data-actions="pc"></div>
+          </div>
+
+          <p class="install-status" data-install-status role="status"></p>
+        </div>
+
+        <aside class="qr" data-qr aria-label="Código para abrir esta página en el celular">
+          <svg class="qr-code" viewBox="0 0 33 33" shape-rendering="crispEdges" role="img" aria-label="Código QR de la página de descarga"><path stroke-width="1" stroke="#012f75" d="M0 0.5h7m2 0h1m2 0h3m3 0h6m2 0h7M0 1.5h1m5 0h1m2 0h1m1 0h1m1 0h6m1 0h3m3 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h6m1 0h2m1 0h4m2 0h1m1 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m1 0h2m2 0h1m1 0h7m1 0h3m1 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m1 0h2m1 0h2m2 0h1m2 0h4m1 0h1m2 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m1 0h4m3 0h3m2 0h1m5 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M8 7.5h4m3 0h1m5 0h3M0 8.5h1m1 0h5m4 0h1m1 0h1m1 0h3m4 0h3m1 0h5M1 9.5h3m3 0h2m2 0h2m1 0h1m1 0h6m1 0h1m2 0h2m1 0h2m1 0h1M0 10.5h2m1 0h1m2 0h2m2 0h1m4 0h1m1 0h1m2 0h3m1 0h1m3 0h1m1 0h2M0 11.5h5m4 0h1m1 0h1m2 0h3m4 0h6m1 0h5M0 12.5h4m1 0h3m4 0h1m5 0h2m2 0h1m1 0h1m3 0h2m1 0h1M1 13.5h1m1 0h1m3 0h3m1 0h6m1 0h7m1 0h1m2 0h1m1 0h2M0 14.5h1m3 0h1m1 0h2m1 0h2m2 0h2m3 0h1m1 0h2m2 0h6m1 0h1M1 15.5h3m6 0h1m3 0h1m1 0h1m2 0h5m1 0h3m1 0h2M1 16.5h1m1 0h2m1 0h2m3 0h1m1 0h2m2 0h1m4 0h1m2 0h1m1 0h3m2 0h1M0 17.5h1m2 0h1m5 0h1m1 0h1m2 0h1m1 0h8m1 0h3m1 0h4M4 18.5h1m1 0h3m2 0h1m1 0h5m6 0h5m1 0h2M0 19.5h5m5 0h1m1 0h2m1 0h4m1 0h4m2 0h5m1 0h1M0 20.5h1m1 0h3m1 0h2m1 0h1m2 0h1m2 0h2m2 0h1m2 0h2m1 0h1m2 0h2m1 0h2M0 21.5h1m3 0h1m2 0h3m3 0h1m1 0h1m2 0h4m1 0h1m2 0h1m3 0h1m1 0h1M0 22.5h1m1 0h3m1 0h1m1 0h2m1 0h1m3 0h4m12 0h1M0 23.5h1m1 0h2m3 0h9m2 0h2m1 0h2m2 0h2m2 0h2m1 0h1M0 24.5h1m1 0h1m1 0h3m4 0h2m2 0h1m1 0h1m6 0h5m2 0h1M8 25.5h4m4 0h1m2 0h3m2 0h1m3 0h1m1 0h1m1 0h1M0 26.5h7m8 0h2m1 0h1m1 0h1m2 0h2m1 0h1m1 0h1m1 0h1M0 27.5h1m5 0h1m1 0h8m4 0h5m3 0h3M0 28.5h1m1 0h3m1 0h1m1 0h1m4 0h2m3 0h1m1 0h1m1 0h1m1 0h6m1 0h1M0 29.5h1m1 0h3m1 0h1m1 0h9m2 0h2m2 0h1m1 0h1m2 0h1m2 0h2M0 30.5h1m1 0h3m1 0h1m1 0h1m2 0h1m1 0h1m3 0h2m1 0h1m1 0h2m2 0h2m1 0h1M0 31.5h1m5 0h1m3 0h3m3 0h1m1 0h1m2 0h1m3 0h1m2 0h3M0 32.5h7m1 0h1m2 0h4m2 0h1m4 0h3m2 0h1m3 0h1"/></svg>
+          <p><strong>¿La quieres en el celular?</strong> Apunta la cámara de tu teléfono a este código y se abre esta página.</p>
+        </aside>
+      </div>
+    </section>
+
+    <section id="funciones" class="features" aria-labelledby="funciones-titulo">
+      <div class="section-head">
+        <h2 id="funciones-titulo">Todo tu consultorio en una app</h2>
+        <p>Agenda, pacientes, odontograma, presupuestos y cobros, en el celular o en la computadora. Estas pantallas son de la app tal como la vas a usar.</p>
+      </div>
+
+      <div class="shots">
+        <figure class="shot">
+          <img src="img/agenda.webp" alt="Agenda del día en Sonrisas, con las citas de la mañana y de la tarde" width="600" height="1298" loading="lazy" decoding="async" />
+          <figcaption><strong>Agenda con recordatorios</strong> Citas por día o por semana. Le recuerdas la cita a cada paciente por WhatsApp con un toque.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="img/ficha.webp" alt="Ficha de una paciente en Sonrisas con su alerta médica por alergia al látex" width="600" height="1298" loading="lazy" decoding="async" />
+          <figcaption><strong>Fichas de pacientes</strong> Cédula, seguro, alergias y antecedentes. Las alertas médicas siempre a la vista.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="img/presupuesto.webp" alt="Presupuesto en Sonrisas con endodoncia y corona listo para imprimir" width="600" height="1298" loading="lazy" decoding="async" />
+          <figcaption><strong>Presupuestos listos para imprimir</strong> Salen llenos con los hallazgos del odontograma. Aplicas descuento y lo descargas o lo imprimes.</figcaption>
+        </figure>
+      </div>
+
+      <ul class="more">
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3c-3 0-4.5 2.5-4 6 .5 3 1.5 4.5 2 7.5.4 2.5 1.4 4.5 2.5 4.5 1.6 0 1.6-2.5 2-4.5.4-1.5 1-2.5 2.5-2.5s2.1 1 2.5 2.5c.4 2 .4 4.5 2 4.5 1.1 0 2.1-2 2.5-4.5.5-3 1.5-4.5 2-7.5.5-3.5-1-6-4-6-2.5 0-3.5 1.5-5 1.5S9.5 3 7 3z" /></svg>
+          <div><strong>Odontograma con precios</strong><p>Cada hallazgo trae su tratamiento y el total se suma solo.</p></div>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2" /><circle cx="12" cy="12" r="2.5" /><path d="M6 12h.01M18 12h.01" /></svg>
+          <div><strong>Cobros y saldos</strong><p>Pago móvil, Zelle, efectivo o punto, en dólares o bolívares. El recibo sale al momento.</p></div>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
+          <div><strong>Fotos clínicas</strong><p>Caries, fracturas, el antes y el después, con la pieza y una nota.</p></div>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+          <div><strong>Tu recepción incluida</strong><p>Entra con su propia cuenta y maneja agenda y cobros. Lo clínico lo editas tú.</p></div>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18" /><path d="M7 16v-5M12 16V8M17 16v-8" /></svg>
+          <div><strong>Reportes del mes</strong><p>Ingresos, tratamientos más hechos y pacientes nuevos.</p></div>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+          <div><strong>Tus datos, privados</strong><p>Cada consultorio ve solo lo suyo. Las fotos clínicas se guardan en privado.</p></div>
+        </li>
+      </ul>
+    </section>
+
+    <section id="precios" class="pricing" aria-labelledby="precios-titulo">
+      <div class="section-head">
+        <h2 id="precios-titulo">Precios claros</h2>
+        <p data-trial-line>Los primeros <span data-trial>15</span> días son gratis y no necesitas tarjeta. Después eliges cómo pagar.</p>
+      </div>
+      <div class="plans">
+        <div class="plan">
+          <h3>Mensual</h3>
+          <p class="price"><strong data-monthly>$5</strong><span>al mes</span></p>
+          <p>Pagas mes a mes, cuando se vence tu plan.</p>
+        </div>
+        <div class="plan plan-annual" data-annual-plan>
+          <h3>Anual</h3>
+          <p class="price"><strong data-annual>$50</strong><span>por 12 meses</span></p>
+          <p data-saving>Ahorras $10 frente a pagar mes a mes.</p>
+        </div>
+      </div>
+      <p class="fine">Pagas por Pago Móvil desde la app: copias los datos, haces el pago y subes la foto del comprobante.</p>
+    </section>
+
+    <section id="preguntas" class="faq" aria-labelledby="preguntas-titulo">
+      <h2 id="preguntas-titulo">Preguntas frecuentes</h2>
+      <div class="faq-list">
+        <details>
+          <summary>¿Es una app de verdad?</summary>
+          <p>Sí. Se instala desde el navegador y queda con su ícono en tu pantalla de inicio, como cualquier app. No pasa por Play Store ni App Store: ocupa muy poco espacio y siempre tienes la última versión.</p>
+        </details>
+        <details>
+          <summary>¿Funciona en iPhone?</summary>
+          <p>Sí. Ábrela en Safari, toca Compartir y elige Agregar a pantalla de inicio.</p>
+        </details>
+        <details>
+          <summary>¿Puedo usarla en el celular y en la computadora?</summary>
+          <p>Sí, con la misma cuenta. Lo que guardas en uno aparece en el otro.</p>
+        </details>
+        <details>
+          <summary>¿Necesito internet?</summary>
+          <p>Sí, para abrirla y para guardar. Si la conexión se cae un momento mientras trabajas, tus cambios se guardan cuando vuelve.</p>
+        </details>
+        <details>
+          <summary>¿Quién ve los datos de mis pacientes?</summary>
+          <p>Solo las personas de tu consultorio. Cada consultorio ve únicamente lo suyo y las fotos clínicas se guardan en privado.</p>
+        </details>
+        <details>
+          <summary>¿Mi recepcionista también puede usarla?</summary>
+          <p>Sí. La invitas con un código y entra con su propia cuenta: maneja la agenda, los pacientes y los cobros, y la parte clínica la editas tú.</p>
+        </details>
+        <details>
+          <summary>¿Cómo pago?</summary>
+          <p>Por Pago Móvil. En la app, en Mi suscripción, ves los datos para pagar, haces el pago y subes la foto del comprobante.</p>
+        </details>
+        <details>
+          <summary>¿Qué pasa cuando termina la prueba?</summary>
+          <p>Eliges el plan mensual o el anual y reportas tu pago. Si no pagas, el acceso se pausa, pero tus datos se quedan guardados.</p>
+        </details>
+      </div>
+    </section>
+
+    <section class="cta-band" aria-labelledby="cta-titulo">
+      <h2 id="cta-titulo">Organiza tu consultorio desde hoy.</h2>
+      <p>Descárgala, crea tu cuenta con tu correo y agenda tu primera cita en minutos.</p>
+      <div class="actions">
+        <a class="btn btn-light btn-lg" href="#descargar" data-download>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5 5 5-5M12 15V3" /></svg>
+          <span data-download-label>Descargar Sonrisas</span>
+        </a>
+        <a class="btn btn-on-dark btn-lg" href="/#registro">Probar en el navegador</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <img src="img/logo.svg" alt="Sonrisas" width="118" height="75" />
+      <p>Sonrisas es un producto de EU Digital Solutions.</p>
+      <nav class="footer-links" aria-label="Enlaces">
+        <a href="/">Entrar</a>
+        <a href="/#registro">Crear cuenta</a>
+        <a href="#" data-whatsapp hidden>Escríbenos por WhatsApp</a>
+      </nav>
+    </div>
+  </footer>
+
+  <div class="toast" data-toast role="status" aria-live="polite"></div>
+
+  <script src="/js/config.js"></script>
+  <script src="descargar.js"></script>
+</body>
+</html>
