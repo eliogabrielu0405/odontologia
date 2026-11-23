@@ -41,7 +41,7 @@
     return `${fmtDate(s.paidUntil)}<br><small class="danger-text">hace ${U.plural(-s.daysLeft, 'día', 'días')}</small>`;
   };
 
-  /** Mensaje de recordatorio de pago para WhatsApp, con los datos de Pago Móvil. */
+  /** Mensaje de recordatorio de pago para WhatsApp, con los métodos de pago activos. */
   const reminderText = (clinic, person) => {
     const s = data.settings;
     const sub = subOf(clinic);
@@ -55,11 +55,11 @@
       suspendida: `tu cuenta de Sonrisas para ${clinic.name} está suspendida por falta de pago`,
       bloqueada: `tu cuenta de Sonrisas para ${clinic.name} está bloqueada`,
     }[sub.state];
-    const pm = [s.pm_bank, s.pm_phone, s.pm_id_doc, s.pm_holder].filter((v) => String(v || '').trim()).join(' · ');
+    const methods = Session.methodSummary(s);
     return [
       `Hola${name ? ` ${name}` : ''}, te escribimos de EU Digital Solutions: ${when}.`,
       s.monthly_price ? `Monto: ${money(s.monthly_price, s.currency)} al mes${Number(s.annual_price) > 0 ? ` o ${money(s.annual_price, s.currency)} el plan anual (12 meses)` : ''}.` : '',
-      pm ? `Pago Móvil: ${pm}.` : '',
+      methods.length ? `Puedes pagar por:\n${methods.map((m) => `• ${m}`).join('\n')}` : '',
       `Cuando pagues, sube la foto del comprobante en Sonrisas, sección Mi suscripción: ${appUrl()}`,
       '¡Gracias!',
     ].filter(Boolean).join('\n');
@@ -97,10 +97,11 @@
           <div class="receipt-view" data-img><p class="muted">Cargando comprobante…</p></div>
           <div class="stack">
             <dl class="kv compact">
+              <dt>Método</dt><dd>${esc(report.method || 'Pago Móvil')}</dd>
               <dt>Monto</dt><dd><strong>${money(report.amount, report.currency)}</strong></dd>
               <dt>Meses</dt><dd>${report.months === 12 && annualOn() ? '12 (plan anual)' : report.months}</dd>
               <dt>Referencia</dt><dd>${esc(report.reference) || '—'}</dd>
-              <dt>Banco</dt><dd>${esc(report.bank) || '—'}</dd>
+              <dt>${esc(Session.methodType(report.method).from)}</dt><dd>${esc(report.bank) || '—'}</dd>
               <dt>Teléfono</dt><dd>${esc(report.payer_phone) || '—'}</dd>
               <dt>Fecha del pago</dt><dd>${fmtDate(report.paid_on)}</dd>
               <dt>Enviado</dt><dd>${fmtDateTime(report.created_at)}</dd>
@@ -113,8 +114,9 @@
       onMount: async (form) => {
         const box = form.querySelector('[data-img]');
         try {
-          const url = await Session.receiptUrl(report.receipt_path);
-          box.innerHTML = url ? `<a href="${esc(url)}" target="_blank" rel="noopener" title="Abrir en tamaño completo"><img src="${esc(url)}" alt="Comprobante de pago"></a>` : '<p class="muted">Sin foto.</p>';
+          const url = report.receipt_path ? await Session.receiptUrl(report.receipt_path) : null;
+          box.innerHTML = url ? `<a href="${esc(url)}" target="_blank" rel="noopener" title="Abrir en tamaño completo"><img src="${esc(url)}" alt="Comprobante de pago"></a>`
+            : `<p class="muted">${report.method === Session.PLAY_METHOD ? 'Pago con Google Play, verificado con Google. El detalle está en Play Console, sección Pedidos.' : 'Sin foto.'}</p>`;
         } catch (err) { box.innerHTML = `<p class="muted">${esc(err.message)}</p>`; }
         const approveBtn = form.querySelector('[data-approve]');
         if (approveBtn) approveBtn.addEventListener('click', async () => {
@@ -233,12 +235,12 @@
     const incomeText = Object.keys(income).length ? Object.entries(income).map(([c, v]) => money(v, c)).join(' + ') : money(0, s.currency);
     const toRemind = subs.filter((x) => ['por_vencer', 'vencida', 'sin_acceso', 'suspendida'].includes(x.sub.state) || (x.sub.state === 'prueba' && x.sub.daysLeft <= Number(s.reminder_days || 0)))
       .sort((a, b) => a.sub.daysLeft - b.sub.daysLeft);
-    const missingSetup = !Number(s.monthly_price) || !String(s.pm_phone || '').trim();
+    const missingSetup = !Number(s.monthly_price) || !Session.activeMethods(s).length;
 
     el.innerHTML = `
       ${pageHead('Resumen', `Sonrisas · EU Digital Solutions · ${esc(U.fmtDateLong(new Date()))}`)}
       ${newIdeas ? `<div class="banner banner-info">${icon('bulb')}<div class="grow"><strong>${newIdeas === 1 ? 'Tienes 1 sugerencia nueva' : `Tienes ${newIdeas} sugerencias nuevas`}</strong> de las clínicas para mejorar Sonrisas.</div><a class="btn btn-sm" href="#admin-sugerencias">Ver sugerencias</a></div>` : ''}
-      ${missingSetup ? `<div class="banner banner-warn">${icon('alert')}<div class="grow"><strong>Falta configurar el cobro.</strong> Carga el precio mensual y tus datos de Pago Móvil para que los odontólogos sepan cuánto y a dónde pagar.</div><a class="btn btn-sm" href="#admin-ajustes">Configurar</a></div>` : ''}
+      ${missingSetup ? `<div class="banner banner-warn">${icon('alert')}<div class="grow"><strong>Falta configurar el cobro.</strong> Carga el precio mensual y al menos un método de pago para que los odontólogos sepan cuánto y a dónde pagar.</div><a class="btn btn-sm" href="#admin-ajustes">Configurar</a></div>` : ''}
       <div class="grid grid-4">
         ${statTile('teal', 'building', data.clinics.length, 'Clínicas registradas', '#admin-clinicas')}
         ${statTile('green', 'check', count(['al_dia']), 'Al día')}
@@ -339,18 +341,19 @@
         return `<tr>
           <td class="nowrap">${fmtDateTime(r.created_at)}</td>
           <td>${c ? `<button class="link-row" data-open="${c.id}"><strong>${esc(c.name)}</strong></button>` : '<span class="muted">Clínica eliminada</span>'}</td>
+          <td>${esc(r.method || 'Pago Móvil')}</td>
           <td class="num money">${money(r.amount, r.currency)}</td>
           <td>${r.months}</td>
           <td>${esc(r.reference) || '—'}<br><small class="muted">${esc([r.bank, r.payer_phone].filter(Boolean).join(' · '))}</small></td>
           <td>${fmtDate(r.paid_on)}</td>
           <td><span class="badge ${{ pendiente: 'b-warn', aprobado: 'b-ok', rechazado: 'b-danger' }[r.status]}">${{ pendiente: 'En revisión', aprobado: 'Aprobado', rechazado: 'Rechazado' }[r.status]}</span>${r.admin_note ? `<br><small class="muted">${esc(r.admin_note)}</small>` : ''}</td>
           <td><button class="btn btn-sm ${r.status === 'pendiente' ? 'btn-primary' : ''}" data-review="${r.id}">${r.status === 'pendiente' ? 'Revisar' : 'Ver'}</button></td></tr>`;
-      }).join('') || `<tr><td colspan="8" class="empty">${paymentsTab === 'pendiente' ? 'No hay pagos esperando revisión.' : 'No hay pagos en esta lista.'}</td></tr>`;
+      }).join('') || `<tr><td colspan="9" class="empty">${paymentsTab === 'pendiente' ? 'No hay pagos esperando revisión.' : 'No hay pagos en esta lista.'}</td></tr>`;
     };
     el.innerHTML = `
       ${pageHead('Pagos recibidos', 'Comprobantes que envían las clínicas')}
       <div class="tabs">${[['pendiente', 'Por revisar'], ['aprobado', 'Aprobados'], ['rechazado', 'Rechazados'], ['todos', 'Todos']].map(([k, l]) => `<button data-tab="${k}">${l}${k === 'pendiente' ? ' <span class="count-pill" data-pending-count></span>' : ''}</button>`).join('')}</div>
-      <div class="card"><div class="table-wrap"><table><thead><tr><th>Enviado</th><th>Clínica</th><th class="num">Monto</th><th>Meses</th><th>Referencia</th><th>Fecha del pago</th><th>Estado</th><th><span class="sr-only">Acciones</span></th></tr></thead><tbody data-body></tbody></table></div></div>`;
+      <div class="card"><div class="table-wrap"><table><thead><tr><th>Enviado</th><th>Clínica</th><th>Método</th><th class="num">Monto</th><th>Meses</th><th>Referencia</th><th>Fecha del pago</th><th>Estado</th><th><span class="sr-only">Acciones</span></th></tr></thead><tbody data-body></tbody></table></div></div>`;
     paint();
     el.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => { paymentsTab = b.dataset.tab; paint(); }));
     el.querySelector('[data-body]').addEventListener('click', (e) => {
@@ -364,12 +367,97 @@
   /* =====================================================================
      VISTA: Ajustes
      ===================================================================== */
+  /* ---------- Métodos de pago de la mensualidad ---------- */
+  const newMethodId = () => `pm-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  const methodFieldsHtml = (typeKey, method) => {
+    const type = Session.METHOD_TYPES[typeKey] || Session.METHOD_TYPES.otro;
+    const saved = (method && method.type === typeKey ? method.fields : null) || [];
+    const valueOf = (label, i) => {
+      const hit = saved.find((f) => f.label === label) || saved[i];
+      return hit ? hit.value : '';
+    };
+    return `${type.fields.map((label, i) => `<label class="field ${type.fields.length === 1 ? 'full' : ''}">${esc(label)}<input name="f${i}" maxlength="120" value="${esc(valueOf(label, i))}"></label>`).join('')}
+      ${type.link ? `<label class="field full">${esc(type.link)}<input name="link" type="url" maxlength="200" placeholder="https://paypal.me/tuusuario" value="${esc(method && method.type === typeKey ? method.link || '' : '')}"></label>` : ''}`;
+  };
+  const editMethod = (methods, index, save) => {
+    const method = index >= 0 ? methods[index] : null;
+    const typeKey = method ? method.type : 'pago_movil';
+    openModal({
+      title: method ? `Editar ${method.name}` : 'Agregar método de pago',
+      submitLabel: method ? 'Guardar' : 'Agregar',
+      body: `<div class="form-grid">
+          <label class="field">Tipo<select name="type">${Object.entries(Session.METHOD_TYPES).map(([k, t]) => `<option value="${k}" ${k === typeKey ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}</select></label>
+          <label class="field">Nombre que ven las clínicas<input name="name" required maxlength="40" value="${esc(method ? method.name : Session.METHOD_TYPES[typeKey].name)}"></label>
+          <div class="form-grid full" data-fields>${methodFieldsHtml(typeKey, method)}</div>
+          <label class="field full">Nota (opcional)<input name="note" maxlength="200" placeholder="Ej: envía USDT por la red TRC20" value="${esc(method ? method.note || '' : '')}"></label>
+          <label class="field inline full"><input type="checkbox" name="active" ${!method || method.active !== false ? 'checked' : ''}> Mostrar este método a las clínicas</label>
+        </div>`,
+      onMount: (form) => {
+        let lastAuto = form.name.value;
+        form.type.addEventListener('change', () => {
+          const type = Session.METHOD_TYPES[form.type.value];
+          form.querySelector('[data-fields]').innerHTML = methodFieldsHtml(form.type.value, method);
+          if (!form.name.value.trim() || form.name.value === lastAuto) { form.name.value = type.name === 'Otro' ? '' : type.name; lastAuto = form.name.value; }
+        });
+      },
+      onSubmit: async (d) => {
+        const type = Session.METHOD_TYPES[d.type] || Session.METHOD_TYPES.otro;
+        const name = d.name.trim().slice(0, 40);
+        if (name === Session.PLAY_METHOD) throw new Error('Ese nombre está reservado para los pagos de la app de Play Store.');
+        if (methods.some((m, i) => i !== index && m.name.toLowerCase() === name.toLowerCase())) throw new Error('Ya hay un método con ese nombre.');
+        const fields = type.fields.map((label, i) => ({ label, value: String(d[`f${i}`] || '').trim().slice(0, 120) })).filter((f) => f.value);
+        const link = String(d.link || '').trim().slice(0, 200);
+        if (link && !/^https:\/\/\S+$/i.test(link)) throw new Error('El enlace tiene que empezar con https://');
+        if (!fields.length && !link) throw new Error('Completa al menos un dato para pagar.');
+        const next = { id: method ? method.id : newMethodId(), type: d.type, name, fields, link, note: String(d.note || '').trim().slice(0, 200), active: d.active === 'on' };
+        const list = methods.slice();
+        if (index >= 0) list[index] = next; else list.push(next);
+        await save(list);
+        toast(method ? 'Método actualizado' : 'Método agregado');
+        return undefined;
+      },
+    });
+  };
+
+  /* =====================================================================
+     VISTA: Ajustes
+     ===================================================================== */
   const settingsView = async (el) => {
     loadingCard(el, 'Ajustes de cobro');
     try { await load(); } catch (err) { failCard(el, 'Ajustes de cobro', err); return; }
     const s = data.settings;
+    let methods = Array.isArray(s.payment_methods) ? s.payment_methods.slice() : [];
+
+    const saveMethods = async (list) => {
+      if (list.length > 12) throw new Error('Puedes tener hasta 12 métodos de pago.');
+      const { error } = await Session.client.from('platform_settings').update({ payment_methods: list, updated_at: new Date().toISOString() }).eq('id', 1);
+      if (error) throw new Error(Session.friendly(error));
+      methods = list;
+      s.payment_methods = list;
+      paintMethods();
+      try { await Session.loadContext(); } catch { /* se recarga al navegar */ }
+    };
+    const paintMethods = () => {
+      el.querySelector('[data-methods]').innerHTML = methods.map((m, i) => {
+        const type = Session.METHOD_TYPES[m.type] || Session.METHOD_TYPES.otro;
+        const detail = [...(m.fields || []).map((f) => f.value), m.link].filter(Boolean).join(' · ');
+        return `<div class="method-row ${m.active === false ? 'off' : ''}">
+          <div class="pm-logo">${icon(type.icon)}</div>
+          <div class="grow"><strong>${esc(m.name)}</strong>${m.active === false ? ' <span class="badge b-muted">Oculto</span>' : ''}<br><small class="muted">${esc(detail) || 'Sin datos'}</small></div>
+          <div class="act">
+            <button type="button" data-up="${i}" title="Subir" aria-label="Subir ${esc(m.name)}" ${i === 0 ? 'disabled' : ''}>${icon('chevronL')}</button>
+            <button type="button" data-edit="${i}" title="Editar" aria-label="Editar ${esc(m.name)}">${icon('edit')}</button>
+            <button type="button" data-del="${i}" title="Eliminar" aria-label="Eliminar ${esc(m.name)}">${icon('trash')}</button>
+          </div></div>`;
+      }).join('') || '<p class="muted no-margin">Todavía no hay métodos de pago. Agrega al menos uno para que las clínicas sepan cómo pagarte.</p>';
+    };
+
     el.innerHTML = `
-      ${pageHead('Ajustes de cobro', 'Precio, Pago Móvil y plazos que ven todas las clínicas')}
+      ${pageHead('Ajustes de cobro', 'Precio, métodos de pago y plazos que ven todas las clínicas')}
+      <div class="card mb">
+        <div class="card-head"><h3>Métodos de pago</h3><button type="button" class="btn btn-sm btn-primary" data-add-method>${icon('plus')}Agregar método</button></div>
+        <div class="card-body"><p class="muted small no-margin mb">Las clínicas los ven en Mi suscripción, en este orden, y eligen con cuál pagaron al subir el comprobante. Se guardan al momento.</p><div class="method-list" data-methods></div></div>
+      </div>
       <form class="card" data-form novalidate>
         <div class="card-head"><h3>Planes</h3></div>
         <div class="card-body form-grid">
@@ -379,27 +467,53 @@
           <label class="field">Días de prueba gratis para clínicas nuevas<input type="number" name="trial_days" min="0" max="90" value="${esc(s.trial_days)}"></label>
           <label class="field">Días de gracia después del vencimiento<input type="number" name="grace_days" min="0" max="60" value="${esc(s.grace_days)}"></label>
           <label class="field full">Avisar a la clínica cuántos días antes de vencer<input type="number" name="reminder_days" min="0" max="30" value="${esc(s.reminder_days)}"></label>
-        </div>
-        <div class="card-head bordered"><h3>Datos de Pago Móvil</h3><span class="muted small">Se muestran en el panel de pago de cada clínica</span></div>
-        <div class="card-body form-grid">
-          <label class="field">Banco<input name="pm_bank" maxlength="80" placeholder="Ej: 0102 Banco de Venezuela" value="${esc(s.pm_bank)}"></label>
-          <label class="field">Teléfono del Pago Móvil<input name="pm_phone" maxlength="30" inputmode="tel" placeholder="0414-1234567" value="${esc(s.pm_phone)}"></label>
-          <label class="field">Cédula o RIF<input name="pm_id_doc" maxlength="30" placeholder="V-12345678" value="${esc(s.pm_id_doc)}"></label>
-          <label class="field">Titular<input name="pm_holder" maxlength="80" placeholder="EU Digital Solutions" value="${esc(s.pm_holder)}"></label>
-          <label class="field full">Nota para el pago (opcional)<input name="payment_note" maxlength="200" placeholder="Ej: si pagas en bolívares, usa la tasa BCV del día" value="${esc(s.payment_note)}"></label>
+          <label class="field full">Nota general para pagar (opcional)<input name="payment_note" maxlength="200" placeholder="Ej: si pagas en bolívares, usa la tasa BCV del día" value="${esc(s.payment_note)}"></label>
           <label class="field full">WhatsApp de soporte<input name="support_whatsapp" maxlength="30" inputmode="tel" placeholder="0414-1234567" value="${esc(s.support_whatsapp)}"></label>
+        </div>
+        <div class="card-head bordered"><h3>App de Play Store</h3><span class="muted small">Ahí se paga con Google Play</span></div>
+        <div class="card-body form-grid">
+          <p class="muted small full no-margin">El precio lo pones en Play Console (Monetizar → Suscripciones). Aquí van los <strong>ID de producto</strong> de esas suscripciones, exactamente como los creaste.</p>
+          <label class="field">ID de la suscripción mensual<input name="play_monthly_sku" maxlength="60" pattern="[a-z0-9._]*" placeholder="sonrisas_mensual" value="${esc(s.play_monthly_sku || '')}"></label>
+          <label class="field">ID de la suscripción anual<input name="play_annual_sku" maxlength="60" pattern="[a-z0-9._]*" placeholder="sonrisas_anual" value="${esc(s.play_annual_sku || '')}"><small class="hint">Déjalo vacío si no ofreces plan anual en Play.</small></label>
         </div>
         <div class="form-actions"><button class="btn btn-primary btn-lg" type="submit">${icon('check')}Guardar ajustes</button></div>
       </form>`;
+    paintMethods();
+
+    el.querySelector('[data-add-method]').addEventListener('click', () => editMethod(methods, -1, saveMethods));
+    el.querySelector('[data-methods]').addEventListener('click', (e) => {
+      const edit = e.target.closest('[data-edit]');
+      if (edit) { editMethod(methods, Number(edit.dataset.edit), saveMethods); return; }
+      const up = e.target.closest('[data-up]');
+      if (up) {
+        const i = Number(up.dataset.up);
+        const list = methods.slice();
+        [list[i - 1], list[i]] = [list[i], list[i - 1]];
+        saveMethods(list).catch((err) => toast(err.message, 'err'));
+        return;
+      }
+      const del = e.target.closest('[data-del]');
+      if (del) {
+        const i = Number(del.dataset.del);
+        confirmDialog(`¿Eliminar ${methods[i].name}? Las clínicas dejarán de verlo. Los comprobantes que ya enviaron con este método no se borran.`, async () => {
+          await saveMethods(methods.filter((_, j) => j !== i));
+          toast('Método eliminado');
+          return undefined;
+        });
+      }
+    });
+
     el.querySelector('[data-form]').addEventListener('submit', async (e) => {
       e.preventDefault();
       const d = Object.fromEntries(new FormData(e.target).entries());
+      const sku = (v) => String(v || '').trim().toLowerCase();
+      if (![d.play_monthly_sku, d.play_annual_sku].every((v) => /^[a-z0-9._]{0,60}$/.test(sku(v)))) { toast('Los ID de Play solo llevan minúsculas, números, punto y guion bajo.', 'err'); return; }
       const patch = {
         monthly_price: U.cents(d.monthly_price), annual_price: U.cents(d.annual_price), currency: d.currency,
         trial_days: Math.max(0, Math.min(90, Number(d.trial_days) || 0)), grace_days: Math.max(0, Math.min(60, Number(d.grace_days) || 0)),
         reminder_days: Math.max(0, Math.min(30, Number(d.reminder_days) || 0)),
-        pm_bank: d.pm_bank.trim(), pm_phone: d.pm_phone.trim(), pm_id_doc: d.pm_id_doc.trim(), pm_holder: d.pm_holder.trim(),
-        payment_note: d.payment_note.trim(), support_whatsapp: d.support_whatsapp.trim(), updated_at: new Date().toISOString(),
+        payment_note: d.payment_note.trim(), support_whatsapp: d.support_whatsapp.trim(),
+        play_monthly_sku: sku(d.play_monthly_sku), play_annual_sku: sku(d.play_annual_sku), updated_at: new Date().toISOString(),
       };
       const { error } = await Session.client.from('platform_settings').update(patch).eq('id', 1);
       if (error) { toast(Session.friendly(error), 'err'); return; }
