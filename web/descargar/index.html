@@ -117,8 +117,8 @@
 
           <div class="panel" role="tabpanel" id="panel-android" aria-labelledby="tab-android" data-panel="android" tabindex="-1">
             <ol class="steps">
-              <li><strong>Abre esta página en Chrome.</strong> Si llegaste desde WhatsApp, toca los tres puntos de arriba y elige <em>Abrir en Chrome</em>.</li>
-              <li><strong>Instálala.</strong> Toca <em>Instalar en este teléfono</em>. Si no ves ese botón, abre el menú de los tres puntos y elige <em>Instalar app</em> o <em>Agregar a la pantalla principal</em>.</li>
+              <li><strong>Toca <em>Instalar en este teléfono</em>.</strong> Se abre la ventana de instalación de Chrome: confirma con <em>Instalar</em>.</li>
+              <li><strong>¿Estás dentro de WhatsApp u otra app?</strong> El botón te lleva primero a Chrome, y ahí la instalas con un toque.</li>
               <li><strong>Ábrela desde tu pantalla de inicio.</strong> Crea tu cuenta con tu correo o entra con la que ya tienes.</li>
             </ol>
             <div class="panel-actions" data-actions="android"></div>
@@ -126,7 +126,7 @@
 
           <div class="panel" role="tabpanel" id="panel-ios" aria-labelledby="tab-ios" data-panel="ios" tabindex="-1">
             <ol class="steps">
-              <li><strong>Abre Sonrisas en Safari.</strong> Usa el botón <em>Abrir Sonrisas</em>. Si estás en WhatsApp o en otro navegador, copia el enlace y pégalo en Safari.</li>
+              <li><strong>Toca <em>Instalar en este iPhone</em>.</strong> Una flecha te señala el botón Compartir de Safari. Si estás en WhatsApp o en otra app, el botón te lleva primero a Safari.</li>
               <li><strong>Toca Compartir.</strong> Es el cuadrito con una flecha hacia arriba, en la barra de Safari.</li>
               <li><strong>Elige <em>Agregar a pantalla de inicio</em></strong> y luego <em>Agregar</em>. El ícono de Sonrisas queda junto a tus otras apps.</li>
             </ol>
@@ -136,7 +136,7 @@
           <div class="panel" role="tabpanel" id="panel-pc" aria-labelledby="tab-pc" data-panel="pc" tabindex="-1">
             <ol class="steps">
               <li><strong>Abre esta página en Chrome o Edge.</strong> Sirve en Windows, Mac y Linux.</li>
-              <li><strong>Instálala.</strong> Toca <em>Instalar en esta computadora</em> o el ícono de instalar al final de la barra de direcciones.</li>
+              <li><strong>Instálala.</strong> Haz clic en <em>Instalar en esta computadora</em> y confirma en la ventana del navegador.</li>
               <li><strong>Úsala en su propia ventana.</strong> Sonrisas queda en tu escritorio o en el menú de inicio. En una Mac con Safari: menú <em>Archivo</em>, <em>Agregar al Dock</em>.</li>
             </ol>
             <div class="panel-actions" data-actions="pc"></div>
@@ -218,7 +218,7 @@
           <p data-saving>Ahorras $10 frente a pagar mes a mes.</p>
         </div>
       </div>
-      <p class="fine">Pagas por Pago Móvil desde la app: copias los datos, haces el pago y subes la foto del comprobante.</p>
+      <p class="fine">Pagas por Pago Móvil, transferencia, Zelle, PayPal o Binance: en la app copias los datos, haces el pago y subes la foto del comprobante.</p>
     </section>
 
     <section id="preguntas" class="faq" aria-labelledby="preguntas-titulo">
@@ -250,7 +250,7 @@
         </details>
         <details>
           <summary>¿Cómo pago?</summary>
-          <p>Por Pago Móvil. En la app, en Mi suscripción, ves los datos para pagar, haces el pago y subes la foto del comprobante.</p>
+          <p>Por Pago Móvil, transferencia, Zelle, PayPal o Binance. En la app, en Mi suscripción, eliges el método, ves los datos para pagar, haces el pago y subes la foto del comprobante.</p>
         </details>
         <details>
           <summary>¿Qué pasa cuando termina la prueba?</summary>
@@ -283,6 +283,26 @@
       </nav>
     </div>
   </footer>
+
+  <!-- Ventana de instalación: la abre cualquier botón "Descargar" cuando el navegador no puede instalar directo. -->
+  <dialog class="sheet" data-sheet aria-labelledby="sheet-title">
+    <div class="pointer" data-pointer hidden aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V4" /><path d="m5 11 7-7 7 7" /></svg>
+    </div>
+    <div class="sheet-panel">
+      <div class="sheet-head">
+        <img src="/icons/icon-192.png" alt="" width="48" height="48" />
+        <div>
+          <p class="sheet-title" id="sheet-title" data-sheet-title>Instalar Sonrisas</p>
+          <p class="sheet-sub" data-sheet-sub></p>
+        </div>
+        <button type="button" class="sheet-close" data-sheet-close aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
+      </div>
+      <div class="sheet-body" data-sheet-body></div>
+    </div>
+  </dialog>
 
   <div class="toast" data-toast role="status" aria-live="polite"></div>
 

@@ -183,7 +183,6 @@ main > section { max-width: var(--vp-wide); margin: 0 auto; padding: clamp(64px,
 }
 .tabs [role='tab'][aria-selected='true'] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(1, 47, 117, 0.07); }
 .panel { outline: none; }
-.panel.flash .steps { animation: reveal var(--t-slow) var(--ease-out); }
 .steps { list-style: none; counter-reset: paso; margin: 0; padding: 0; display: grid; max-width: 65ch; }
 /* El número va aparte con position: el texto del paso mezcla negritas y frases, y en un grid se partiría en celdas. */
 .steps li { counter-increment: paso; position: relative; min-height: 80px; padding: 16px 0 16px 64px; border-bottom: 1px solid var(--line); color: var(--muted); }
@@ -271,6 +270,71 @@ main > section { max-width: var(--vp-wide); margin: 0 auto; padding: clamp(64px,
 }
 .toast.show { opacity: 1; translate: -50% 0; transition-duration: var(--t-base); transition-timing-function: var(--ease-out); }
 
+/* ---------- Ventana de instalación ----------
+   Ocupa toda la pantalla (para que la flecha pueda señalar los botones del navegador desde el borde) y el panel
+   va abajo en el celular, arriba cuando la flecha señala la barra de abajo de Safari, y al centro en pantallas grandes. */
+.sheet {
+  position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none;
+  margin: 0; padding: 0; border: 0; background: transparent; color: var(--text); overflow: hidden;
+}
+.sheet::backdrop { background: rgba(1, 22, 56, 0.6); }
+.sheet[open] { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+.sheet[data-pos='top'][open] { justify-content: flex-start; }
+.sheet-panel {
+  position: relative; width: 100%; max-width: 480px; max-height: calc(100% - 88px); overflow-y: auto;
+  display: grid; gap: 24px; padding: 24px var(--gutter) max(24px, env(safe-area-inset-bottom));
+  background: var(--surface); border-radius: 24px 24px 0 0; box-shadow: var(--shadow);
+  animation: sheet-up var(--t-slow) var(--ease-out);
+}
+.sheet[data-pos='top'] .sheet-panel { border-radius: 0 0 24px 24px; padding-top: max(24px, env(safe-area-inset-top)); padding-bottom: 24px; animation-name: sheet-down; }
+.sheet-head { display: grid; grid-template-columns: 48px minmax(0, 1fr) 44px; gap: 16px; align-items: start; }
+.sheet-head img { width: 48px; height: 48px; border-radius: 12px; }
+.sheet-title { font: 700 1.25rem/1.2 var(--font-display); color: var(--ink); margin-top: 2px; }
+.sheet-sub { margin-top: 4px; color: var(--muted); font-size: 0.875rem; }
+.sheet-close { display: grid; place-items: center; width: 44px; height: 44px; margin: -6px -6px 0 0; border: 0; border-radius: 12px; background: transparent; color: var(--muted); cursor: pointer; }
+.sheet-close svg { width: 20px; height: 20px; }
+@media (hover: hover) { .sheet-close:hover { background: var(--paper); color: var(--ink); } }
+.sheet-body { display: grid; gap: 16px; }
+.btn-block { width: 100%; white-space: normal; text-align: center; padding-block: 8px; }
+.btn[disabled] { opacity: 0.75; cursor: progress; }
+.btn[disabled]:active { scale: 1; }
+.spinner { width: 18px; height: 18px; flex: none; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.35); border-top-color: #fff; animation: spin 800ms linear infinite; }
+.wait-bar { height: 4px; margin-top: -8px; border-radius: 4px; background: var(--cyan-wash); overflow: hidden; }
+.wait-bar i { display: block; height: 100%; background: var(--cyan); transform: scaleX(0); transform-origin: left; transition: transform 250ms linear; }
+.wait-bar-busy { margin-top: 0; }
+.wait-bar-busy i { width: 40%; transform: none; animation: busy 1.2s var(--ease-out) infinite; }
+.sheet-note { color: var(--muted); font-size: 0.875rem; }
+.mini-steps { list-style: none; counter-reset: paso; margin: 0; padding: 0; display: grid; gap: 16px; }
+.mini-steps li { counter-increment: paso; position: relative; min-height: 32px; padding: 3px 0 0 44px; line-height: 1.9; }
+.mini-steps li::before {
+  content: counter(paso); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--cyan-wash); color: var(--ink); font: 700 1rem/1 var(--font-display);
+}
+/* Un botón del navegador dibujado en el texto ("toca [Compartir]"). */
+.key {
+  display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; max-width: 100%;
+  padding: 1px 8px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--paper);
+  color: var(--ink); font-size: 0.875rem; font-weight: 600; line-height: 1.6; white-space: nowrap;
+}
+.key svg { width: 18px; height: 18px; flex: none; }
+.sheet-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 0.875rem; font-weight: 600; }
+.sheet-link svg { width: 16px; height: 16px; flex: none; }
+/* La flecha que señala el botón del navegador (fuera de la página), desde el borde de la pantalla. */
+.pointer { position: absolute; z-index: 1; width: 56px; height: 56px; color: #fff; pointer-events: none; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35)); animation: nudge 700ms var(--ease-out) infinite alternate; }
+.pointer svg { width: 100%; height: 100%; }
+.pointer[data-at='top-right'] { top: max(4px, env(safe-area-inset-top)); right: 8px; }
+.pointer[data-at='bottom-center'] { bottom: max(4px, env(safe-area-inset-bottom)); left: calc(50% - 28px); rotate: 180deg; }
+.pointer[data-at='bottom-right'] { bottom: max(4px, env(safe-area-inset-bottom)); right: 8px; rotate: 180deg; }
+@media (min-width: 768px) {
+  .sheet[open], .sheet[data-pos='top'][open] { justify-content: center; }
+  .sheet-panel, .sheet[data-pos='top'] .sheet-panel { border-radius: 24px; padding: 32px; }
+}
+@keyframes sheet-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+@keyframes sheet-down { from { opacity: 0; transform: translateY(-24px); } to { opacity: 1; transform: none; } }
+@keyframes nudge { from { transform: translateY(8px); } to { transform: translateY(-4px); } }
+@keyframes busy { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* ---------- Movimiento: una sola entrada orquestada en la portada ---------- */
 .rise { animation: rise var(--t-slow) var(--ease-out) both; }
 .hero-copy .rise:nth-child(1) { animation-delay: 0ms; }
@@ -280,11 +344,11 @@ main > section { max-width: var(--vp-wide); margin: 0 auto; padding: clamp(64px,
 .demo.rise { animation-delay: 200ms; }
 @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @keyframes tick { from { opacity: 0.4; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-@keyframes reveal { from { opacity: 0.4; } to { opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .rise, .findings li.new, .demo-total strong.tick, .panel.flash .steps { animation: none !important; opacity: 1; transform: none; }
+  .rise, .findings li.new, .demo-total strong.tick, .sheet-panel, .pointer, .spinner, .wait-bar-busy i { animation: none !important; opacity: 1; transform: none; }
+  .wait-bar i { transition: none !important; }
   .btn, .chip, .tooth, .toast, .tip, .faq summary::after, .tooth .canal, .tooth .ring { transition: none !important; }
   .btn:active, .chip:active, .tooth:active { scale: 1; }
 }
@@ -320,4 +384,13 @@ main > section { max-width: var(--vp-wide); margin: 0 auto; padding: clamp(64px,
   .footer-inner { grid-template-columns: minmax(0, 1fr); }
   .actions .btn { flex: 1 1 100%; }
   .cta-band { border-radius: 24px; }
+}
+
+/* Celulares angostos (360 px o menos, comunes en Android): la barra de arriba entra sin salirse de la pantalla. */
+@media (max-width: 399.98px) {
+  .nav-inner { gap: 12px; }
+  .brand img:last-child { width: 94px; }
+}
+@media (max-width: 339.98px) {
+  .brand img:last-child { display: none; }
 }

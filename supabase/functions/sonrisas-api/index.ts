@@ -97,6 +97,62 @@ const findInvite = async (raw: unknown) => {
   return { ...data, clinicName: clinic.name as string };
 };
 
+// ---------- Google Play (app de Play Store) ----------
+// Secretos de la función: PLAY_PACKAGE_NAME (ej. app.sonrisas.twa) y PLAY_SERVICE_ACCOUNT (el JSON completo de una
+// cuenta de servicio de Google Cloud con acceso a la app en Play Console: "Ver datos financieros" y "Administrar pedidos").
+const PLAY_PACKAGE = Deno.env.get('PLAY_PACKAGE_NAME') ?? '';
+const PLAY_ACCOUNT = Deno.env.get('PLAY_SERVICE_ACCOUNT') ?? '';
+const PLAY_NOT_READY = 'Los pagos con Google Play todavía no están configurados. Intenta más tarde.';
+let googleToken: { value: string; expires: number } | null = null;
+
+const b64url = (data: ArrayBuffer | string) => {
+  const bytes = typeof data === 'string' ? new TextEncoder().encode(data) : new Uint8Array(data);
+  let text = '';
+  for (const b of bytes) text += String.fromCharCode(b);
+  return btoa(text).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+};
+
+/** Token de acceso a la API de Google Play con la cuenta de servicio (JWT firmado con RS256). */
+const googleAccessToken = async () => {
+  if (googleToken && googleToken.expires > Date.now() + 60_000) return googleToken.value;
+  let account: { client_email?: string; private_key?: string } = {};
+  try { account = JSON.parse(PLAY_ACCOUNT); } catch { throw new Fail(503, PLAY_NOT_READY); }
+  if (!PLAY_PACKAGE || !account.client_email || !account.private_key) throw new Fail(503, PLAY_NOT_READY);
+  const now = Math.floor(Date.now() / 1000);
+  const head = b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
+  const claims = b64url(JSON.stringify({
+    iss: account.client_email, scope: 'https://www.googleapis.com/auth/androidpublisher',
+    aud: 'https://oauth2.googleapis.com/token', iat: now, exp: now + 3600,
+  }));
+  const pem = account.private_key.replace(/-----[^-]+-----/g, '').replace(/\s+/g, '');
+  const der = Uint8Array.from(atob(pem), (c) => c.charCodeAt(0));
+  const key = await crypto.subtle.importKey('pkcs8', der, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+  const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(`${head}.${claims}`));
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: `${head}.${claims}.${b64url(signature)}` }),
+  });
+  if (!res.ok) {
+    console.error('google token', res.status, await res.text());
+    throw new Fail(502, 'No se pudo conectar con Google Play. Intenta de nuevo.');
+  }
+  const json = await res.json();
+  googleToken = { value: json.access_token, expires: Date.now() + Number(json.expires_in ?? 3600) * 1000 };
+  return googleToken.value;
+};
+const playApi = async (path: string, init: RequestInit = {}) => {
+  const token = await googleAccessToken();
+  return fetch(`https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(PLAY_PACKAGE)}/${path}`, {
+    ...init,
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+  });
+};
+// Cancelada = no se va a renovar, pero vale hasta su vencimiento.
+const PLAY_VALID = ['SUBSCRIPTION_STATE_ACTIVE', 'SUBSCRIPTION_STATE_IN_GRACE_PERIOD', 'SUBSCRIPTION_STATE_CANCELED'];
+/** Fecha en Venezuela (UTC-4) de un instante. */
+const dateVE = (iso: string) => new Date(new Date(iso).getTime() - 4 * 3600 * 1000).toISOString().slice(0, 10);
+
 const actions: Record<string, (body: Body, req: Request) => Promise<unknown>> = {
   /** Un odontólogo crea su cuenta y su clínica (con días de prueba). */
   async registrar(body) {
@@ -247,6 +303,94 @@ const actions: Record<string, (body: Body, req: Request) => Promise<unknown>> = 
     for (const m of members ?? []) await db.auth.admin.deleteUser(m.id as string);
     return { ok: true, removedUsers: members?.length ?? 0 };
   },
+  /** Verifica con Google una compra de la app de Play y, si está vigente, extiende la suscripción de la clínica. */
+  async play_verify(body, req) {
+    const me = await caller(req);
+    const { data: profile } = await db.from('profiles').select('clinic_id, role, active').eq('id', me.id).maybeSingle();
+    if (!profile || !profile.active || !['titular', 'recepcion'].includes(profile.role as string)) {
+      throw new Fail(403, 'Solo el titular de la clínica o la recepción pueden pagar la suscripción.');
+    }
+    const clinicId = profile.clinic_id as string;
+    const productId = clean(body.productId, 60);
+    const token = String(body.purchaseToken ?? '').trim();
+    if (!/^[a-z0-9._]{1,60}$/.test(productId) || token.length < 10 || token.length > 4096) throw new Fail(400, 'Los datos de la compra no son válidos.');
+
+    const { data: settings } = await db.from('platform_settings')
+      .select('play_monthly_sku, play_annual_sku, monthly_price, annual_price, currency').eq('id', 1).single();
+    if (!settings) throw new Fail(500, 'No se pudieron leer los ajustes.');
+    const months = productId && productId === settings.play_annual_sku ? 12 : productId && productId === settings.play_monthly_sku ? 1 : 0;
+    if (!months) throw new Fail(400, 'Ese plan no está configurado en Sonrisas.');
+
+    // Cada compra queda asociada a la primera clínica que la registra: no se puede reusar en otra.
+    const { data: known } = await db.from('play_purchases').select('clinic_id').eq('purchase_token', token).maybeSingle();
+    if (known && known.clinic_id !== clinicId) throw new Fail(409, 'Esta compra de Google Play ya está asociada a otra clínica.');
+    const res = await playApi(`purchases/subscriptionsv2/tokens/${encodeURIComponent(token)}`);
+    if ([400, 404, 410].includes(res.status)) throw new Fail(400, 'Google Play no reconoce esta compra.');
+    if (!res.ok) {
+      console.error('play subscriptionsv2', res.status, await res.text());
+      throw new Fail(502, 'No se pudo verificar la compra con Google Play. Intenta de nuevo.');
+    }
+    const purchase = await res.json();
+    const lines = (purchase.lineItems ?? []) as Array<Record<string, any>>;
+    const line = lines.find((l) => l.productId === productId);
+    if (!line) throw new Fail(400, 'La compra no corresponde a ese plan.');
+    const state = String(purchase.subscriptionState ?? '');
+    const expiresAt = String(line.expiryTime ?? '');
+    const orderId = String(purchase.latestOrderId ?? '');
+    const valid = PLAY_VALID.includes(state) && !!expiresAt && new Date(expiresAt) > new Date();
+
+    // Recién con la compra confirmada por Google se asocia a la clínica.
+    if (!known) {
+      const { error } = await db.from('play_purchases').insert({ purchase_token: token, clinic_id: clinicId, user_id: me.id, product_id: productId });
+      if (error && error.code === '23505') {
+        const { data: owner } = await db.from('play_purchases').select('clinic_id').eq('purchase_token', token).maybeSingle();
+        if (!owner || owner.clinic_id !== clinicId) throw new Fail(409, 'Esta compra de Google Play ya está asociada a otra clínica.');
+      } else if (error) {
+        throw new Fail(500, 'No se pudo registrar la compra. Intenta de nuevo.');
+      }
+    }
+
+    // Confirmar la compra a Google: si no se confirma en 3 días, Google le devuelve el dinero al cliente.
+    let acknowledged = purchase.acknowledgementState === 'ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED';
+    if (valid && !acknowledged) {
+      const ack = await playApi(`purchases/subscriptions/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(token)}:acknowledge`, { method: 'POST', body: '{}' });
+      acknowledged = ack.ok;
+      if (!ack.ok) console.error('play acknowledge', ack.status, await ack.text());
+    }
+    await db.from('play_purchases').update({
+      product_id: productId, order_id: orderId, state, expires_at: expiresAt || null,
+      auto_renewing: !!line.autoRenewingPlan?.autoRenewEnabled, acknowledged, updated_at: new Date().toISOString(),
+    }).eq('purchase_token', token);
+    if (!valid) return { ok: true, active: false, changed: false };
+
+    const { data: clinic } = await db.from('clinics').select('paid_until, status, trial').eq('id', clinicId).single();
+    if (!clinic) throw new Fail(404, 'No encontramos tu clínica.');
+    if (clinic.status === 'bloqueada') throw new Fail(403, 'Tu cuenta está bloqueada. Escríbenos por WhatsApp para resolverlo.');
+    const until = dateVE(expiresAt);
+    const paidUntil = until > clinic.paid_until ? until : (clinic.paid_until as string);
+    const changed = paidUntil !== clinic.paid_until || clinic.trial || clinic.status === 'suspendida';
+    if (changed) {
+      const { error } = await db.from('clinics')
+        .update({ paid_until: paidUntil, trial: false, status: clinic.status === 'suspendida' ? 'activa' : clinic.status })
+        .eq('id', clinicId);
+      if (error) throw new Fail(500, 'No se pudo activar tu plan. Intenta de nuevo.');
+    }
+
+    // Una fila en el historial de pagos por cada cobro de Google (compra o renovación), ya aprobada.
+    if (orderId) {
+      const price = months === 12 ? Number(settings.annual_price) || Number(settings.monthly_price) * 12 : Number(settings.monthly_price);
+      if (price > 0) {
+        const { error } = await db.from('payment_reports').insert({
+          clinic_id: clinicId, user_id: me.id, method: 'Google Play', amount: price, currency: settings.currency, months,
+          reference: orderId.slice(0, 60), paid_on: todayVE(), status: 'aprobado', reviewed_at: new Date().toISOString(),
+          admin_note: 'Monto de referencia: lo cobrado está en Play Console.', external_id: orderId,
+        });
+        if (error && error.code !== '23505') console.error('play history', error.message);
+      }
+    }
+    return { ok: true, active: true, changed, paid_until: paidUntil };
+  },
+
 };
 
 Deno.serve(async (req) => {

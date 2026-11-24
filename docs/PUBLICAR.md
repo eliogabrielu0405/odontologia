@@ -16,18 +16,19 @@ Están escritos para hacerlos con Claude en una sesión que tenga conectada la c
 
 ## 2. Crear la base de datos
 
-Aplicar en orden las migraciones de `supabase/migrations/` (`20261108000000_sonrisas.sql`, `20261108010000_endurecer_funciones.sql`, `20261109000000_fotos_pacientes.sql`, `20261109010000_sugerencias.sql`, `20261112000000_plan_anual.sql`, `20261113000000_precios_publicos.sql`). Crean:
+Aplicar en orden las migraciones de `supabase/migrations/` (`20261108000000_sonrisas.sql`, `20261108010000_endurecer_funciones.sql`, `20261109000000_fotos_pacientes.sql`, `20261109010000_sugerencias.sql`, `20261112000000_plan_anual.sql`, `20261113000000_precios_publicos.sql`, `20261124000000_metodos_pago_y_play.sql`). Crean:
 
 | Tabla | Para qué sirve |
 |-------|----------------|
-| `platform_settings` | Precio mensual y del plan anual, moneda, días de prueba y de gracia, datos de Pago Móvil, WhatsApp de soporte |
+| `platform_settings` | Precio mensual y del plan anual, moneda, días de prueba y de gracia, métodos de pago (`payment_methods`), ID de las suscripciones de Google Play, WhatsApp de soporte |
 | `platform_admins` | Quién es administrador de EU Digital Solutions |
 | `platform_secrets` | Código de un solo uso para crear al administrador (solo su hash) |
 | `clinics` | Cada odontólogo que contrata: estado (activa, suspendida, bloqueada) y fecha hasta la que pagó |
 | `profiles` | Personas de cada clínica: titular, odontólogos y recepción |
 | `clinic_invites` | Códigos para que la recepción u otros odontólogos se unan |
 | `records` | Datos clínicos de cada consultorio (pacientes, citas, presupuestos, cobros, odontogramas…) |
-| `payment_reports` | Pagos reportados con foto del comprobante (meses que cubren; 12 = plan anual) |
+| `payment_reports` | Pagos reportados con foto del comprobante y su método (meses que cubren; 12 = plan anual). Los pagos de Google Play aparecen aquí ya aprobados |
+| `play_purchases` | Compras de Google Play verificadas por la función del servidor (a qué clínica pertenece cada una y hasta cuándo vale) |
 | `suggestions` | Sugerencias de las clínicas para mejorar la app y las respuestas del administrador |
 
 Además crean los buckets privados `comprobantes` y `pacientes` (fotos de pacientes), todas las reglas de seguridad por filas y las funciones `my_context`, `approve_payment`, `reject_payment`, `update_my_clinic`, `update_my_profile` y `update_member`.
@@ -41,6 +42,8 @@ Desplegar `supabase/functions/sonrisas-api/index.ts` como la Edge Function **`so
 Usa las variables `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY`, que Supabase ya trae en sus funciones.
 
 La función crea las cuentas ya confirmadas, así que **no hace falta configurar correo (SMTP)** para registrarse.
+
+Para cobrar en la app de Play Store, la función necesita dos secretos más (Edge Functions → Secrets): `PLAY_PACKAGE_NAME` y `PLAY_SERVICE_ACCOUNT`. Ver la sección *Google Play* más abajo. Sin ellos todo lo demás funciona igual; solo los pagos de Google Play responden “todavía no están configurados”.
 
 ## 4. Conectar la página con Supabase
 
@@ -102,7 +105,7 @@ Se cambió por dos motivos del plan gratuito de Netlify:
 
 ## 7. Primeros ajustes (en la app, como administrador)
 
-En **Ajustes de cobro**: precio mensual, precio del plan anual (12 meses; en 0 no se ofrece), moneda, días de prueba, días de gracia, días de aviso, datos de Pago Móvil (banco, teléfono, cédula/RIF, titular) y WhatsApp de soporte.
+En **Ajustes de cobro**: precio mensual, precio del plan anual (12 meses; en 0 no se ofrece), moneda, días de prueba, días de gracia, días de aviso y WhatsApp de soporte. Arriba, en **Métodos de pago**, agrega los que aceptas (Pago Móvil, transferencia, Zelle, PayPal, Binance Pay, Zinli u otro) con sus datos; se guardan al momento y las clínicas los ven en ese orden.
 
 ## 8. Recomendado en el panel de Supabase
 
@@ -117,15 +120,31 @@ Una vez publicada (con https), Sonrisas ya es instalable:
 - **Android:** abrir el enlace en Chrome y tocar **Instalar la app**.
 - **iPhone:** abrir el enlace en Safari → Compartir → **Agregar a pantalla de inicio**.
 
-### Si más adelante la quieres en las tiendas
+## Google Play (app de la tienda)
 
-- **Google Play:** se puede empaquetar esta misma app como *Trusted Web Activity* (con PWABuilder o Bubblewrap). Requiere una cuenta de desarrollador de Google Play (pago único) y publicar el archivo `.well-known/assetlinks.json` en el sitio.
-- **App Store (iPhone):** requiere la cuenta de desarrollador de Apple (pago anual) y su revisión. Ojo: Apple y Google suelen exigir que las suscripciones digitales se cobren con su propio sistema de pagos, con comisión, y pueden rechazar una app que pida pagar por Pago Móvil desde adentro. Antes de publicar en tiendas hay que revisar sus reglas vigentes.
+Sonrisas se publica en Play Store como *Trusted Web Activity*: el paquete abre esta misma página a pantalla completa, así que cada cambio publicado en Cloudflare llega solo a la app. **En la app de Play se paga con Google Play; en la web, con los métodos de Ajustes de cobro.** Dentro de la app de Play no aparecen los otros métodos de pago (Google no lo permite).
+
+1. **Cuenta de Play Console** (personal o de empresa con D-U-N-S) y una **cuenta de comerciante** de Google Payments para recibir los cobros. Confirmar que acepten tu país y tu banco.
+2. **Crear el paquete** en [PWABuilder](https://www.pwabuilder.com) con la dirección `https://sonrisas.eliogabrielu04.workers.dev/`:
+   - *Start URL*: `/?origen=play`. Así la app sabe que se abrió desde Play.
+   - Activar **Google Play Billing** (Digital Goods API).
+   - Guardar bien la **clave de firma** que genera; sin ella no se pueden subir actualizaciones.
+3. **Publicar `web/.well-known/assetlinks.json`** con el nombre del paquete y la huella SHA-256 de la clave (PWABuilder la entrega; la de *Play App Signing* está en Play Console → Configuración → Integridad de la app). Sin este archivo la app muestra la barra del navegador arriba.
+4. **Crear las suscripciones** en Play Console → Monetizar → Productos → Suscripciones, con sus planes base (mensual y anual) y el precio. Los ID de producto van en Sonrisas → Ajustes de cobro → *App de Play Store* (por defecto `sonrisas_mensual` y `sonrisas_anual`).
+5. **Cuenta de servicio** para que el servidor verifique las compras:
+   - En Google Cloud, crear una cuenta de servicio y descargar su clave JSON.
+   - En Play Console → Usuarios y permisos, invitar el correo de esa cuenta con permisos de **Ver datos financieros** y **Administrar pedidos y suscripciones**.
+   - En Supabase → Edge Functions → Secrets: `PLAY_PACKAGE_NAME` = el nombre del paquete (ej. `app.sonrisas.twa`) y `PLAY_SERVICE_ACCOUNT` = el contenido completo del JSON.
+6. Probar con **cuentas de prueba de licencia** (Play Console → Configuración → Pruebas de licencia) en una prueba interna antes de publicar.
+
+Cómo funciona por dentro: al tocar un plan, Google cobra y entrega un *token* de compra; la función `sonrisas-api` (acción `play_verify`) lo verifica con la API de Google Play, lo confirma (si no se confirma en 3 días Google devuelve el dinero), lo asocia a la clínica y extiende `paid_until` hasta la fecha de vencimiento que da Google. Las renovaciones se registran cada vez que se abre la app (y con el botón *Ya pagué: actualizar mi plan*).
+
+**App Store (iPhone):** requiere la cuenta de desarrollador de Apple (pago anual) y su revisión, y Apple exige su propio sistema de pagos para suscripciones dentro de la app. No está preparado todavía.
 
 ## Comprobación final
 
 1. Crear la cuenta de administrador con el código.
 2. Registrar un odontólogo de prueba desde “Soy odontólogo”.
-3. Como odontólogo: invitar a una recepción y subir un comprobante en “Mi suscripción”.
+3. Como odontólogo: invitar a una recepción y subir un comprobante en “Mi suscripción” (probar con dos métodos de pago distintos).
 4. Como administrador: aprobar el pago, suspender y reactivar la clínica.
 5. Borrar la clínica de prueba desde el panel.

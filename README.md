@@ -1,7 +1,7 @@
 # Sonrisas · EU Digital Solutions
 
 Sistema en la nube para consultorios odontológicos que se cobra como **suscripción mensual o anual**.
-Cada odontólogo crea su cuenta, invita a su recepción y paga la mensualidad o el plan anual (12 meses) por **Pago Móvil** subiendo la foto del comprobante.
+Cada odontólogo crea su cuenta, invita a su recepción y paga la mensualidad o el plan anual (12 meses) en la web con el método que prefiera (**Pago Móvil, transferencia, Zelle, PayPal, Binance Pay, Zinli** u otro que configure el administrador) subiendo la foto del comprobante, o con **Google Play** en la app de Play Store, que se activa sola.
 EU Digital Solutions administra todas las cuentas desde su propio panel.
 
 Hecho para Venezuela: cédula, RIF, teléfonos 04xx, montos en dólares o bolívares y métodos de pago locales.
@@ -10,7 +10,7 @@ Hecho para Venezuela: cédula, RIF, teléfonos 04xx, montos en dólares o bolív
 
 | Persona | Qué puede hacer |
 |---------|-----------------|
-| **Administrador (EU Digital Solutions)** | Ver todas las clínicas con el correo y teléfono del doctor; revisar comprobantes y aprobar o rechazar pagos; suspender, bloquear, reactivar, extender o eliminar clínicas; enviar recordatorios de pago por WhatsApp; restablecer contraseñas; configurar precio, días de prueba y de gracia, datos de Pago Móvil y WhatsApp de soporte; leer y responder las **sugerencias** de las clínicas. |
+| **Administrador (EU Digital Solutions)** | Ver todas las clínicas con el correo y teléfono del doctor; revisar comprobantes y aprobar o rechazar pagos; suspender, bloquear, reactivar, extender o eliminar clínicas; enviar recordatorios de pago por WhatsApp; restablecer contraseñas; configurar precio, días de prueba y de gracia, los métodos de pago con sus datos, los ID de las suscripciones de Google Play y WhatsApp de soporte; leer y responder las **sugerencias** de las clínicas. |
 | **Odontólogo titular** | Se registra con su correo y contraseña (con días de prueba gratis). Usa todo el sistema, invita a su equipo con un código, ve **Mi suscripción** y sube el comprobante. Envía **sugerencias** para mejorar la app y ve las respuestas. |
 | **Recepción** | Se une con el código que le da el titular. Agenda, pacientes, presupuestos y cobros; también ve **Mi suscripción** y puede subir el comprobante. No edita la historia clínica ni el odontograma. |
 | **Otros odontólogos** | Se unen con código. Agenda, pacientes, historia clínica, odontograma, presupuestos y reportes. |
@@ -23,6 +23,8 @@ Hecho para Venezuela: cédula, RIF, teléfonos 04xx, montos en dólares o bolív
 - **Sin acceso / suspendida**: solo se ve “Mi suscripción” para reportar el pago. Los datos quedan guardados.
 - **Bloqueada**: nadie de esa clínica entra; se muestra el WhatsApp de soporte.
 - Al **aprobar un pago**, la suscripción se extiende los meses pagados y la clínica se reactiva sola.
+- **Métodos de pago (web):** el administrador arma la lista en *Ajustes de cobro*; la clínica elige el método, ve sus datos con botón de copiar (y el enlace de pago si es PayPal.me) y al reportar indica con cuál pagó.
+- **Google Play (app de la tienda):** la clínica elige el plan mensual o anual con el precio de Google y paga con su cuenta de Google. El servidor verifica la compra con Google y extiende la suscripción al momento; las renovaciones se registran al abrir la app. Ahí no se muestran los otros métodos de pago. Configuración en `docs/PUBLICAR.md`.
 
 ## Sugerencias
 
@@ -64,7 +66,8 @@ web/js/config.js        URL y clave pública de Supabase
 web/js/utils.js         Formato (Venezuela), modales, avisos, WhatsApp, fotos
 web/js/logo.js          Logo de Sonrisas en vector (en modo oscuro las letras van en blanco)
 web/js/data.js          Datos de la clínica: carga, guardado en segundo plano y tiempo real
-web/js/account.js       Sesión, registro, invitaciones, perfil, equipo y Mi suscripción
+web/js/play.js          Pagos con Google Play en la app de Play Store
+web/js/account.js       Sesión, registro, invitaciones, perfil, equipo, Mi suscripción y métodos de pago
 web/js/photos.js        Fotos de pacientes: subir, mostrar con enlaces temporales y borrar
 web/js/suggestions.js   Sugerencias de las clínicas y respuestas del administrador
 web/js/views.js         Pantallas de la clínica

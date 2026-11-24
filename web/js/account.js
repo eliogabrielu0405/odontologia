@@ -118,11 +118,12 @@
     return path;
   };
 
-  const reportPayment = async ({ file, amount, currency, months, reference, bank, payerPhone, paidOn }) => {
+  const reportPayment = async ({ file, method, amount, currency, months, reference, bank, payerPhone, paidOn }) => {
     if (!ctx || !ctx.clinic) throw new Error('No hay una clínica asociada a tu cuenta.');
     const path = await uploadReceipt(ctx.clinic.id, file);
     const { error } = await client.from('payment_reports').insert({
-      clinic_id: ctx.clinic.id, user_id: ctx.user_id, amount: U.cents(amount), currency, months: Number(months) || 1,
+      clinic_id: ctx.clinic.id, user_id: ctx.user_id, method: String(method || 'Pago Móvil').trim().slice(0, 40) || 'Pago Móvil',
+      amount: U.cents(amount), currency, months: Number(months) || 1,
       reference: String(reference || '').trim().slice(0, 60), bank: String(bank || '').trim().slice(0, 80),
       payer_phone: String(payerPhone || '').trim().slice(0, 30), paid_on: paidOn, receipt_path: path,
     });
@@ -138,13 +139,14 @@
 
   const showReceipt = async (report) => {
     let url = null;
-    try { url = await receiptUrl(report.receipt_path); } catch (err) { toast(err.message, 'err'); return; }
+    if (report.receipt_path) { try { url = await receiptUrl(report.receipt_path); } catch (err) { toast(err.message, 'err'); return; } }
     openModal({
       title: `Comprobante · ${money(report.amount, report.currency)}`, size: 'lg', hideFooter: true,
-      body: `<div class="receipt-view">${url ? `<img src="${esc(url)}" alt="Foto del comprobante de pago">` : '<p class="muted">Este pago no tiene foto.</p>'}</div>
+      body: `<div class="receipt-view">${url ? `<img src="${esc(url)}" alt="Foto del comprobante de pago">` : `<p class="muted">${report.method === PLAY_METHOD ? 'Pagado con Google Play: el comprobante lo envía Google a tu correo.' : 'Este pago no tiene foto.'}</p>`}</div>
         <dl class="kv compact">
+          <dt>Método</dt><dd>${esc(report.method || 'Pago Móvil')}</dd>
           <dt>Referencia</dt><dd>${esc(report.reference) || '—'}</dd>
-          <dt>Banco</dt><dd>${esc(report.bank) || '—'}</dd>
+          <dt>${esc(methodType(report.method).from)}</dt><dd>${esc(report.bank) || '—'}</dd>
           <dt>Teléfono</dt><dd>${esc(report.payer_phone) || '—'}</dd>
           <dt>Fecha del pago</dt><dd>${fmtDate(report.paid_on)}</dd>
           <dt>Meses</dt><dd>${report.months}</dd>
@@ -168,11 +170,42 @@
   /* =====================================================================
      VISTA: Mi suscripción
      ===================================================================== */
-  const PM_FIELDS = [
-    ['pm_bank', 'Banco'], ['pm_phone', 'Teléfono'], ['pm_id_doc', 'Cédula / RIF'], ['pm_holder', 'Titular'],
-  ];
+  /** Tipos de método de pago: los datos que pide cada uno al administrador y cómo se llama la referencia. */
+  const PLAY_METHOD = 'Google Play';
+  const METHOD_TYPES = {
+    pago_movil: { name: 'Pago Móvil', icon: 'phone', fields: ['Banco', 'Teléfono', 'Cédula / RIF', 'Titular'], ref: 'Referencia', refHint: 'Últimos dígitos', from: 'Banco de origen', fromHint: 'Ej: Banesco', phone: true },
+    transferencia: { name: 'Transferencia bancaria', icon: 'building', fields: ['Banco', 'Número de cuenta', 'Cédula / RIF', 'Titular'], ref: 'Referencia', refHint: 'Número de la transferencia', from: 'Banco de origen', fromHint: 'Ej: Mercantil' },
+    zelle: { name: 'Zelle', icon: 'cash', fields: ['Correo o teléfono', 'Titular'], ref: 'Número de confirmación', refHint: 'Lo ves en tu banco', from: 'Nombre de quien pagó', fromHint: 'Como aparece en Zelle' },
+    paypal: { name: 'PayPal', icon: 'wallet', fields: ['Correo de PayPal'], link: 'Enlace de PayPal.me (opcional)', ref: 'ID de la transacción', refHint: 'Lo ves en el detalle del pago', from: 'Correo de quien pagó', fromHint: 'tu@correo.com' },
+    binance: { name: 'Binance Pay', icon: 'wallet', fields: ['Binance Pay ID', 'Usuario o correo', 'Moneda'], ref: 'ID de la orden', refHint: 'Lo ves en el historial de Binance Pay', from: 'Usuario de quien pagó', fromHint: 'Tu usuario de Binance' },
+    zinli: { name: 'Zinli', icon: 'wallet', fields: ['Correo de Zinli', 'Titular'], ref: 'Referencia', refHint: 'Número del movimiento', from: 'Correo de quien pagó', fromHint: 'tu@correo.com' },
+    otro: { name: 'Otro', icon: 'cash', fields: ['Datos para pagar'], ref: 'Referencia', refHint: 'Número o código del pago', from: 'Quién pagó', fromHint: 'Nombre o cuenta' },
+  };
+  /** El tipo de un método por su tipo o por su nombre (los comprobantes guardan el nombre). */
+  const methodType = (typeOrName) => {
+    if (METHOD_TYPES[typeOrName]) return METHOD_TYPES[typeOrName];
+    const method = (platform().payment_methods || []).find((m) => m.name === typeOrName);
+    if (method && METHOD_TYPES[method.type]) return METHOD_TYPES[method.type];
+    if (typeOrName === PLAY_METHOD) return { ...METHOD_TYPES.otro, from: 'Cuenta de Google' };
+    return METHOD_TYPES.otro;
+  };
+  /** Métodos que ven las clínicas: los activos y con algún dato cargado. */
+  // Si la base todavía no tiene la lista (migración 20261124 sin aplicar), usa los datos de Pago Móvil de antes.
+  const legacyMethods = (s) => [{ id: 'pago-movil', type: 'pago_movil', name: 'Pago Móvil', link: '', note: '', active: true,
+    fields: [['Banco', s.pm_bank], ['Teléfono', s.pm_phone], ['Cédula / RIF', s.pm_id_doc], ['Titular', s.pm_holder]].map(([label, value]) => ({ label, value: value || '' })) }];
+  const activeMethods = (s = platform()) => (Array.isArray(s.payment_methods) ? s.payment_methods : legacyMethods(s))
+    .filter((m) => m && m.active !== false && String(m.name || '').trim()
+      && ((m.fields || []).some((f) => String(f.value || '').trim()) || String(m.link || '').trim()));
+  /** Resumen en una línea de cada método (para el recordatorio por WhatsApp). */
+  const methodSummary = (s = platform()) => activeMethods(s).map((m) =>
+    `${m.name}: ${[...(m.fields || []).filter((f) => String(f.value || '').trim()).map((f) => f.value), m.link].filter(Boolean).join(' · ')}`);
+  /** Qué decirle a la clínica para pagar, según dónde abrió Sonrisas. */
+  const payHint = () => (window.Play && Play.inPlayApp ? 'Suscríbete desde Mi suscripción.' : 'Paga tu plan y sube el comprobante en Mi suscripción.');
 
-  const statusCard = (sub) => {
+  const supportButton = (s) => (s.support_whatsapp ? `<a class="btn btn-sm" href="${esc(waLink(s.support_whatsapp, `Hola, soy de ${ctx.clinic.name} y tengo una consulta sobre mi suscripción de Sonrisas.`))}" target="_blank" rel="noopener">${icon('whatsapp')}Escribir a soporte</a>` : '');
+
+  /** inPlay: en la app de Play el precio lo pone Google, así que aquí no se muestra el de la web. */
+  const statusCard = (sub, inPlay = false) => {
     let detail = '';
     if (sub.state === 'prueba') detail = sub.daysLeft === 0 ? 'Tu prueba gratis termina hoy.' : `Te quedan ${U.plural(sub.daysLeft, 'día', 'días')} de prueba gratis.`;
     else if (sub.state === 'al_dia') detail = `Tu plan está pagado hasta el ${fmtDate(sub.paidUntil)}.`;
@@ -184,30 +217,63 @@
     return `<div class="card sub-card sub-${sub.state}">
       <div class="sub-main">
         <span class="badge ${sub.badge}">${esc(sub.label)}</span>
-        <h2>${sub.price ? money(sub.price, sub.currency) : 'Plan Sonrisas'}<small>${sub.price ? ' / mes' : ''}</small></h2>
-        ${sub.annualPrice ? `<p class="sub-annual">${icon('check')}<span>Plan anual: <strong>${money(sub.annualPrice, sub.currency)}</strong> por 12 meses${annualSaving(sub) ? ` · ahorras ${money(annualSaving(sub), sub.currency)}` : ''}</span></p>` : ''}
+        <h2>${sub.price && !inPlay ? money(sub.price, sub.currency) : 'Plan Sonrisas'}<small>${sub.price && !inPlay ? ' / mes' : ''}</small></h2>
+        ${sub.annualPrice && !inPlay ? `<p class="sub-annual">${icon('check')}<span>Plan anual: <strong>${money(sub.annualPrice, sub.currency)}</strong> por 12 meses${annualSaving(sub) ? ` · ahorras ${money(annualSaving(sub), sub.currency)}` : ''}</span></p>` : ''}
         <p>${esc(detail)}</p>
       </div>
       <dl class="sub-meta"><dt>Vence</dt><dd>${fmtDate(sub.paidUntil)}</dd><dt>Clínica</dt><dd>${esc(ctx.clinic.name)}</dd></dl>
     </div>`;
   };
 
+  const amountRows = (sub) => [[sub.annualPrice ? 'Monto mensual' : 'Monto', sub.price], ['Plan anual (12 meses)', sub.annualPrice]].filter(([, value]) => value).map(([label, value]) => `
+    <div class="pm-row total"><span>${label}</span><strong>${money(value, sub.currency)}</strong><button type="button" class="icon-btn sm" data-copy="${esc(U.number2(value))}" aria-label="Copiar ${label.toLowerCase()}">${icon('copy')}</button></div>`).join('');
+
+  const methodPanel = (m, sub, s, index) => {
+    const type = METHOD_TYPES[m.type] || METHOD_TYPES.otro;
+    const rows = (m.fields || []).filter((f) => String(f.value || '').trim()).map((f) => `
+      <div class="pm-row"><span>${esc(f.label)}</span><strong>${esc(f.value)}</strong><button type="button" class="icon-btn sm" data-copy="${esc(f.value)}" aria-label="Copiar ${esc(f.label)}">${icon('copy')}</button></div>`).join('');
+    const link = /^https:\/\/[^\s]+$/i.test(String(m.link || '').trim()) ? `<a class="btn btn-primary" href="${esc(m.link.trim())}" target="_blank" rel="noopener">${icon('wallet')}Pagar con ${esc(m.name)}</a>` : '';
+    return `<div class="pm-panel" data-pm-panel="${index}" ${index ? 'hidden' : ''}>
+      <div class="pm-head"><div class="pm-logo">${icon(type.icon)}</div><div><h3>${esc(m.name)}</h3><p class="muted no-margin">Paga con estos datos y luego envía el comprobante.</p></div></div>
+      <div class="pm-rows">${rows}${amountRows(sub)}</div>
+      ${link ? `<div class="doc-actions left">${link}</div>` : ''}
+      ${m.note ? `<p class="pm-note">${esc(m.note)}</p>` : ''}
+    </div>`;
+  };
+
   const payCard = (s, sub) => {
-    const configuredPM = PM_FIELDS.some(([k]) => String(s[k] || '').trim());
-    const support = s.support_whatsapp ? `<a class="btn btn-sm" href="${esc(waLink(s.support_whatsapp, `Hola, soy de ${ctx.clinic.name} y tengo una consulta sobre mi suscripción de Sonrisas.`))}" target="_blank" rel="noopener">${icon('whatsapp')}Escribir a soporte</a>` : '';
-    if (!configuredPM) {
+    const methods = activeMethods(s);
+    const support = supportButton(s);
+    if (!methods.length) {
       return `<div class="card card-pad"><h3 class="section-title">Cómo pagar</h3><p class="muted no-margin">EU Digital Solutions todavía no cargó los datos de pago.</p>${support ? `<div class="doc-actions left">${support}</div>` : ''}</div>`;
     }
-    const rows = PM_FIELDS.filter(([k]) => String(s[k] || '').trim()).map(([k, label]) => `
-      <div class="pm-row"><span>${label}</span><strong>${esc(s[k])}</strong><button type="button" class="icon-btn sm" data-copy="${esc(s[k])}" aria-label="Copiar ${label}">${icon('copy')}</button></div>`).join('');
     return `<div class="card card-pad pm-card">
-      <div class="pm-head"><div class="pm-logo">${icon('phone')}</div><div><h3>Pago Móvil</h3><p class="muted no-margin">Paga con estos datos y luego envía el comprobante.</p></div></div>
-      <div class="pm-rows">${rows}
-        ${[[sub.annualPrice ? 'Monto mensual' : 'Monto', sub.price], ['Plan anual (12 meses)', sub.annualPrice]].filter(([, value]) => value).map(([label, value]) => `
-        <div class="pm-row total"><span>${label}</span><strong>${money(value, sub.currency)}</strong><button type="button" class="icon-btn sm" data-copy="${esc(U.number2(value))}" aria-label="Copiar ${label.toLowerCase()}">${icon('copy')}</button></div>`).join('')}
-      </div>
+      ${methods.length > 1 ? `<div><p class="pm-choose">Elige cómo pagar</p><div class="pm-tabs" role="tablist" aria-label="Métodos de pago">${methods.map((m, i) => `<button type="button" role="tab" aria-selected="${i === 0}" data-pm-tab="${i}">${icon((METHOD_TYPES[m.type] || METHOD_TYPES.otro).icon)}${esc(m.name)}</button>`).join('')}</div></div>` : ''}
+      ${methods.map((m, i) => methodPanel(m, sub, s, i)).join('')}
       ${s.payment_note ? `<p class="pm-note">${esc(s.payment_note)}</p>` : ''}
       ${support ? `<div class="doc-actions left">${support}</div>` : ''}
+    </div>`;
+  };
+
+  /** En la app de Play: suscripción con Google Play (sin otros métodos de pago). */
+  const playCard = (s, sub, products, ready) => {
+    const support = supportButton(s);
+    if (!canPay()) return `<div class="card card-pad"><h3 class="section-title">Suscripción</h3><p class="muted no-margin">Solo el titular de la clínica o la recepción pueden suscribirse.</p></div>`;
+    if (sub.state === 'bloqueada') return `<div class="card card-pad"><h3 class="section-title">Suscripción</h3><p class="muted no-margin">Tu cuenta está bloqueada. Escríbenos por WhatsApp para resolverlo.</p>${support ? `<div class="doc-actions left">${support}</div>` : ''}</div>`;
+    if (!ready || !products.length) {
+      return `<div class="card card-pad"><h3 class="section-title">Suscripción con Google Play</h3><p class="muted no-margin">Los pagos con Google Play no están disponibles en este momento. Intenta de nuevo más tarde.</p>${support ? `<div class="doc-actions left">${support}</div>` : ''}</div>`;
+    }
+    const paidAhead = ['al_dia', 'por_vencer'].includes(sub.state) && sub.daysLeft > 0;
+    return `<div class="card card-pad pm-card">
+      <div class="pm-head"><div class="pm-logo">${icon('wallet')}</div><div><h3>Suscripción con Google Play</h3><p class="muted no-margin">Pagas con tu cuenta de Google y se renueva sola. La cancelas cuando quieras desde Play Store.</p></div></div>
+      ${paidAhead ? `<p class="pm-note">Tu plan ya está pagado hasta el ${fmtDate(sub.paidUntil)}. Si te suscribes ahora, el plan de Google Play vale desde hoy.</p>` : ''}
+      <div class="play-plans">${products.map((p) => `
+        <button type="button" class="play-plan" data-play-buy="${esc(p.itemId)}">
+          <span><strong>${esc(p.itemId === s.play_annual_sku ? 'Plan anual' : p.itemId === s.play_monthly_sku ? 'Plan mensual' : (p.title || 'Plan Sonrisas'))}</strong><small>${esc(p.itemId === s.play_annual_sku ? 'Se renueva cada año' : 'Se renueva cada mes')}</small></span>
+          <b>${esc(Play.priceText(p))}</b>
+        </button>`).join('')}
+      </div>
+      <div class="doc-actions left"><button type="button" class="btn btn-sm" data-play-restore>${icon('refresh')}Ya pagué: actualizar mi plan</button>${support}</div>
     </div>`;
   };
 
@@ -215,6 +281,7 @@
     <form class="card" data-report novalidate>
       <div class="card-head"><h3>Reportar un pago</h3><span class="muted small">Lo revisamos y activamos tu plan</span></div>
       <div class="card-body form-grid">
+        ${activeMethods(s).length > 1 ? `<label class="field full">Cómo pagaste<select name="method">${activeMethods(s).map((m) => `<option value="${esc(m.name)}">${esc(m.name)}</option>`).join('')}</select></label>` : `<input type="hidden" name="method" value="${esc((activeMethods(s)[0] || {}).name || 'Pago Móvil')}">`}
         <label class="field full upload-field">
           <span>Foto del comprobante <span class="req">*</span></span>
           <input type="file" name="receipt" accept="image/*" required data-file>
@@ -229,9 +296,9 @@
         <label class="field">Moneda<select name="currency"><option value="USD" ${sub.currency === 'USD' ? 'selected' : ''}>Dólares ($)</option><option value="VES" ${sub.currency === 'VES' ? 'selected' : ''}>Bolívares (Bs.)</option></select></label>
         <label class="field"><span>Monto pagado <span class="req">*</span></span><input type="number" name="amount" min="0.01" step="0.01" inputmode="decimal" required value="${sub.price ? sub.price : ''}"></label>
         <label class="field"><span>Fecha del pago <span class="req">*</span></span><input type="date" name="paidOn" required value="${isoDate()}"></label>
-        <label class="field"><span>Referencia <span class="req">*</span></span><input name="reference" required maxlength="60" placeholder="Últimos dígitos" inputmode="numeric"></label>
-        <label class="field">Banco de origen<input name="bank" maxlength="80" placeholder="Ej: Banesco"></label>
-        <label class="field full">Teléfono desde el que pagaste<input name="payerPhone" maxlength="30" inputmode="tel" placeholder="0414-1234567"></label>
+        <label class="field"><span><span data-ref-label>Referencia</span> <span class="req">*</span></span><input name="reference" required maxlength="60" placeholder="Últimos dígitos"></label>
+        <label class="field"><span data-from-label>Banco de origen</span><input name="bank" maxlength="80" placeholder="Ej: Banesco"></label>
+        <label class="field full" data-phone-field>Teléfono desde el que pagaste<input name="payerPhone" maxlength="30" inputmode="tel" placeholder="0414-1234567"></label>
       </div>
       <div class="form-actions"><button class="btn btn-primary btn-lg" type="submit" data-send>${icon('upload')}Enviar comprobante</button></div>
     </form>`;
@@ -240,33 +307,80 @@
   const REPORT_LABEL = { pendiente: 'En revisión', aprobado: 'Aprobado', rechazado: 'Rechazado' };
 
   const historyCard = (reports) => `
-    <div class="card"><div class="card-head"><h3>Pagos reportados</h3></div>
-      <div class="table-wrap"><table><thead><tr><th>Enviado</th><th class="num">Monto</th><th>Meses</th><th>Referencia</th><th>Estado</th><th><span class="sr-only">Comprobante</span></th></tr></thead><tbody>
-      ${reports.map((r) => `<tr><td class="nowrap">${fmtDateTime(r.created_at)}</td><td class="num money">${money(r.amount, r.currency)}</td><td>${r.months === 12 && Number(platform().annual_price) > 0 ? '12 (anual)' : r.months}</td><td>${esc(r.reference) || '—'}</td>
+    <div class="card"><div class="card-head"><h3>Pagos</h3></div>
+      <div class="table-wrap"><table><thead><tr><th>Enviado</th><th>Método</th><th class="num">Monto</th><th>Meses</th><th>Referencia</th><th>Estado</th><th><span class="sr-only">Comprobante</span></th></tr></thead><tbody>
+      ${reports.map((r) => `<tr><td class="nowrap">${fmtDateTime(r.created_at)}</td><td>${esc(r.method || 'Pago Móvil')}</td><td class="num money">${money(r.amount, r.currency)}</td><td>${r.months === 12 && Number(platform().annual_price) > 0 ? '12 (anual)' : r.months}</td><td>${esc(r.reference) || '—'}</td>
         <td><span class="badge ${REPORT_BADGE[r.status]}">${REPORT_LABEL[r.status]}</span>${r.admin_note ? `<br><small class="muted">${esc(r.admin_note)}</small>` : ''}</td>
-        <td><div class="act"><button data-receipt="${r.id}" title="Ver comprobante" aria-label="Ver comprobante">${icon('eye')}</button></div></td></tr>`).join('') || '<tr><td colspan="6" class="empty">Todavía no reportaste pagos.</td></tr>'}
+        <td><div class="act"><button data-receipt="${r.id}" title="Ver comprobante" aria-label="Ver comprobante">${icon('eye')}</button></div></td></tr>`).join('') || '<tr><td colspan="7" class="empty">Todavía no hay pagos.</td></tr>'}
       </tbody></table></div></div>`;
 
   const subscriptionView = async (el) => {
     const s = platform();
     const sub = subscription();
+    const inPlay = !!(window.Play && Play.inPlayApp);
     el.innerHTML = `${pageHead('Mi suscripción', 'Estado de tu plan Sonrisas y pagos')}<div class="card empty">Cargando pagos…</div>`;
     let reports = [];
-    try { reports = await loadMyReports(); } catch (err) { toast(err.message, 'err'); }
+    let products = [];
+    let playReady = false;
+    const [loaded] = await Promise.allSettled([
+      loadMyReports(),
+      inPlay ? Play.available().then(async (ok) => { playReady = ok; if (ok) products = await Play.details([s.play_monthly_sku, s.play_annual_sku]); }) : null,
+    ]);
+    if (loaded.status === 'fulfilled') reports = loaded.value; else toast(loaded.reason.message, 'err');
     const pending = reports.find((r) => r.status === 'pendiente');
     const allowed = canPay() && sub.state !== 'bloqueada';
+    const order = [s.play_monthly_sku, s.play_annual_sku];
+    products.sort((a, b) => order.indexOf(a.itemId) - order.indexOf(b.itemId));
     el.innerHTML = `
       ${pageHead('Mi suscripción', 'Estado de tu plan Sonrisas y pagos')}
-      ${statusCard(sub)}
+      ${statusCard(sub, inPlay)}
       ${pending ? `<div class="banner banner-info">${icon('clock')}<div class="grow"><strong>Recibimos tu comprobante del ${fmtDate(pending.paid_on)}.</strong> Está en revisión; te avisamos al activarlo.</div></div>` : ''}
+      ${inPlay ? `<div class="sub-grid">${playCard(s, sub, products, playReady)}</div>` : `
       <div class="grid grid-2 sub-grid">
         ${payCard(s, sub)}
         ${allowed ? reportForm(s, sub) : `<div class="card card-pad"><h3 class="section-title">Reportar un pago</h3><p class="muted no-margin">${sub.state === 'bloqueada' ? 'Tu cuenta está bloqueada. Escríbenos por WhatsApp para resolverlo.' : 'Solo el titular de la clínica o la recepción pueden reportar pagos.'}</p></div>`}
-      </div>
+      </div>`}
       <div class="mt">${historyCard(reports)}</div>`;
 
     el.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', () => copyText(b.dataset.copy)));
     el.querySelectorAll('[data-receipt]').forEach((b) => b.addEventListener('click', () => showReceipt(reports.find((r) => r.id === b.dataset.receipt))));
+
+    /* Google Play: comprar y "ya pagué" (vuelve a verificar las compras). */
+    const afterPlay = async (result) => {
+      toast(result && result.paid_until ? `¡Listo! Tu plan está activo hasta el ${fmtDate(result.paid_until)}.` : 'Tu plan está al día.');
+      if (window.App && App.refreshAccount) await App.refreshAccount(); else { await loadContext(); subscriptionView(el); }
+    };
+    el.querySelectorAll('[data-play-buy]').forEach((button) => button.addEventListener('click', async () => {
+      el.querySelectorAll('[data-play-buy]').forEach((b) => { b.disabled = true; });
+      try {
+        const result = await Play.buy(button.dataset.playBuy);
+        if (result) { await afterPlay(result); return; }
+      } catch (err) { toast(err.message, 'err'); }
+      el.querySelectorAll('[data-play-buy]').forEach((b) => { b.disabled = false; });
+    }));
+    const restore = el.querySelector('[data-play-restore]');
+    if (restore) restore.addEventListener('click', async () => {
+      restore.disabled = true;
+      try {
+        const changed = await Play.sync();
+        if (changed) { await afterPlay(null); return; }
+        toast('No encontramos pagos nuevos de Google Play en esta cuenta.');
+      } catch (err) { toast(err.message, 'err'); }
+      restore.disabled = false;
+    });
+
+    /* Pestañas de métodos de pago. */
+    const tabs = [...el.querySelectorAll('[data-pm-tab]')];
+    const pickMethod = (index) => {
+      tabs.forEach((t) => t.setAttribute('aria-selected', String(t.dataset.pmTab === String(index))));
+      el.querySelectorAll('[data-pm-panel]').forEach((panel) => { panel.hidden = panel.dataset.pmPanel !== String(index); });
+    };
+    tabs.forEach((t) => t.addEventListener('click', () => {
+      pickMethod(t.dataset.pmTab);
+      const select = el.querySelector('[data-report] select[name="method"]');
+      if (select) { select.selectedIndex = Number(t.dataset.pmTab); select.dispatchEvent(new Event('change')); }
+    }));
+
     const form = el.querySelector('[data-report]');
     if (!form) return;
     const fileInput = form.querySelector('[data-file]');
@@ -280,6 +394,19 @@
       preview.hidden = false;
       label.textContent = `${file.name} · toca para cambiarla`;
     });
+    const adaptToMethod = () => {
+      const type = methodType(form.method.value);
+      form.querySelector('[data-ref-label]').textContent = type.ref;
+      form.reference.placeholder = type.refHint;
+      form.reference.inputMode = type.phone ? 'numeric' : 'text';
+      form.querySelector('[data-from-label]').textContent = type.from;
+      form.bank.placeholder = type.fromHint;
+      form.querySelector('[data-phone-field]').hidden = !type.phone;
+      const index = activeMethods(s).findIndex((m) => m.name === form.method.value);
+      if (index >= 0 && tabs.length) pickMethod(index);
+    };
+    if (form.method.tagName === 'SELECT') form.method.addEventListener('change', adaptToMethod);
+    adaptToMethod();
     form.months.addEventListener('change', () => {
       const amount = planAmount(sub, Number(form.months.value));
       if (amount && form.currency.value === sub.currency) form.amount.value = amount;
@@ -290,7 +417,8 @@
       const file = fileInput.files[0];
       if (!file) { toast('Agrega la foto del comprobante.', 'err'); return; }
       if (!(Number(data.amount) > 0)) { toast('Escribe el monto que pagaste.', 'err'); form.amount.focus(); return; }
-      if (!String(data.reference).trim()) { toast('Escribe el número de referencia del pago.', 'err'); form.reference.focus(); return; }
+      if (!String(data.reference).trim()) { toast(`Escribe el dato "${methodType(data.method).ref}" del pago.`, 'err'); form.reference.focus(); return; }
+      if (!methodType(data.method).phone) data.payerPhone = '';
       const button = form.querySelector('[data-send]');
       button.disabled = true;
       button.textContent = 'Enviando…';
@@ -481,6 +609,7 @@
     signIn, signOut, hasSession, register, verifyCode, join, createAdmin,
     loadContext, context: () => ctx, loadPublicSettings, platform,
     subscription, subscriptionOf, STATES, canPay, hasAccess, loadMyReports, pendingReport, receiptUrl, showReceipt,
+    METHOD_TYPES, PLAY_METHOD, methodType, activeMethods, methodSummary, payHint,
     updateClinic, changePassword, showTempPassword,
     views: { subscription: subscriptionView, team: teamView, profile: profileView },
   };

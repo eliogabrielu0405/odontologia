@@ -278,6 +278,8 @@
   /* =====================================================================
      Layout con sesión
      ===================================================================== */
+  /** Sonrisas abierta desde la app de Play Store: se paga con Google Play. */
+  const inPlay = () => !!(window.Play && Play.inPlayApp);
   const subscriptionBanner = () => {
     const sub = Session.subscription();
     if (!sub || currentRoute() === 'suscripcion') return '';
@@ -288,10 +290,10 @@
     }
     if (sub.state === 'prueba') {
       const days = sub.daysLeft === 0 ? 'Tu prueba gratis termina hoy.' : `Te ${sub.daysLeft === 1 ? 'queda 1 día' : `quedan ${sub.daysLeft} días`} de prueba gratis.`;
-      return `<div class="banner banner-info">${icon('info')}<div class="grow"><strong>${days}</strong> ${Session.canPay() ? 'Para seguir después, paga tu plan por Pago Móvil y sube el comprobante.' : 'Avísale al titular para que active el plan.'}</div>${Session.canPay() ? '<a class="btn btn-sm" href="#suscripcion">Ver cómo pagar</a>' : ''}</div>`;
+      return `<div class="banner banner-info">${icon('info')}<div class="grow"><strong>${days}</strong> ${Session.canPay() ? (inPlay() ? 'Para seguir después, suscríbete desde Mi suscripción.' : 'Para seguir después, paga tu plan y sube el comprobante.') : 'Avísale al titular para que active el plan.'}</div>${Session.canPay() ? '<a class="btn btn-sm" href="#suscripcion">Ver cómo pagar</a>' : ''}</div>`;
     }
     if (sub.state === 'por_vencer') {
-      return `<div class="banner banner-warn">${icon('bell')}<div class="grow"><strong>Tu suscripción vence ${sub.daysLeft === 0 ? 'hoy' : `el ${fmtDate(sub.paidUntil)}`}.</strong> ${Session.canPay() ? 'Paga por Pago Móvil y sube el comprobante para no perder el acceso.' : 'Avísale al titular de la clínica.'}</div>${payBtn}</div>`;
+      return `<div class="banner banner-warn">${icon('bell')}<div class="grow"><strong>Tu suscripción vence ${sub.daysLeft === 0 ? 'hoy' : `el ${fmtDate(sub.paidUntil)}`}.</strong> ${Session.canPay() ? (inPlay() ? 'Renueva tu suscripción para no perder el acceso.' : 'Paga tu plan y sube el comprobante para no perder el acceso.') : 'Avísale al titular de la clínica.'}</div>${payBtn}</div>`;
     }
     if (sub.state === 'vencida') {
       return `<div class="banner banner-danger">${icon('alert')}<div class="grow"><strong>Tu suscripción venció el ${fmtDate(sub.paidUntil)}.</strong> Te ${sub.graceLeft === 1 ? 'queda 1 día' : `quedan ${sub.graceLeft} días`} antes de que se pause el acceso.</div>${payBtn}</div>`;
@@ -302,7 +304,7 @@
   const lockedNotice = () => {
     const sub = Session.subscription();
     const text = sub.state === 'suspendida' ? 'La cuenta de tu clínica está suspendida.' : `La suscripción de tu clínica venció el ${fmtDate(sub.paidUntil)}.`;
-    return `<div class="banner banner-danger">${icon('lock')}<div class="grow"><strong>${text}</strong> ${Session.canPay() ? 'Reporta tu pago aquí y reactivamos el acceso en cuanto lo confirmemos. Tus datos están guardados.' : 'Pídele al titular o a la recepción que reporten el pago. Tus datos están guardados.'}</div></div>`;
+    return `<div class="banner banner-danger">${icon('lock')}<div class="grow"><strong>${text}</strong> ${Session.canPay() ? (inPlay() ? 'Suscríbete aquí con Google Play y el acceso vuelve al momento. Tus datos están guardados.' : 'Reporta tu pago aquí y reactivamos el acceso en cuanto lo confirmemos. Tus datos están guardados.') : 'Pídele al titular o a la recepción que paguen el plan. Tus datos están guardados.'}</div></div>`;
   };
 
   const syncText = (state) => {
@@ -443,7 +445,11 @@
     renderLoading(false);
     const slow = setTimeout(() => renderLoading(true), 10000);
     try {
-      const ctx = await Session.loadContext();
+      let ctx = await Session.loadContext();
+      // App de Play: antes de decidir el acceso, registra renovaciones de Google Play (si la suscripción venció).
+      if (inPlay() && ctx && ctx.clinic && !ctx.is_admin && !ctx.has_access) {
+        try { if (await Play.sync()) ctx = await Session.loadContext(); } catch { /* sigue con lo que hay */ }
+      }
       DB.teardown();
       if (!ctx) mode = 'public';
       else if (ctx.is_admin) mode = 'admin';
@@ -458,6 +464,8 @@
         try { await Session.loadMyReports(); } catch { /* el aviso de pago es opcional */ }
       }
       if (mode === 'admin' && !currentRoute().startsWith('admin')) location.replace('#admin');
+      // Con acceso, las renovaciones de Google Play se registran sin frenar la carga.
+      if (mode === 'clinic' && inPlay()) Play.sync().then((changed) => { if (changed) refreshAccount(); }).catch(() => {});
       refreshCounts();
     } catch (err) {
       errorMessage = Session.friendly(err);
