@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#E9EDF3">
+<meta name="robots" content="noindex">
+<title>Panel de mi página</title>
+<link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap">
+<link rel="stylesheet" href="/core/panel.css">
+<style>
+/* Panel del cliente: arriba el nombre y las secciones; en el centro las hojas para editar;
+   a la derecha (en computadora) un teléfono con la vista previa. Abajo, la barra para guardar. */
+.pnl-arriba { position: sticky; top: 0; z-index: 20; background: var(--mesa); padding-top: env(safe-area-inset-top, 0px); }
+.pnl-cab { background: var(--papel); border-bottom: 1px solid var(--linea-2); }
+.pnl-cab-in, .pnl-nav-in, .pnl-main { max-width: 1320px; margin: 0 auto; }
+.pnl-cab-in { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; }
+.pnl-marca { min-width: 0; display: flex; align-items: center; gap: 10px; }
+.pnl-marca .logo { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; flex: none; background: var(--papel-2); border: 1px solid var(--linea-2); }
+.pnl-marca div { min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
+.pnl-marca b { font-family: var(--titulos); font-weight: 800; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pnl-marca span { color: var(--suave); font-size: 14px; }
+.pnl-nav { border-bottom: 1px solid var(--linea-2); }
+.pnl-nav-in { display: flex; gap: 8px; overflow-x: auto; padding: 10px 16px; scrollbar-width: none; }
+.pnl-nav-in::-webkit-scrollbar { display: none; }
+.pnl-nav button { flex: none; min-height: 40px; padding: 0 15px; border-radius: 999px; border: 1.5px solid var(--linea); background: var(--papel); font-weight: 700; color: var(--tinta); }
+.pnl-nav button[aria-current="page"] { background: var(--tinta); border-color: var(--tinta); color: #fff; }
+.pnl-nav button .punto { display: inline-block; width: 8px; height: 8px; margin-left: 6px; border-radius: 50%; background: var(--ambar); vertical-align: 1px; }
+.pnl-main { display: grid; gap: 20px; padding: 16px 16px calc(110px + env(safe-area-inset-bottom, 0px)); align-items: start; }
+.pnl-editor { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.pnl-titulo { display: flex; flex-direction: column; gap: 4px; padding: 4px 2px 2px; }
+.pnl-titulo h1 { font-size: 26px; }
+.pnl-titulo p { color: var(--suave); }
+.pnl-vista { display: none; }
+.pnl-vista .vista-cab { display: none; }
+.telefono { position: relative; width: 390px; height: min(844px, calc(100vh - 190px)); border: 10px solid var(--tinta); border-radius: 38px; overflow: hidden; background: #fff; box-shadow: 0 24px 50px -24px rgba(25, 32, 43, .55); }
+.telefono iframe { width: 100%; height: 100%; border: 0; display: block; background: #fff; }
+.telefono .cubre { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(255, 255, 255, .7); font-weight: 700; color: var(--suave); }
+.vista-nota { margin-top: 10px; text-align: center; color: var(--suave); font-size: 14px; max-width: 390px; }
+.pnl-guardar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: var(--papel); border-top: 1px solid var(--linea-2); box-shadow: 0 -8px 24px -18px rgba(25, 32, 43, .4); }
+.pnl-guardar-in { max-width: 1320px; margin: 0 auto; display: flex; align-items: center; gap: 10px; padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); }
+.pnl-guardar p { flex: 1; min-width: 0; font-weight: 700; font-size: 15px; line-height: 1.25; }
+.pnl-guardar.sucio p { color: var(--ambar); }
+.pnl-guardar .estado-ok::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--verde); margin-right: 8px; vertical-align: 1px; }
+.pnl-guardar.sucio .estado-ok::before { background: var(--ambar); }
+.btn-vista { display: inline-flex; }
+.recibo { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 12px 0; border-top: 1px dashed var(--linea); }
+.recibo:first-child { border-top: 0; }
+.recibo b { font-variant-numeric: tabular-nums; }
+.recibo .suave { font-size: 14px; }
+.recibo .respuesta { grid-column: 1 / -1; color: var(--rojo); font-size: 14px; font-weight: 700; }
+.metodo-eu { border: 1.5px solid var(--linea-2); border-radius: 12px; padding: 12px 14px; }
+.metodo-eu h3 { font-size: 16px; margin-bottom: 4px; }
+.talon-fila { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.talon-monto { font-family: var(--titulos); font-weight: 800; font-size: 34px; line-height: 1; font-variant-numeric: tabular-nums; }
+.talon-monto small { font-size: 16px; color: var(--suave); font-weight: 700; }
+@media (min-width: 1024px) {
+  .pnl-main { grid-template-columns: minmax(0, 1fr) 410px; gap: 28px; }
+  .pnl-vista { display: flex; flex-direction: column; align-items: center; position: sticky; top: 132px; }
+  .btn-vista { display: none; }
+}
+@media (max-width: 1023px) {
+  .pnl-vista.abierta { display: flex; flex-direction: column; position: fixed; inset: 0; z-index: 60; background: var(--tinta); padding: env(safe-area-inset-top, 0px) 0 0; }
+  .pnl-vista.abierta .vista-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; color: #fff; }
+  .pnl-vista.abierta .vista-cab b { font-family: var(--titulos); font-size: 18px; }
+  .pnl-vista.abierta .telefono { width: 100%; height: auto; flex: 1; border: 0; border-radius: 0; box-shadow: none; }
+  .pnl-vista.abierta .vista-nota { display: none; }
+}
+@media (max-width: 1023px) {
+  .pnl-guardar-in { flex-wrap: wrap; row-gap: 6px; }
+  .pnl-guardar p { flex-basis: 100%; font-size: 14px; }
+  .pnl-guardar .btn { flex: 1 1 0; padding: 0 8px; min-width: 0; font-size: 15px; white-space: normal; line-height: 1.15; }
+  .pnl-main { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
+}
+.pnl-cab .acciones { flex-wrap: nowrap; flex: none; }
+</style>
+</head>
+<body class="pnl">
+<div id="app"><div class="cargando-pantalla"><p><span class="punto-carga"></span>Cargando</p></div></div>
+<script src="/core/config.js"></script>
+<script src="/core/catalogos.js"></script>
+<script src="/t/sushi/datos.js"></script>
+<script src="/t/arepera/datos.js"></script>
+<script src="/t/pizzeria/datos.js"></script>
+<script src="/t/burgers/datos.js"></script>
+<script src="/t/boutique/datos.js"></script>
+<script src="/core/util.js"></script>
+<script src="/core/api.js"></script>
+<script src="/core/campos.js"></script>
+<script src="/panel/panel.js"></script>
+</body>
+</html>

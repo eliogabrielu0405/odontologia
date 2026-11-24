@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#E9EDF3">
+<title>EU Digital Solutions: páginas de pedidos por WhatsApp</title>
+<meta name="description" content="Páginas de pedidos para restaurantes y tiendas en Venezuela. Precios en dólares y bolívares, pedidos directo a tu WhatsApp y un panel para cambiar todo desde el teléfono.">
+<link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap">
+<link rel="stylesheet" href="/core/panel.css">
+<style>
+/* Portada de EU Digital: a la izquierda la promesa; a la derecha, el ticket del pedido tal como
+   llega al WhatsApp, con su sello. Debajo, las cinco plantillas y cómo funciona. */
+.ld { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+.ld-cab { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; }
+.ld-hero { display: grid; gap: 28px; padding: 18px 0 44px; align-items: center; }
+.ld-hero h1 { font-size: clamp(34px, 7.4vw, 60px); line-height: 1.02; letter-spacing: -.025em; }
+.ld-hero .sub { margin-top: 14px; font-size: 18px; color: var(--suave); max-width: 46ch; }
+.ld-hero .acciones { margin-top: 22px; }
+.ticket { position: relative; justify-self: center; width: min(360px, 100%); padding: 30px 22px 74px; background: var(--papel); border-radius: 6px; box-shadow: 0 28px 60px -34px rgba(25, 32, 43, .6); transform: rotate(1.6deg);
+  font: 15px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  -webkit-mask: radial-gradient(circle 7px at 50% 0, transparent 97%, #000) 0 0 / 18px 51% repeat-x, radial-gradient(circle 7px at 50% 100%, transparent 97%, #000) 0 100% / 18px 51% repeat-x;
+  mask: radial-gradient(circle 7px at 50% 0, transparent 97%, #000) 0 0 / 18px 51% repeat-x, radial-gradient(circle 7px at 50% 100%, transparent 97%, #000) 0 100% / 18px 51% repeat-x; }
+.ticket .de { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font: 700 13px/1.2 var(--cuerpo); color: var(--suave); }
+.ticket .de i { width: 10px; height: 10px; border-radius: 50%; background: #25D366; }
+.ticket b { font-weight: 800; }
+.ticket .linea { display: flex; justify-content: space-between; gap: 10px; }
+.ticket hr { border: 0; border-top: 1.5px dashed var(--linea); margin: 10px 0; }
+.ticket .total { font-size: 17px; }
+.ticket .sello { position: absolute; right: 22px; bottom: 28px; }
+.ld-sec { padding: 40px 0; }
+.ld-sec > h2 { font-size: clamp(26px, 4.6vw, 38px); }
+.ld-sec > p { color: var(--suave); margin-top: 6px; max-width: 60ch; }
+.ld-plantillas { margin-top: 22px; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+@media (min-width: 720px) { .ld-plantillas { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; } }
+.ld-pl { display: flex; flex-direction: column; gap: 6px; padding: 10px 10px 14px; background: var(--papel); border: 1px solid var(--linea-2); border-radius: var(--radio); box-shadow: var(--sombra); text-decoration: none; color: inherit; }
+.ld-pl img { width: 100%; aspect-ratio: 390 / 600; object-fit: cover; object-position: top; border-radius: 10px; border: 1px solid var(--linea-2); background: var(--papel-2); }
+.ld-pl b { font-family: var(--titulos); font-weight: 800; font-size: 18px; margin-top: 4px; }
+.ld-pl span { color: var(--suave); font-size: 13px; line-height: 1.4; }
+@media (min-width: 720px) { .ld-pl span { font-size: 14px; } }
+.ld-pl:hover { border-color: var(--carbon); }
+.ld-pasos { margin-top: 22px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; counter-reset: paso; list-style: none; padding: 0; }
+.ld-pasos li { counter-increment: paso; background: var(--papel); border: 1px solid var(--linea-2); border-radius: var(--radio); padding: 18px; box-shadow: var(--sombra); }
+.ld-pasos li::before { content: counter(paso); display: inline-grid; place-items: center; width: 34px; height: 34px; margin-bottom: 10px; border-radius: 50%; background: var(--carbon); color: #fff; font: 800 17px/1 var(--titulos); }
+.ld-pasos h3 { font-size: 19px; margin-bottom: 4px; }
+.ld-pasos p { color: var(--suave); }
+.ld-lista { margin-top: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px 22px; padding: 0; list-style: none; }
+.ld-lista li { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-top: 1px dashed var(--linea); }
+.ld-lista li::before { content: ""; flex: none; width: 18px; height: 18px; margin-top: 3px; border-radius: 50%; background: var(--verde-suave) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F7A4D' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12 4 4 8-8'/%3E%3C/svg%3E") center / 12px no-repeat; }
+.ld-cierre { margin: 10px 0 40px; padding: 26px 22px; border-radius: var(--radio); background: var(--tinta); color: #fff; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+.ld-cierre h2 { font-size: 26px; }
+.ld-cierre p { color: #C9D1DE; margin-top: 4px; }
+.ld-pie { padding: 18px 0 30px; color: var(--suave); font-size: 14px; display: flex; flex-wrap: wrap; gap: 8px 18px; justify-content: space-between; }
+.btn-wa { background: #1F7A4D; border-color: #1F7A4D; }
+.btn-wa:hover { background: #17603c; border-color: #17603c; }
+@media (min-width: 880px) {
+  .ld-hero { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); padding: 34px 0 64px; }
+}
+</style>
+</head>
+<body class="pnl">
+<div id="ruta" class="cargando-pantalla" hidden><p><span class="punto-carga"></span>Abriendo la página</p></div>
+
+<div id="portada" hidden>
+  <div class="ld">
+    <header class="ld-cab">
+      <div class="marca-eu"><img src="/img/favicon.svg" alt="">EU Digital Solutions</div>
+      <a class="btn btn-sec btn-chico" href="/panel/">Entrar a mi panel</a>
+    </header>
+
+    <section class="ld-hero">
+      <div>
+        <h1>Tu menú en línea, con los pedidos directo a tu WhatsApp</h1>
+        <p class="sub">Páginas de pedidos para restaurantes y tiendas. Tus clientes ven los precios en dólares y en bolívares, arman su pedido y te lo mandan por WhatsApp. Tú cambias precios, fotos y la tasa del día desde el teléfono.</p>
+        <div class="acciones">
+          <a class="btn btn-wa" id="cta-wa" href="#" target="_blank" rel="noopener">Quiero mi página</a>
+          <a class="btn btn-sec" href="#plantillas">Ver las plantillas</a>
+        </div>
+      </div>
+      <figure class="ticket" aria-label="Así te llega un pedido al WhatsApp">
+        <div class="de"><i></i>WhatsApp, hace un momento</div>
+        <div><b>Nuevo pedido: Arepera Doña Rosa</b></div>
+        <div>Cliente: María G.</div>
+        <div>Tipo: Delivery</div>
+        <hr>
+        <div class="linea"><span>2 x Reina pepiada</span><span>$8.00</span></div>
+        <div class="linea"><span>1 x Malta</span><span>$1.50</span></div>
+        <div class="linea"><span>Delivery</span><span>$2.00</span></div>
+        <hr>
+        <div class="linea total"><b>Total</b><b>$11.50</b></div>
+        <div>Pago: Pago Móvil</div>
+        <div>En bolívares: Bs 419,75</div>
+        <span class="sello verde grande">Recibido</span>
+      </figure>
+    </section>
+  </div>
+
+  <div class="ld">
+    <section class="ld-sec" id="plantillas">
+      <h2>Elige tu plantilla</h2>
+      <p>Ábrelas y haz un pedido de prueba: así lo vería tu cliente.</p>
+      <div class="ld-plantillas" id="lista-plantillas"></div>
+    </section>
+
+    <section class="ld-sec">
+      <h2>Cómo funciona</h2>
+      <ol class="ld-pasos">
+        <li><h3>Eliges la plantilla</h3><p>Pizzería, arepera, comida rápida, sushi o tienda de ropa.</p></li>
+        <li><h3>Te creamos tu página</h3><p>Con tu nombre, tu menú, tus fotos y tu WhatsApp. Te mandamos el enlace y tu usuario.</p></li>
+        <li><h3>La manejas desde tu panel</h3><p>Cambias lo que quieras cuando quieras, sin pedirle nada a nadie.</p></li>
+      </ol>
+    </section>
+
+    <section class="ld-sec">
+      <h2>Lo que cambias tú mismo</h2>
+      <ul class="ld-lista">
+        <li>Precios, fotos y descripciones de tus productos</li>
+        <li>La tasa del día, para mostrar los precios en bolívares</li>
+        <li>Lo que se acabó hoy, con un toque</li>
+        <li>Horario, dirección, redes y formas de pago</li>
+        <li>Colores, letras y animaciones de la página</li>
+        <li>Avisos del día y cintas de promoción</li>
+      </ul>
+    </section>
+
+    <section class="ld-cierre">
+      <div><h2>¿Hacemos la tuya?</h2><p>Escríbenos y en poco tiempo tienes tu página lista.</p></div>
+      <a class="btn btn-wa" id="cta-wa-2" href="#" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+    </section>
+
+    <footer class="ld-pie">
+      <span>EU Digital Solutions</span>
+      <span><a href="/panel/">Entrar a mi panel</a></span>
+    </footer>
+  </div>
+</div>
+
+<noscript><p style="padding:24px">Esta página necesita JavaScript.</p></noscript>
+<script src="/core/config.js"></script>
+<script src="/core/catalogos.js"></script>
+<script src="/t/sushi/datos.js"></script>
+<script src="/t/arepera/datos.js"></script>
+<script src="/t/pizzeria/datos.js"></script>
+<script src="/t/burgers/datos.js"></script>
+<script src="/t/boutique/datos.js"></script>
+<script>
+/* Si la dirección trae un negocio (?n=usuario, un subdominio o un dominio propio), se abre su página.
+   Si no, se muestra la portada de EU Digital. */
+(function () {
+  "use strict";
+  var C = window.EU_CONFIG;
+  var params = new URLSearchParams(location.search);
+  function identificar() {
+    var n = (params.get("n") || params.get("negocio") || "").trim().toLowerCase();
+    if (n) return { slug: n };
+    var host = location.hostname.toLowerCase();
+    if (!host || host === "localhost" || host === "127.0.0.1" || /\.(workers|pages)\.dev$/.test(host)) return null;
+    if (C.dominioBase) {
+      if (host === C.dominioBase || host === "www." + C.dominioBase) return null;
+      if (host.slice(-(C.dominioBase.length + 1)) === "." + C.dominioBase) {
+        var sub = host.slice(0, -(C.dominioBase.length + 1));
+        return sub && sub.indexOf(".") < 0 && ["www", "app", "panel", "admin"].indexOf(sub) < 0 ? { slug: sub } : null;
+      }
+    }
+    return { dominio: host.replace(/^www\./, "") };
+  }
+  function noDisponible(titulo, texto, reintentar) {
+    var r = document.getElementById("ruta");
+    r.innerHTML = "";
+    var m = document.createElement("main");
+    m.className = "eu-pantalla entrada-pantalla";
+    var hj = document.createElement("div");
+    hj.className = "hoja entrada-hoja";
+    var h1 = document.createElement("h1"); h1.textContent = titulo;
+    var p = document.createElement("p"); p.className = "suave"; p.textContent = texto;
+    hj.append(h1, p);
+    if (reintentar) { var b = document.createElement("button"); b.className = "btn"; b.type = "button"; b.textContent = "Intentar de nuevo"; b.onclick = function () { location.reload(); }; hj.append(b); }
+    m.append(hj);
+    r.replaceWith(m);
+    document.title = titulo;
+  }
+  var id = identificar();
+  if (!id) { mostrarPortada(); return; }
+  document.getElementById("ruta").hidden = false;
+  var base = C.supabaseUrl.replace(/\/+$/, "");
+  var filtro = id.slug ? "slug=eq." + encodeURIComponent(id.slug) : "dominio=eq." + encodeURIComponent(id.dominio);
+  fetch(base + "/rest/v1/eu_sitios?select=id,slug,nombre,plantilla,contenido,actualizado&estado=eq.activo&limit=1&" + filtro, {
+    headers: { apikey: C.supabaseKey, Authorization: "Bearer " + C.supabaseKey }, cache: "no-store",
+  }).then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); }).then(function (filas) {
+    var s = filas && filas[0];
+    if (!s) { noDisponible("Esta página no está disponible", "Si eres el dueño del negocio, escríbele a EU Digital."); return; }
+    try { sessionStorage.setItem("eu:sitio:" + s.slug, JSON.stringify({ t: Date.now(), sitio: s })); } catch (_) { /* sin almacenamiento */ }
+    var extra = new URLSearchParams(location.search);
+    extra.delete("negocio");
+    extra.set("n", s.slug);
+    location.replace("/t/" + encodeURIComponent(s.plantilla) + "/?" + extra.toString() + location.hash);
+  }).catch(function () { noDisponible("No pudimos cargar la página", "Revisa tu conexión a internet y vuelve a intentar.", true); });
+
+  function mostrarPortada() {
+    document.getElementById("portada").hidden = false;
+    var wa = "https://wa.me/" + String(C.whatsappMarca || "").replace(/\D+/g, "") + "?text=" + encodeURIComponent("Hola, quiero una página de pedidos para mi negocio.");
+    document.getElementById("cta-wa").href = wa;
+    document.getElementById("cta-wa-2").href = wa;
+    var P = window.EU_PLANTILLAS || {};
+    var cont = document.getElementById("lista-plantillas");
+    ["pizzeria", "arepera", "burgers", "sushi", "boutique"].forEach(function (k) {
+      var t = P[k];
+      if (!t) return;
+      var a = document.createElement("a");
+      a.className = "ld-pl"; a.href = "/t/" + k + "/";
+      var img = document.createElement("img"); img.src = t.vistaPrevia; img.alt = "Vista de la plantilla " + t.nombre; img.loading = "lazy";
+      var b = document.createElement("b"); b.textContent = t.nombre;
+      var s = document.createElement("span"); s.textContent = t.descripcion;
+      a.append(img, b, s);
+      cont.append(a);
+    });
+  }
+})();
+</script>
+</body>
+</html>

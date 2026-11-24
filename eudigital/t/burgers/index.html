@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="es" data-plantilla="burgers">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Burgers</title>
+<meta name="description" content="Perros, hamburguesas y más. Arma tu pedido y envíalo por WhatsApp.">
+<meta name="theme-color" content="#E11413">
+<link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Lexend:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="/core/sitio.css">
+<style>
+/* Layout: cartel de comida rápida — encabezado rojo con toldo, hamburguesa que se abre al bajar, botones de categoría tipo sticker, cuadrícula de productos y pedido (hoja en móvil, columna fija en escritorio) */
+:root{
+  --rojo:#E11413;--sobre-rojo:#FFFFFF;--naranja:#E77F0A;--amarillo:#FDD103;--verde:#049804;--negro:#000000;
+  --fondo-a:#FDD103;--fondo-b:#FFE98A;--puntos:#E77F0A;--tarjeta:#FFFFFF;--tinta-txt:#000000;--suave:#4A4A4A;--foto-fondo:#FDD103;--campo:#FFFFFF;
+  --f-brush:"Caveat Brush","Comic Sans MS",cursive;--f-cuerpo:"Lexend",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --eu-fondo:var(--fondo-b);--eu-tarjeta:var(--tarjeta);--eu-texto:var(--tinta-txt);--eu-suave:var(--suave);--eu-linea:rgba(0,0,0,.14);
+  --eu-principal:var(--rojo);--eu-sobre-principal:var(--sobre-rojo);--eu-acento:var(--amarillo);--eu-titulos:var(--f-brush);--eu-cuerpo:var(--f-cuerpo);
+  color-scheme:light;
+}
+:root[data-theme="dark"]{color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:auto}
+body{margin:0;min-height:100vh;color:var(--tinta-txt);font-family:var(--f-cuerpo);font-size:16px;line-height:1.45;overflow-x:clip;
+  background:radial-gradient(circle,var(--puntos) 1.6px,transparent 2px) 0 0/22px 22px,linear-gradient(160deg,var(--fondo-a) 0%,var(--fondo-b) 50%,var(--fondo-a) 100%);
+  background-attachment:scroll;padding-bottom:env(safe-area-inset-bottom,0px)}
+.navidad body{background:radial-gradient(circle,rgba(255,255,255,.85) 1.6px,transparent 2px) 0 0/22px 22px,linear-gradient(160deg,var(--fondo-a) 0%,var(--fondo-b) 50%,var(--fondo-a) 100%)}
+h1,h2,h3,p{margin:0}
+button,input,textarea{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:4px solid var(--verde);outline-offset:2px}
+.brush{font-family:var(--f-brush);font-weight:400}
+.ic{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
+/* Estilo sticker del cartel: borde negro y sombra dura; al tocar se hunde */
+.sticker{border:2px solid #000;box-shadow:3px 3px 0 #000}
+.toca{transition:transform .12s,box-shadow .12s}
+.toca:active:not(:disabled){transform:translate(3px,3px);box-shadow:none}
+
+/* ---------- Encabezado ---------- */
+.cab{position:sticky;top:0;z-index:30;background:var(--rojo);color:var(--sobre-rojo);padding-top:env(safe-area-inset-top,0px)}
+.cab-in{max-width:80rem;margin:0 auto;display:flex;align-items:center;gap:12px;padding:8px max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px))}
+.logo{position:relative;width:46px;height:46px;flex:none;border-radius:50%;border:2px solid #000;background:#fff;display:grid;place-items:center;font-size:24px}
+.logo img{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover;background:#fff}
+.gorro{display:none;position:absolute;left:-4px;top:-8px;width:30px;height:26px;transform:rotate(-14deg);z-index:2;pointer-events:none}
+.navidad .gorro{display:block}
+.nombre{min-width:0;flex:1}
+.nombre h1{font-size:1.1rem;font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nombre p{font-family:var(--f-brush);font-size:1.15rem;line-height:1;color:var(--amarillo)}
+.bolsa{position:relative;width:48px;height:48px;border-radius:50%;background:var(--amarillo);color:#000;display:grid;place-items:center;flex:none}
+.bolsa .n{position:absolute;right:-6px;top:-6px;min-width:24px;height:24px;padding:0 4px;border-radius:12px;border:2px solid #000;background:var(--naranja);font-size:12px;font-weight:800;display:grid;place-items:center}
+.toldo{height:12px;border-block:2px solid #000;background:repeating-linear-gradient(90deg,var(--rojo) 0 28px,var(--amarillo) 28px 56px)}
+.navidad .toldo{background:repeating-linear-gradient(135deg,#E11413 0 10px,#FFFFFF 10px 20px)}
+@media (min-width:640px){.logo{width:56px;height:56px;font-size:30px}.nombre h1{font-size:1.25rem}.nombre p{font-size:1.3rem}.cab-in{padding-block:12px}}
+
+[data-eu-avisos]:empty{display:none}
+
+/* ---------- Hamburguesa que se abre al bajar ---------- */
+.hb{height:220vh;height:220dvh}
+.hb.quieta{height:auto}
+.hb-fijo{position:sticky;top:96px;max-width:48rem;margin:0 auto;padding:16px 16px 0}
+.hb-marco{overflow:hidden;border-radius:16px;background:#000}
+.hb-marco canvas{display:block;width:100%;height:auto}
+.hb-pie{margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.hb-aviso{font-family:var(--f-brush);font-size:1.6rem;line-height:1.1;transition:opacity .3s}
+.hb-aviso.fuera{opacity:0}
+.boton-blanco{display:inline-flex;align-items:center;gap:4px;border-radius:12px;background:var(--tarjeta);padding:8px 16px;font-size:.9rem;font-weight:700;color:var(--tinta-txt)}
+.boton-blanco .ic{width:18px;height:18px}
+
+/* Portada sencilla (cuando la hamburguesa está apagada) */
+.portada{max-width:80rem;margin:0 auto;padding:22px 16px 4px;display:flex;align-items:center;gap:16px}
+.portada .grande{width:84px;height:84px;font-size:44px}
+.portada h2{font-family:var(--f-brush);font-weight:400;font-size:2.4rem;line-height:1}
+.portada p{color:var(--suave);font-weight:500;max-width:52ch}
+
+/* ---------- Menú ---------- */
+.menu{max-width:80rem;margin:0 auto;padding:0 16px 128px;display:grid;gap:24px;scroll-margin-top:112px}
+.menu-col{min-width:0}
+.cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;padding:16px 4px}
+.cat{min-width:0;border-radius:12px;background:var(--tarjeta);color:var(--tinta-txt);font-family:var(--f-brush);font-size:1.125rem;line-height:1.1;padding:8px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow-wrap:anywhere;text-align:center}
+.cat span{font-size:1.6rem}
+@media (min-width:400px){.cat{font-size:1.25rem}}
+.b-txt{display:inline!important}
+.cat[aria-pressed="true"]{background:var(--amarillo);color:#000}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.prod{display:flex;flex-direction:column;overflow:hidden;border-radius:16px;background:var(--tarjeta)}
+.prod.eu-rev{transition:opacity .45s ease,transform .5s cubic-bezier(.2,.8,.2,1)}
+.foto{position:relative;aspect-ratio:1;display:grid;place-items:center;overflow:hidden;border-bottom:2px solid #000;background:var(--foto-fondo);font-size:3.6rem}
+.foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.prod.agotado .foto img{filter:grayscale(1);opacity:.6}
+.prod-txt{display:flex;flex:1;flex-direction:column;gap:4px;padding:12px}
+.prod h3{font-size:1rem;font-weight:700;line-height:1.3}
+.prod .desc{font-size:.78rem;line-height:1.35;color:var(--suave)}
+.precio{margin-top:auto;padding-top:8px;font-size:1.5rem;font-weight:800;color:var(--rojo);line-height:1.1}
+.precio small{display:block;font-size:.75rem;font-weight:700;color:var(--suave)}
+.precio.sin{font-size:.9rem;color:var(--suave)}
+.prod-acc{padding:0 12px 12px}
+.agregar{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;background:var(--rojo);color:var(--sobre-rojo);padding:10px 8px;font-size:.9rem;font-weight:700;line-height:1.2}
+.agregar:disabled{cursor:not-allowed;background:rgba(0,0,0,.15);color:rgba(0,0,0,.45);box-shadow:none}
+.cant{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cant button{width:44px;height:44px;border-radius:50%;background:var(--naranja);color:#000;display:grid;place-items:center}
+.cant .ic{width:20px;height:20px}
+.cant b{min-width:2rem;text-align:center;font-size:1.25rem;font-weight:800;font-variant-numeric:tabular-nums}
+.vacio{padding:24px 8px;text-align:center;color:var(--suave)}
+@media (min-width:640px){.grid{gap:16px}.prod .desc{font-size:.85rem}.cats{display:flex;flex-wrap:wrap;gap:12px}.cat{flex-direction:row;gap:8px;padding:8px 20px;font-size:1.8rem}.cat span{font-size:1.8rem}}
+@media (min-width:768px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+.local{margin-top:40px;display:flex;flex-direction:column;gap:12px}
+.local h2{font-family:var(--f-brush);font-weight:400;font-size:2.2rem;line-height:1}
+.local .eu-info-col{border:2px solid #000;box-shadow:3px 3px 0 #000}
+
+/* ---------- Pedido ---------- */
+.lado{min-width:0}
+.pedido{display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;border-radius:16px;background:var(--tarjeta);width:100%;min-height:0}
+.ped-cab{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:2px solid #000;background:var(--amarillo);color:#000;padding:8px 16px;position:sticky;top:0;z-index:2}
+.ped-cab h2{font-family:var(--f-brush);font-weight:400;font-size:1.9rem;line-height:1.1}
+.redondo{width:44px;height:44px;border-radius:50%;background:#fff;color:#000;display:grid;place-items:center;flex:none}
+.ped-lineas{padding:8px 16px}
+.ped-lineas ul{list-style:none;margin:0;padding:0}
+.ped-lineas li{display:flex;align-items:center;gap:8px;padding:12px 0;border-bottom:2px solid rgba(0,0,0,.1)}
+.ped-lineas li:last-child{border-bottom:0}
+.ped-lineas .txt{flex:1;min-width:0}
+.ped-lineas .txt b{display:block;line-height:1.3}
+.ped-lineas .txt span{font-size:.85rem;color:var(--suave)}
+.borrar{width:44px;height:44px;border:0;border-radius:50%;background:none;color:var(--rojo);display:grid;place-items:center}
+.ped-vacio{padding:24px 0;text-align:center;color:var(--suave)}
+.ped-form{display:flex;flex-direction:column;gap:12px;border-top:2px solid #000;padding:16px}
+.campo{display:flex;flex-direction:column;gap:4px}
+.campo > span,.ped-form legend{font-size:.85rem;font-weight:700}
+.campo em{font-style:normal;font-weight:500;color:var(--suave)}
+.campo input,.campo textarea{width:100%;border-radius:12px;border:2px solid #000;background:var(--campo);padding:12px 14px;font-size:16px}
+.campo textarea{resize:none}
+.campo small{font-size:.75rem;color:var(--suave)}
+.contador{margin-top:4px;text-align:right;font-size:.75rem;color:var(--suave)}
+.ped-form fieldset{border:0;margin:0;padding:0;min-width:0}
+.ped-form legend{padding:0;margin-bottom:4px}
+.tipos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tipo{display:flex;flex-direction:column;align-items:center;gap:4px;border-radius:12px;background:#fff;color:#000;padding:12px 4px;font-size:.85rem;font-weight:700;text-align:center;line-height:1.2}
+.tipo[aria-pressed="true"]{background:var(--amarillo)}
+.ped-form .eu-pago-op span{border:2px solid #000;border-radius:12px;background:#fff;color:#000}
+.ped-form .eu-pago-op input:checked + span{background:var(--amarillo);box-shadow:3px 3px 0 #000;border-color:#000}
+.ped-form .eu-pago-detalle{border:2px dashed #000;background:var(--campo)}
+.ped-total{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding-top:4px}
+.ped-total > span{font-weight:700}
+.ped-total .tot{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1}
+.ped-total b{font-size:1.9rem;font-weight:800;color:var(--rojo);font-variant-numeric:tabular-nums}
+.ped-total small{font-size:.8rem;font-weight:700;color:var(--suave)}
+.enviar{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;background:var(--verde);color:#fff;padding:16px 8px;font-size:1.1rem;font-weight:800}
+.enviar:disabled{cursor:not-allowed;background:rgba(0,0,0,.15);color:rgba(0,0,0,.45);box-shadow:none}
+.falta{text-align:center;font-size:.85rem;font-weight:600;color:var(--rojo)}
+.cerrado-nota{border-radius:12px;background:#2b2f36;color:#fff;padding:10px 12px;font-size:.85rem;font-weight:600}
+
+/* Barra de abajo en el teléfono */
+.barra{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;display:flex;align-items:center;justify-content:space-between;gap:8px;border-radius:16px;background:var(--verde);color:#fff;padding:16px 20px;font-size:1.1rem;font-weight:800}
+.barra span{display:flex;align-items:center;gap:8px}
+.aviso-flota{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:50;border-radius:999px;background:#000;color:#fff;padding:10px 18px;font-weight:700;font-size:.9rem;white-space:nowrap}
+
+@media (max-width:1023px){
+  .lado{position:fixed;inset:0;z-index:40;display:none;align-items:flex-end;background:rgba(0,0,0,.6);padding:8px}
+  .lado.abierto{display:flex}
+  .lado .pedido{max-height:92vh;max-height:92dvh}
+}
+@media (min-width:1024px){
+  .menu{grid-template-columns:minmax(0,1fr) 380px;padding-bottom:32px}
+  .lado .pedido{position:sticky;top:112px;max-height:calc(100vh - 8rem)}
+  .cerrar-pedido,.bolsa,.barra{display:none!important}
+  .hb-fijo{top:112px}
+}
+@media (prefers-reduced-motion:reduce){.toca{transition:none}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-bolsa" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></symbol>
+  <symbol id="i-mas" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="i-menos" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-basura" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-enviar" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol>
+  <symbol id="i-cubiertos" viewBox="0 0 24 24"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></symbol>
+  <symbol id="i-moto" viewBox="0 0 24 24"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></symbol>
+  <symbol id="i-abajo" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+</svg>
+
+<header class="cab">
+  <div class="cab-in">
+    <div class="logo" id="logo" data-eu-logo>
+      <span id="logoEmoji" aria-hidden="true">🍔</span>
+      <svg class="gorro" viewBox="0 0 40 34" aria-hidden="true"><path d="M5 26 C6 12 15 4 27 6 C31 7 34 10 35 14 C32 12 28 12 25 14 C18 18 14 22 14 27 Z" fill="#E11413" stroke="#000" stroke-width="2" stroke-linejoin="round"/><rect x="3" y="24" width="30" height="8" rx="4" fill="#fff" stroke="#000" stroke-width="2"/><circle cx="35" cy="14" r="4.5" fill="#fff" stroke="#000" stroke-width="2"/></svg>
+    </div>
+    <div class="nombre"><h1 id="nombre"></h1><p id="lema"></p></div>
+    <button class="bolsa sticker toca" id="bolsa" type="button" aria-label="Ver pedido"><svg class="ic"><use href="#i-bolsa"/></svg><span class="n" id="bolsaN" hidden>0</span></button>
+  </div>
+  <div class="toldo" aria-hidden="true"></div>
+</header>
+<div data-eu-avisos></div>
+
+<section class="hb" id="hb" aria-label="Hamburguesa que se abre al bajar">
+  <div class="hb-fijo" data-eu-portada>
+    <div class="hb-marco sticker"><canvas id="lienzo" width="640" height="480" role="img" aria-label="Hamburguesa abriéndose capa por capa"></canvas></div>
+    <div class="hb-pie">
+      <p class="hb-aviso" id="hbAviso"></p>
+      <button class="boton-blanco sticker toca" type="button" data-ir-menu>Ir al menú <svg class="ic"><use href="#i-abajo"/></svg></button>
+    </div>
+  </div>
+</section>
+<section class="portada" id="portada" hidden data-eu-portada>
+  <div class="logo grande" id="logoGrande" aria-hidden="true">🍔</div>
+  <div><h2 id="portadaNombre"></h2><p id="portadaTxt"></p></div>
+</section>
+
+<main class="menu" id="menu">
+  <section class="menu-col">
+    <nav class="cats" id="cats" aria-label="Categorías del menú"></nav>
+    <div class="grid" id="grid"></div>
+    <section class="local" aria-labelledby="local-t"><h2 id="local-t">El local</h2><div id="info"></div></section>
+  </section>
+  <aside class="lado" id="lado">
+    <section class="pedido sticker" id="pedido" aria-labelledby="pedido-t">
+      <div class="ped-cab"><h2 id="pedido-t">Tu pedido (<span id="cuenta">0</span>)</h2><button class="redondo sticker toca cerrar-pedido" id="cerrar" type="button" aria-label="Cerrar pedido"><svg class="ic"><use href="#i-x"/></svg></button></div>
+      <div class="ped-lineas" id="lineas"></div>
+      <form class="ped-form" id="form" novalidate>
+        <label class="campo"><span>Nombre</span><input id="cliente" autocomplete="name" placeholder="¿A nombre de quién?"></label>
+        <fieldset><legend>Tipo de entrega</legend><div class="tipos" id="tipos"></div></fieldset>
+        <label class="campo" id="campoDir" hidden><span>Dirección</span><input id="direccion" autocomplete="street-address" placeholder="Calle, casa o edificio, referencia"><small id="notaDelivery"></small></label>
+        <div id="pago"></div>
+        <div id="pagoDetalle"></div>
+        <div><label class="campo"><span>Notas para la cocina <em>(opcional)</em></span><textarea id="notas" rows="2" maxlength="200" placeholder="Ej: sin cebolla, salsas aparte, bien cocido"></textarea></label><p class="contador" id="contador" aria-hidden="true">0/200</p></div>
+        <p class="cerrado-nota" id="cerrado" hidden></p>
+        <div class="ped-total"><span>Total a pagar</span><span class="tot"><b id="total">$0.00</b><small id="totalBs"></small></span></div>
+        <button class="enviar sticker toca" id="enviar" type="submit" data-eu-boton><svg class="ic"><use href="#i-enviar"/></svg> Confirmar y enviar pedido</button>
+        <p class="falta" id="falta" role="status" hidden></p>
+      </form>
+    </section>
+  </aside>
+</main>
+
+<button class="barra sticker toca" id="barra" type="button" hidden data-eu-boton><span><svg class="ic"><use href="#i-bolsa"/></svg><span class="b-txt">Ver pedido (<b id="barraN">0</b>)</span></span><span id="barraTotal">$0.00</span></button>
+<div class="aviso-flota" id="avisoFlota" role="status" hidden></div>
+
+<script src="/core/config.js"></script>
+<script src="/core/catalogos.js"></script>
+<script src="/t/burgers/datos.js"></script>
+<script src="/core/sitio.js"></script>
+<script src="/t/burgers/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="es" data-plantilla="arepera">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Arma tu Arepa</title>
+<meta name="description" content="Arma tu arepa con los rellenos que quieras y envía el pedido por WhatsApp.">
+<meta name="theme-color" content="#FFC63F">
+<link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="/core/sitio.css">
+<style>
+/* Layout: app de una pantalla para teléfono — encabezado corto, escenario con la arepa real y la mascota en la esquina, pestañas, lista con scroll propio y barra de pedido abajo */
+:root{
+  --bg:#FFF7DD;--panel:#FFFFFF;--ink:#3A2414;--muted:#7A5E46;--line:#EEDFB6;--chip:#FFF0C2;
+  --ray-a:#FFD862;--ray-b:#FFC63F;--glow:#FFF4C4;--plate:#FFFFFF;--plate-rim:#E7D7B4;
+  --bubble:#FFFFFF;--bubble-ink:#3A2414;--toast:#B8732A;--leaf:#2F8F4E;--leaf-deep:#1F6B39;--leaf-ink:#FFFFFF;
+  --chili:#D9472B;--chili-ink:#FFFFFF;--scrim:rgba(40,24,10,.5);
+  --display:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --body:"Nunito","Segoe UI",system-ui,sans-serif;
+  --eu-fondo:var(--bg);--eu-tarjeta:var(--panel);--eu-texto:var(--ink);--eu-suave:var(--muted);--eu-linea:var(--line);
+  --eu-principal:var(--leaf);--eu-sobre-principal:var(--leaf-ink);--eu-acento:var(--ray-b);--eu-titulos:var(--display);--eu-cuerpo:var(--body);
+  color-scheme:light;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1C130B;--panel:#2A1D12;--ink:#FCEBC8;--muted:#C9AE8C;--line:#47321F;--chip:#3A2918;
+  --ray-a:#6A4416;--ray-b:#573711;--glow:#8E5E22;--plate:#F3EBDD;--plate-rim:#C9B793;
+  --bubble:#FFF3D6;--bubble-ink:#3A2414;--toast:#E7A257;--leaf:#55C27A;--leaf-deep:#2F8F4E;--leaf-ink:#0E2414;
+  --chili:#F27258;--chili-ink:#2A0E06;--scrim:rgba(0,0,0,.62);color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1C130B;--panel:#2A1D12;--ink:#FCEBC8;--muted:#C9AE8C;--line:#47321F;--chip:#3A2918;
+  --ray-a:#6A4416;--ray-b:#573711;--glow:#8E5E22;--plate:#F3EBDD;--plate-rim:#C9B793;
+  --bubble:#FFF3D6;--bubble-ink:#3A2414;--toast:#E7A257;--leaf:#55C27A;--leaf-deep:#2F8F4E;--leaf-ink:#0E2414;
+  --chili:#F27258;--chili-ink:#2A0E06;--scrim:rgba(0,0,0,.62);color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.4;overflow:hidden;
+  -webkit-tap-highlight-color:transparent;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px}
+h1,h2,h3,p{margin:0}
+h1,h2{font-family:var(--display);line-height:1;text-wrap:balance}
+button,input,textarea{font:inherit;color:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--leaf);outline-offset:3px}
+
+.app{height:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.app > *{flex:none}
+[data-eu-avisos]:empty{display:none}
+.app .eu-tiras{gap:6px}
+.app .eu-tira{border-radius:14px;padding-block:7px;font-size:13px}
+
+/* ---------- Encabezado ---------- */
+.head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.marca{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:44px;height:44px;border-radius:50%;object-fit:cover;flex:none;background:var(--panel);box-shadow:0 0 0 2px var(--line)}
+.marca-txt{min-width:0;display:flex;flex-direction:column;gap:2px}
+.head h1{font-size:1.6rem;font-weight:800;overflow-wrap:anywhere}
+.head h1 span{color:var(--toast)}
+.head small{color:var(--muted);font-weight:800;font-size:.85rem;font-variant-numeric:tabular-nums}
+.info-btn{flex:none;min-height:40px;padding:0 14px;border-radius:999px;border:2px solid var(--line);background:var(--panel);font-weight:800;font-size:.85rem;cursor:pointer}
+.info-btn .pt{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:#2bb673;vertical-align:1px}
+.info-btn .pt.cerrado{background:var(--chili)}
+
+/* ---------- Escenario ---------- */
+.stage{position:relative;height:clamp(200px,38vh,350px);border-radius:28px;overflow:hidden;background:var(--ray-b);isolation:isolate}
+@supports (height:1dvh){.stage{height:clamp(200px,38dvh,350px)}}
+.stage::before{content:"";position:absolute;left:50%;top:72%;width:1000px;height:1000px;transform:translate(-50%,-50%);
+  background:repeating-conic-gradient(var(--ray-a) 0 9deg,var(--ray-b) 9deg 18deg);animation:spin 70s linear infinite;z-index:-2}
+.stage::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 74%,var(--glow) 0 16%,transparent 58%);z-index:-1}
+.stage > .eu-particulas{z-index:28}
+@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+
+.clear{position:absolute;top:12px;left:12px;z-index:30;border:0;border-radius:999px;background:var(--panel);color:var(--ink);
+  font-weight:800;font-size:.85rem;padding:7px 14px;cursor:pointer;box-shadow:0 3px 0 rgba(58,36,20,.18);transition:transform .15s}
+.clear:active{transform:scale(.94)}
+
+.bubble{position:absolute;top:56px;right:98px;max-width:calc(100% - 120px);z-index:30;background:var(--bubble);color:var(--bubble-ink);
+  font:800 .95rem/1.2 var(--display);padding:7px 12px;border-radius:16px;box-shadow:0 3px 0 rgba(58,36,20,.15)}
+.bubble::after{content:"";position:absolute;right:-8px;top:10px;border:8px solid transparent;border-left-color:var(--bubble);border-right:0}
+.bubble.pop{animation:pop .4s cubic-bezier(.3,1.6,.5,1)}
+.eu-sin-mascota .bubble{display:none}
+@keyframes pop{0%{transform:scale(.6)}100%{transform:scale(1)}}
+
+.dancer{position:absolute;top:4px;right:4px;width:92px;height:100px;z-index:31;border:0;background:none;padding:0;cursor:pointer}
+.dancer svg,.party-dancer svg{width:100%;height:100%;overflow:visible;display:block}
+.d-body{transform-origin:60px 100px;animation:sway 1.1s ease-in-out infinite}
+.d-arm-l{transform-origin:28px 62px;animation:waveL .55s ease-in-out infinite alternate}
+.d-arm-r{transform-origin:92px 62px;animation:waveR .55s ease-in-out infinite alternate}
+.d-leg-l{transform-origin:48px 96px;animation:kickL 1.1s ease-in-out infinite}
+.d-leg-r{transform-origin:72px 96px;animation:kickR 1.1s ease-in-out infinite}
+.d-hop{animation:bob .55s ease-in-out infinite alternate}
+.hop .d-hop{animation:jump .5s cubic-bezier(.3,1.6,.5,1) 2}
+@keyframes sway{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(9deg)}}
+@keyframes waveL{from{transform:rotate(25deg)}to{transform:rotate(-35deg)}}
+@keyframes waveR{from{transform:rotate(35deg)}to{transform:rotate(-25deg)}}
+@keyframes kickL{0%,100%{transform:rotate(0)}25%{transform:rotate(28deg)}}
+@keyframes kickR{0%,100%{transform:rotate(0)}75%{transform:rotate(-28deg)}}
+@keyframes bob{from{transform:translateY(0)}to{transform:translateY(-6px)}}
+@keyframes jump{0%{transform:translateY(0)}50%{transform:translateY(-24px) rotate(8deg)}100%{transform:translateY(0)}}
+
+.plate{position:absolute;left:50%;bottom:12px;width:min(84%,330px);height:34px;transform:translateX(-50%);border-radius:50%;
+  background:radial-gradient(ellipse at 50% 42%,var(--plate) 0 56%,var(--plate-rim) 58% 64%,var(--plate) 66%);box-shadow:0 8px 14px rgba(58,36,20,.28)}
+.arepa-pos{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);transition:width .3s ease,height .3s ease}
+.arepa-pos::before{content:"";position:absolute;left:6%;right:6%;bottom:-6px;height:16px;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(58,36,20,.4),transparent)}
+.arepa{position:relative;width:100%;height:100%;transform-origin:50% 100%}
+.arepa.squish{animation:squish .45s cubic-bezier(.3,1.5,.5,1)}
+@keyframes squish{0%{transform:scale(1,1)}35%{transform:scale(1.06,.92)}70%{transform:scale(.98,1.03)}100%{transform:scale(1,1)}}
+.piece{position:absolute;display:block;height:auto;max-width:none;pointer-events:none;user-select:none;
+  filter:drop-shadow(0 3px 3px rgba(40,20,5,.22));
+  transition:bottom .4s cubic-bezier(.3,1.25,.5,1),width .3s ease,left .3s ease,transform .3s ease}
+.piece.drop{animation:drop .6s cubic-bezier(.3,1.4,.5,1)}
+.piece.out{animation:out .28s ease-in forwards}
+.arepa.empty .piece[data-id="tapa-arriba"]{transform:translateY(-14px) rotate(-7deg)}
+@keyframes drop{0%{transform:translateY(-260px) rotate(-6deg);opacity:0}45%{opacity:1}100%{transform:translateY(0) rotate(0)}}
+@keyframes out{to{transform:translate(170px,-30px) rotate(18deg);opacity:0}}
+
+.mini{position:relative;flex:none}
+.mini img{position:absolute;display:block;height:auto;max-width:none}
+
+/* ---------- Pestañas ---------- */
+.tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px;background:var(--chip);padding:4px;border-radius:999px}
+.tab{position:relative;border:0;background:transparent;color:var(--muted);font-weight:800;font-size:.84rem;min-height:42px;padding:0 2px;border-radius:999px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background-color .2s,color .2s;overflow-wrap:anywhere;line-height:1.1;text-align:center}
+.tab[aria-selected="true"]{background:var(--panel);color:var(--ink);box-shadow:0 2px 0 rgba(58,36,20,.12)}
+.tab .n{position:absolute;top:-6px;right:-2px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--leaf);color:var(--leaf-ink);
+  font-size:.68rem;display:grid;place-items:center;box-shadow:0 0 0 2px var(--bg)}
+
+/* ---------- Lista de ingredientes ---------- */
+.list{flex:1 1 auto!important;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:2px 4px 8px}
+.hint{color:var(--muted);font-size:.85rem;font-weight:700;margin:0 0 10px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 10px;padding-top:4px}
+.ing{position:relative;display:grid;grid-template-columns:60px minmax(0,1fr);align-items:center;gap:8px;min-height:70px;padding:8px 8px 8px 6px;
+  border-radius:18px;border:2px solid var(--line);background:var(--panel);text-align:left;cursor:pointer;
+  transition:transform .15s,border-color .2s,background-color .2s}
+.ing.eu-rev{transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .45s ease,border-color .2s,background-color .2s}
+.ing:active{transform:scale(.96)}
+.ing .th{width:60px;height:46px;display:grid;place-items:center}
+.ing .th img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(40,20,5,.2))}
+.ing .th .sin-foto{font-size:1.6rem}
+.ing .txt{min-width:0;display:flex;flex-direction:column;gap:2px}
+.ing b{font-weight:800;font-size:.9rem;line-height:1.15;hyphens:auto;overflow-wrap:anywhere}
+.ing .p{color:var(--muted);font-size:.8rem;font-weight:700;font-variant-numeric:tabular-nums}
+.ing .p.inc{color:var(--leaf)}
+.ing .ok{position:absolute;top:-7px;right:-5px;width:24px;height:24px;border-radius:50%;background:var(--leaf);color:var(--leaf-ink);
+  display:grid;place-items:center;font-weight:800;font-size:.8rem;transform:scale(0);transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
+.ing[aria-pressed="true"]{border-color:var(--leaf);background:var(--chip)}
+.ing[aria-pressed="true"] .ok{transform:scale(1)}
+.ing.out{opacity:.55;cursor:not-allowed;border-style:dashed}
+.ing.out:active{transform:none}
+.ing.out .th img{filter:grayscale(1)}
+.ing.out .p{color:var(--chili)}
+.ing.out .add{cursor:not-allowed}
+.vacio{color:var(--muted);font-weight:700;text-align:center;padding:24px 8px}
+
+.drink{display:block;padding:0}
+.drink .add{width:100%;min-height:74px;display:grid;grid-template-columns:50px minmax(0,1fr);align-items:center;gap:8px;
+  padding:8px 8px 8px 6px;border:0;background:none;text-align:left;cursor:pointer;border-radius:16px}
+.drink.on{border-color:var(--leaf);background:var(--chip)}
+.drink .th{width:50px;height:58px;display:flex;align-items:flex-end;justify-content:center;overflow:visible}
+.drink .qty{position:absolute;top:-8px;right:-4px;min-width:26px;height:26px;padding:0 7px;border-radius:13px;background:var(--leaf);color:var(--leaf-ink);
+  font-weight:800;font-size:.85rem;display:grid;place-items:center;font-variant-numeric:tabular-nums}
+.drink .qty.pop{animation:pop .4s cubic-bezier(.3,1.6,.5,1)}
+.drink .minus{position:absolute;bottom:-8px;right:-4px;width:30px;height:30px;border-radius:50%;border:2px solid var(--line);background:var(--panel);
+  color:var(--chili);font-weight:800;font-size:1.1rem;line-height:1;display:grid;place-items:center;cursor:pointer}
+.dimg{width:100%;height:100%;object-fit:contain;object-position:50% 100%;filter:drop-shadow(0 2px 2px rgba(40,20,5,.2))}
+.dimg.sm{transform:scale(.8);transform-origin:50% 100%}
+.demoji{font-size:1.9rem;line-height:1}
+.group{font:800 1.05rem var(--display);margin:16px 2px 8px}
+.hint + .group{margin-top:2px}
+.flyer{position:fixed;z-index:60;pointer-events:none;margin:0;display:grid;place-items:center}
+.flyer img{width:100%;height:100%;object-fit:contain}
+.step{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:6px}
+.step button{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);background:var(--panel);font-weight:800;cursor:pointer;line-height:1}
+.step b{min-width:1.2em;text-align:center;font-variant-numeric:tabular-nums}
+
+/* ---------- Barra de pedido ---------- */
+.bar{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;padding-bottom:4px}
+.cart{position:relative;width:58px;height:58px;border-radius:50%;border:2px solid var(--line);background:var(--panel);display:grid;place-items:center;cursor:pointer;transition:transform .15s}
+.cart:active{transform:scale(.94)}
+.cart svg{width:26px;height:26px}
+.cart .badge{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--chili);color:var(--chili-ink);
+  font-size:.75rem;font-weight:800;display:grid;place-items:center}
+.cart .badge.bump{animation:pop .45s cubic-bezier(.3,1.6,.5,1)}
+.cta{height:58px;border:0;border-radius:999px;background:var(--leaf);color:var(--leaf-ink);font-weight:800;font-size:1.02rem;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 7px 0 20px;cursor:pointer;
+  box-shadow:0 5px 0 var(--leaf-deep);transition:transform .12s,box-shadow .12s}
+.cta:active{transform:translateY(3px);box-shadow:0 2px 0 var(--leaf-deep)}
+.cta b{background:rgba(255,255,255,.24);padding:9px 14px;border-radius:999px;font-variant-numeric:tabular-nums}
+
+/* ---------- Hojas: pedido y datos del local ---------- */
+.scrim{position:fixed;inset:0;background:var(--scrim);opacity:0;pointer-events:none;transition:opacity .25s;z-index:40}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:520px;max-height:88%;overflow:auto;overscroll-behavior:contain;z-index:41;background:var(--panel);
+  border-radius:26px 26px 0 0;display:flex;flex-direction:column;gap:12px;
+  padding:10px max(18px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));
+  transform:translateY(105%);visibility:hidden;transition:transform .35s cubic-bezier(.2,.9,.3,1),visibility 0s .35s}
+.sheet.on{transform:none;visibility:visible;transition:transform .35s cubic-bezier(.2,.9,.3,1),visibility 0s}
+.sheet > *{flex:none}
+.grab{width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto}
+.sheet-head{display:flex;justify-content:space-between;align-items:center}
+.sheet-head h2{font-size:1.5rem}
+.x{width:40px;height:40px;border-radius:50%;border:0;background:var(--chip);font-weight:800;cursor:pointer}
+.sheet ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.sheet li{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.sheet li .pic{width:64px;height:58px;display:flex;align-items:flex-end;justify-content:center}
+.sheet li .d{color:var(--muted);font-size:.9rem;min-width:0}
+.sheet li .d strong{display:block;color:var(--ink);font-size:1rem}
+.sheet li .p{font-weight:800;font-variant-numeric:tabular-nums;text-align:right}
+.sheet li .rm{display:block;margin-top:4px;margin-left:auto;border:0;background:none;color:var(--chili);font-weight:800;font-size:.85rem;cursor:pointer;padding:0}
+.empty-note{color:var(--muted)}
+.total{display:flex;flex-direction:column;gap:2px}
+.total strong{font:800 1.6rem var(--display);font-variant-numeric:tabular-nums}
+.total small{color:var(--muted);font-weight:800;font-variant-numeric:tabular-nums}
+.btn{border:0;border-radius:999px;padding:13px 22px;font-weight:800;cursor:pointer;background:var(--leaf);color:var(--leaf-ink);text-align:center}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.soft{background:var(--chip);color:var(--ink)}
+.btn.wa{display:flex;align-items:center;justify-content:center;gap:10px;text-decoration:none;font-size:1.05rem;padding:15px 22px;
+  box-shadow:0 5px 0 var(--leaf-deep);transition:transform .12s,box-shadow .12s}
+.btn.wa:active{transform:translateY(3px);box-shadow:0 2px 0 var(--leaf-deep)}
+.btn.wa svg{width:22px;height:22px;flex:none}
+.btn.wa.off{opacity:.45;box-shadow:none}
+.sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.wa-note{color:var(--muted);font-size:.85rem;text-align:center}
+.wa-note .num{font-weight:800;color:var(--ink);user-select:all;font-variant-numeric:tabular-nums;white-space:nowrap}
+.toast-msg{color:var(--leaf);font-weight:800;min-height:1.4em;text-align:center}
+#copyBox{width:100%;min-height:160px;border-radius:14px;border:2px solid var(--line);background:var(--bg);color:var(--ink);padding:10px;font:600 .9rem var(--body)}
+
+/* Datos del cliente */
+.pedido{display:flex;flex-direction:column;gap:12px;padding-top:4px}
+.campo{display:flex;flex-direction:column;gap:6px}
+.campo > span,.pedido legend{font-weight:800;font-size:.9rem}
+.campo input,.campo textarea{width:100%;border:2px solid var(--line);border-radius:14px;background:var(--bg);padding:11px 12px;font-size:16px;font-weight:700}
+.campo textarea{resize:vertical;min-height:52px}
+.campo small{color:var(--muted);font-weight:700}
+.pedido fieldset{border:0;margin:0;padding:0;min-width:0}
+.pedido legend{padding:0;margin-bottom:6px}
+.seg{display:grid;gap:6px;background:var(--chip);padding:4px;border-radius:16px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{display:flex;align-items:center;justify-content:center;text-align:center;min-height:42px;border-radius:12px;font-weight:800;font-size:.88rem;cursor:pointer;color:var(--muted)}
+.seg input:checked + label{background:var(--panel);color:var(--ink);box-shadow:0 2px 0 rgba(58,36,20,.12)}
+.seg input:focus-visible + label{outline:3px solid var(--leaf);outline-offset:2px}
+.error{background:#FDE3DE;color:#8C2414;border-radius:12px;padding:10px 12px;font-weight:800}
+.cerrado-nota{background:var(--chip);border-radius:12px;padding:10px 12px;font-weight:700}
+.info-sheet .eu-info{grid-template-columns:1fr}
+
+/* ---------- Celebración ---------- */
+.party{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:var(--scrim);overflow:hidden;padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
+.party-card{background:var(--panel);border-radius:32px;padding:22px 22px 24px;display:flex;flex-direction:column;align-items:center;gap:10px;
+  animation:pop .45s cubic-bezier(.3,1.6,.5,1);max-width:100%}
+.party-row{display:flex;align-items:flex-end;justify-content:center;gap:4px}
+.party-dancer{width:120px;height:130px;flex:none}
+.party-card p{font:800 1.6rem var(--display);text-align:center}
+.confetti{position:absolute;top:-20px;width:10px;height:16px;border-radius:3px;animation:fall 1.6s ease-in forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="head">
+    <div class="marca">
+      <img class="logo" id="logo" alt="" hidden data-eu-logo>
+      <div class="marca-txt"><h1 id="titulo"></h1><small id="precioBase"></small></div>
+    </div>
+    <button class="info-btn" id="openInfo" type="button" aria-haspopup="dialog"><span class="pt" id="puntoEstado"></span>Info</button>
+  </header>
+  <div data-eu-avisos></div>
+
+  <section class="stage" id="stage" aria-label="Tu arepa" data-eu-portada>
+    <button class="clear" id="clear" type="button">Vaciar</button>
+    <div class="bubble" id="bubble" aria-live="polite">¡Hola! Rellena tu arepa</div>
+    <button class="dancer" id="dancer" type="button" aria-label="Arepa bailarina, tócala para que salte" data-dancer data-eu-mascota></button>
+    <div class="plate" aria-hidden="true"></div>
+    <div class="arepa-pos" id="arepaPos">
+      <div class="arepa" id="arepa" role="img" aria-label="Tu arepa"></div>
+    </div>
+  </section>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Tipos de ingredientes"></nav>
+
+  <section class="list" id="list" role="tabpanel"></section>
+
+  <div class="bar">
+    <button class="cart" id="openOrder" type="button" aria-label="Ver pedido">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+      <span class="badge" id="orderCount" hidden>0</span>
+    </button>
+    <button class="cta" id="add" type="button" data-eu-boton><span id="ctaTxt">Agregar arepa</span><b id="ctaPrice">$0.00</b></button>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" aria-hidden="true">
+  <div class="grab" aria-hidden="true"></div>
+  <div class="sheet-head"><h2 id="sheetTitle">Tu pedido</h2><button class="x" id="closeOrder" type="button" aria-label="Cerrar pedido">✕</button></div>
+  <ul id="orderList"></ul>
+  <p class="empty-note" id="orderEmpty">Todavía no hay nada en el pedido.</p>
+  <form class="pedido" id="form" novalidate>
+    <p class="cerrado-nota" id="cerrado" hidden></p>
+    <label class="campo"><span>Tu nombre</span><input id="cliente" autocomplete="name" placeholder="Ej: María González"></label>
+    <fieldset><legend>¿Cómo lo quieres?</legend><div class="seg" id="tipos"></div></fieldset>
+    <label class="campo" id="campo-dir" hidden><span>Dirección de entrega</span><textarea id="direccion" rows="2" placeholder="Calle, casa o edificio, punto de referencia"></textarea><small id="nota-delivery"></small></label>
+    <div id="pago"></div>
+    <div id="pago-detalle"></div>
+    <label class="campo"><span>Notas (opcional)</span><textarea id="notas" rows="2" placeholder="Ej: sin picante, bien tostada"></textarea></label>
+    <p class="error" id="error" role="alert" hidden></p>
+  </form>
+  <div class="total"><strong id="total">Total $0.00</strong><small id="totalBs"></small></div>
+  <a class="btn wa" id="sendWa" href="#" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>
+    Enviar pedido por WhatsApp
+  </a>
+  <div class="sheet-actions">
+    <button class="btn soft" id="copy" type="button">Copiar pedido</button>
+    <button class="btn soft" id="emptyOrder" type="button">Vaciar pedido</button>
+  </div>
+  <p class="wa-note">Llega al WhatsApp del local: <span class="num" id="waShow"></span></p>
+  <p class="toast-msg" id="toast" aria-live="polite"></p>
+  <textarea id="copyBox" readonly hidden aria-label="Texto del pedido para copiar"></textarea>
+</section>
+
+<section class="sheet info-sheet" id="infoSheet" role="dialog" aria-modal="true" aria-labelledby="infoTitle" aria-hidden="true">
+  <div class="grab" aria-hidden="true"></div>
+  <div class="sheet-head"><h2 id="infoTitle">El local</h2><button class="x" id="closeInfo" type="button" aria-label="Cerrar">✕</button></div>
+  <p class="empty-note" id="infoDesc" hidden></p>
+  <div id="info"></div>
+</section>
+
+<div class="party" id="party" hidden>
+  <div class="party-card">
+    <div class="party-row"><div id="partyArepa"></div><div class="party-dancer" data-dancer data-eu-mascota></div></div>
+    <p id="partyText">¡Arepa al pedido!</p>
+  </div>
+</div>
+
+<script src="/core/config.js"></script>
+<script src="/core/catalogos.js"></script>
+<script src="/t/arepera/datos.js"></script>
+<script src="/core/sitio.js"></script>
+<script src="/t/arepera/app.js"></script>
+</body>
+</html>

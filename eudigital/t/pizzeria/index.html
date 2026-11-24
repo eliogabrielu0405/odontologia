@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="es" data-plantilla="pizzeria">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pizzería</title>
+<meta name="description" content="Pide tu pizza de la casa, mitad y mitad o armada a tu gusto. Pedidos por WhatsApp.">
+<meta name="theme-color" content="#d7262b">
+<link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Figtree:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/core/sitio.css">
+<link rel="stylesheet" href="/t/pizzeria/estilos.css">
+</head>
+<body>
+<header class="hero" data-eu-portada>
+  <div class="wrap">
+    <div>
+      <div class="brand-row"><img class="hero-logo" id="logo" alt="" hidden data-eu-logo><div class="brand" id="brandName"></div></div>
+      <div class="status" id="heroStatus"><i></i><span></span></div>
+      <h1 id="titulo"></h1>
+      <p id="descripcion"></p>
+      <div class="hero-ctas">
+        <button class="btn btn-cheese" type="button" data-go="arma" data-eu-boton>Arma tu pizza</button>
+        <button class="btn btn-ghost" type="button" data-go="menu">Ver el menú</button>
+      </div>
+    </div>
+    <svg class="mascot" id="mascotBig" viewBox="0 0 200 220" aria-label="Pizza bailarina" role="img" data-eu-mascota></svg>
+  </div>
+  <div class="mantel" aria-hidden="true"></div>
+</header>
+<div data-eu-avisos></div>
+
+<nav class="tabs" aria-label="Secciones">
+  <div class="wrap" role="tablist">
+    <button class="tab" type="button" role="tab" id="tab-menu" aria-selected="true" data-go="menu">Menú</button>
+    <button class="tab" type="button" role="tab" id="tab-arma" aria-selected="false" data-go="arma">Arma tu pizza</button>
+    <button class="tab" type="button" role="tab" id="tab-info" aria-selected="false" data-go="info">El local</button>
+    <svg class="mini-mascot mascot" id="mascotMini" viewBox="0 0 200 220" aria-hidden="true" data-eu-mascota></svg>
+  </div>
+</nav>
+
+<main>
+  <section class="view wrap" id="view-menu" aria-labelledby="tab-menu">
+    <div class="sec-head">
+      <h2>Pizzas de la casa</h2>
+      <p id="tamanosTxt"></p>
+    </div>
+    <div class="cats" aria-label="Ir a" id="saltos"><button class="cat" type="button" data-jump="pizzasHead">Pizzas</button><button class="cat" type="button" data-jump="drinksHead">Bebidas</button></div>
+    <span id="pizzasHead"></span>
+    <button class="mitad-banner" type="button" id="mitadBanner">
+      <span class="mb-pic" aria-hidden="true"><img id="mbA" alt=""><img id="mbB" alt=""></span>
+      <span class="mb-txt"><b>¿Dos sabores? Pide mitad y mitad</b><small>Elige un sabor para cada mitad de tu pizza.</small></span>
+      <span class="mb-go">Armar</span>
+    </button>
+    <div class="grid" id="menuGrid"></div>
+    <div class="sub-head" id="drinksHead"><h2>Bebidas</h2><p id="bebidasTxt"></p></div>
+    <div class="drinks" id="drinks"></div>
+  </section>
+
+  <section class="view wrap" id="view-arma" aria-labelledby="tab-arma" hidden>
+    <div class="sec-head">
+      <h2>Arma tu pizza</h2>
+      <p>Toca un ingrediente y míralo caer en tu pizza.</p>
+    </div>
+    <div class="builder">
+      <div class="stage">
+        <div class="board"><canvas id="builderCanvas" width="400" height="400" aria-label="Vista previa de tu pizza"></canvas>
+          <button class="half-pill l" type="button" data-half="0" aria-pressed="false" hidden>Mitad 1</button>
+          <button class="half-pill r" type="button" data-half="1" aria-pressed="false" hidden>Mitad 2</button></div>
+        <div class="stage-wrap">
+          <div class="forma" id="forma" role="group" aria-label="Forma de la pizza"><button class="opt" type="button" data-forma="entera" aria-pressed="true">Entera</button><button class="opt" type="button" data-forma="mitad" aria-pressed="false">Mitad y mitad</button></div>
+          <div class="stage-info">
+            <div class="sum" id="bSummary"></div>
+            <div class="price-wrap" style="align-items:flex-end"><div class="price" id="bPrice">$0</div><div class="bs" id="bBs"></div></div>
+          </div>
+          <button class="add" type="button" id="bAdd">Agregar al pedido</button>
+        </div>
+      </div>
+      <div class="steps">
+        <div class="step"><h3><span class="n">1</span>Tamaño</h3><div class="opts" id="optSize"></div></div>
+        <div class="step"><h3><span class="n">2</span>Masa</h3><div class="opts" id="optMasa"></div></div>
+        <div class="step"><h3><span class="n">3</span>Salsa<span class="hint half" data-half-tag></span></h3><div class="opts" id="optSalsa"></div></div>
+        <div class="step"><h3><span class="n">4</span>Queso<span class="hint half" data-half-tag></span></h3><div class="opts" id="optQueso"></div></div>
+        <div class="step"><h3><span class="n">5</span>Ingredientes<span class="hint" id="topHint"></span></h3>
+          <div class="flavor-wrap"><div class="flavor-label" id="flavorLabel"></div><div class="flavors" id="flavors"></div></div>
+          <div id="optTops"></div>
+          <button class="icon-btn" type="button" id="bClear" style="margin-top:12px">Quitar todos</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view wrap info-wrap" id="view-info" aria-labelledby="tab-info" hidden>
+    <div class="sec-head"><h2>El local</h2><p>Dónde estamos, cuándo abrimos y cómo pagar.</p></div>
+    <div id="info"></div>
+  </section>
+</main>
+
+<div class="bar" hidden><div class="wrap">
+  <button class="cart-btn" type="button" id="cartBtn" disabled><span class="count" id="cartCount">0</span><span>Ver mi pedido</span><span class="tot"><span id="cartTot">$0.00</span><small id="cartBs"></small></span></button>
+</div></div>
+
+<div class="scrim" id="scrim" hidden></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
+  <div class="wrap">
+    <div class="sheet-head"><h2 id="sheetTitle">Tu pedido</h2><button class="icon-btn" type="button" id="closeSheet">Cerrar</button></div>
+    <div id="lines"></div>
+    <div class="upsell" id="upsell" hidden><div class="label-sm">¿Algo para tomar?</div><div class="ups" id="ups"></div></div>
+    <div id="checkout">
+      <form class="steps" style="gap:12px" id="form" novalidate>
+        <div class="seg" id="modo"></div>
+        <label class="field" for="cName">Nombre<input id="cName" autocomplete="name" placeholder="¿A nombre de quién?"></label>
+        <label class="field" for="cAddr" id="addrWrap">Dirección de entrega<input id="cAddr" autocomplete="street-address" placeholder="Calle, casa, punto de referencia"></label>
+        <div class="pago-wrap"><div id="payOpts"></div><div id="payInfo"></div></div>
+        <label class="field" for="cNote">Notas (opcional)<textarea id="cNote" rows="2" placeholder="Sin cebolla, cortar en 8, etc."></textarea></label>
+        <div class="totals"><span>Total</span><span class="price-wrap" style="align-items:flex-end"><span class="price" id="sheetTot">$0.00</span><span class="bs" id="sheetBs"></span></span></div>
+        <div class="err" id="formErr" role="alert" hidden></div>
+        <p class="closed-note" id="closedNote" hidden></p>
+        <a class="wa" id="waBtn" href="#" target="_blank" rel="noopener">Enviar pedido por WhatsApp</a>
+        <div class="msg" id="msgPreview"></div>
+        <button class="icon-btn" type="button" id="copyMsg">Copiar mensaje</button>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/core/config.js"></script>
+<script src="/core/catalogos.js"></script>
+<script src="/t/pizzeria/datos.js"></script>
+<script src="/core/sitio.js"></script>
+<script src="/t/pizzeria/app.js"></script>
+</body>
+</html>

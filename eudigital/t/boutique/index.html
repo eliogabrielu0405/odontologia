@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="es" data-plantilla="boutique">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+<title>Boutique</title>
+<meta name="description" content="Boutique de ropa para damas: mira cada prenda en 360°, arma tu carrito y envía el pedido por WhatsApp.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..700;1,6..96,400..700&family=Jost:wght@300..600&display=swap">
+<link rel="stylesheet" href="/core/sitio.css">
+<style>:root{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}img{max-width:100%}</style>
+<style>
+/* El probador: cada prenda gira sobre una base rosa, con una cinta métrica que marca
+   frente, lado y espalda. Alrededor, blanco y negro ordenados; el rosa queda para el estudio. */
+:root {
+  --papel: #FFFFFF;
+  --tinta: #000000;
+  --tinta-2: #6B5862;
+  --linea: #EADBE1;
+  --chicle: #CC3570;
+  --sobre-tinta: #FFFFFF;
+  --sobre-chicle: #FFFFFF;
+  --velo: rgba(24, 6, 14, 0.45);
+  /* El estudio del probador mantiene su luz en los dos temas, como una foto de producto. */
+  --estudio: #FBEEF3;
+  --estudio-luz: #FFFFFF;
+  --palo: #F2C3D3;
+  --estudio-tinta: #000000;
+  --estudio-tinta-2: #6E5964;
+  --display: "Bodoni Moda", "Bodoni 72", Didot, "Bodoni MT", Georgia, serif;
+  --texto: "Jost", Futura, "Century Gothic", "Avenir Next", system-ui, sans-serif;
+  --barra-alto: 60px;
+  --lado-izq: max(16px, env(safe-area-inset-left, 0px));
+  --lado-der: max(16px, env(safe-area-inset-right, 0px));
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --papel: #000000; --tinta: #FFFFFF; --tinta-2: #C9B4BE; --linea: #35272E; --chicle: #FF7AAB;
+    --sobre-tinta: #000000; --sobre-chicle: #000000; --velo: rgba(0, 0, 0, 0.62); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --papel: #000000; --tinta: #FFFFFF; --tinta-2: #C9B4BE; --linea: #35272E; --chicle: #FF7AAB;
+  --sobre-tinta: #000000; --sobre-chicle: #000000; --velo: rgba(0, 0, 0, 0.62); color-scheme: dark;
+}
+@media (min-width: 720px) {
+  :root { --lado-izq: max(32px, env(safe-area-inset-left, 0px)); --lado-der: max(32px, env(safe-area-inset-right, 0px)); }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--papel); color: var(--tinta);
+  font: 400 16px/1.55 var(--texto); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 25; background: var(--papel); }
+html.bloqueado, html.bloqueado body { overflow: hidden; }
+h1, h2, h3, p, dl, dd, figure { margin: 0; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--chicle); outline-offset: 3px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.envoltura { width: 100%; max-width: 1280px; margin-inline: auto; padding-left: var(--lado-izq); padding-right: var(--lado-der); }
+.icono { width: 24px; height: 24px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- Barra ---------- */
+.barra { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--papel); }
+.barra-in { height: var(--barra-alto); display: flex; align-items: center; justify-content: space-between; }
+.marca { font-family: var(--display); font-weight: 600; font-size: 30px; line-height: 1; letter-spacing: 0.01em; color: var(--tinta); text-decoration: none; }
+.btn-bolsa { position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 2px 0 10px; border: 0; background: none; font-size: 15px; font-weight: 500; }
+.bolsa-texto { display: none; }
+.contador {
+  min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--chicle); color: var(--sobre-chicle);
+  font-size: 13px; font-weight: 600; line-height: 22px; text-align: center; font-variant-numeric: tabular-nums;
+}
+.btn-bolsa .contador { position: absolute; top: 2px; right: -6px; }
+@media (min-width: 720px) {
+  .bolsa-texto { display: inline; }
+  .btn-bolsa .contador { position: static; }
+}
+
+/* ---------- Búsqueda y categorías ---------- */
+.filtros { padding-block: 2px 12px; }
+.buscador {
+  display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 18px; max-width: 560px;
+  border: 1px solid var(--linea); border-radius: 999px; background: var(--papel); cursor: text;
+}
+.buscador:focus-within { border-color: var(--tinta); }
+.buscador .icono { color: var(--tinta-2); width: 20px; height: 20px; }
+.buscador input { flex: 1; min-width: 0; height: 100%; border: 0; background: none; outline: none; font-size: 16px; }
+.buscador input::placeholder { color: var(--tinta-2); opacity: 1; }
+.buscador input::-webkit-search-cancel-button { cursor: pointer; }
+.categorias-barra { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--barra-alto)); z-index: 19; background: var(--papel); }
+.categorias { display: flex; gap: 8px; overflow-x: auto; padding-block: 2px 14px; scrollbar-width: none; }
+.categorias::-webkit-scrollbar { display: none; }
+.categorias::after { content: ""; flex: 0 0 1px; }
+.chip {
+  flex: none; height: 40px; padding: 0 18px; border: 1px solid var(--linea); border-radius: 999px;
+  background: transparent; font-size: 15px; white-space: nowrap;
+}
+.chip[aria-pressed="true"] { background: var(--tinta); border-color: var(--tinta); color: var(--sobre-tinta); }
+@media (hover: hover) { .chip[aria-pressed="false"]:hover { border-color: var(--tinta); } }
+
+/* ---------- Probador ---------- */
+.probador {
+  position: relative; display: flex; flex-direction: column; color: var(--estudio-tinta);
+  background: radial-gradient(62% 56% at 50% 42%, var(--estudio-luz) 0%, var(--estudio) 72%);
+}
+.escena {
+  position: relative; height: clamp(330px, 54vh, 500px); touch-action: pan-y; cursor: grab;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+.escena:active { cursor: grabbing; }
+.escena canvas, .escena .foto360 { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.escena .foto360 { object-fit: contain; pointer-events: none; }
+.escena[data-estado="cargando"]::before {
+  content: ""; position: absolute; left: 50%; bottom: 9%; width: min(62%, 340px); aspect-ratio: 5 / 1;
+  transform: translateX(-50%); border-radius: 50%; background: var(--palo); opacity: 0.7;
+}
+.escena-aviso { position: absolute; left: 24px; right: 24px; top: 42%; text-align: center; color: var(--estudio-tinta-2); font-size: 15px; text-wrap: balance; }
+.cinta { position: relative; height: 46px; width: min(100% - 32px, 560px); margin: 8px auto 0; touch-action: pan-y; cursor: ew-resize; outline-offset: 6px; }
+.cinta canvas {
+  display: block; width: 100%; height: 100%;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+}
+.muesca { position: absolute; left: 50%; top: -8px; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid var(--estudio-tinta); transform: translateX(-50%); }
+.pista { text-align: center; font-size: 14px; color: var(--estudio-tinta-2); padding: 8px 16px 16px; transition: opacity 0.4s; text-wrap: balance; }
+.pista.oculta { opacity: 0; }
+
+/* ---------- Destacado ---------- */
+.destacado .probador { margin-left: calc(-1 * var(--lado-izq)); margin-right: calc(-1 * var(--lado-der)); }
+.destacado-info { display: grid; gap: 16px; justify-items: start; padding-block: 24px 8px; }
+.nombre-grande { font-family: var(--display); font-weight: 500; font-size: clamp(36px, 9vw, 60px); line-height: 1.04; letter-spacing: -0.015em; text-wrap: balance; }
+.desc { color: var(--tinta-2); max-width: 44ch; }
+.precio { font-variant-numeric: tabular-nums lining-nums; font-weight: 500; }
+.precio-grande { font-size: 22px; }
+.opcion { display: grid; gap: 12px; }
+.opcion-tit { font-weight: 500; }
+.opcion-tit span { font-weight: 400; color: var(--tinta-2); }
+@media (min-width: 960px) {
+  .destacado-in { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 64px; align-items: center; padding-block: 6px 24px; }
+  .destacado .probador { margin: 0; }
+  .destacado .escena { height: min(64vh, 620px); }
+  .destacado-info { padding: 0; gap: 20px; }
+}
+
+/* ---------- Botones y controles ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 0 30px;
+  border-radius: 999px; border: 1px solid transparent; font-size: 16px; font-weight: 500; line-height: 1.2; text-align: center; text-decoration: none;
+}
+.btn:active { transform: scale(0.985); }
+.btn-negro { background: var(--tinta); color: var(--sobre-tinta); }
+.btn-borde { background: transparent; border-color: var(--tinta); color: var(--tinta); }
+.btn-ancho { width: 100%; }
+.btn-redondo {
+  position: relative; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 0;
+  background: var(--estudio-luz); color: var(--estudio-tinta); box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
+}
+.btn-redondo .contador { position: absolute; top: -2px; right: -4px; }
+.btn-redondo-plano { background: transparent; color: var(--tinta); box-shadow: none; }
+.enlace { border: 0; background: none; padding: 6px 0; font-size: 15px; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.enlace-chico { font-size: 14px; color: var(--tinta-2); }
+.muestras { display: flex; flex-wrap: wrap; gap: 14px; padding: 5px; margin: -5px; }
+.muestra { position: relative; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; box-shadow: 0 0 0 1px var(--linea), inset 0 0 0 1px rgba(0, 0, 0, 0.08); }
+.muestra[aria-checked="true"]::after { content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 1.5px solid var(--tinta); }
+.tallas { display: flex; flex-wrap: wrap; gap: 8px; }
+.talla { min-width: 56px; height: 48px; padding: 0 12px; border: 1px solid var(--tinta); background: transparent; font-size: 15px; font-weight: 500; letter-spacing: 0.03em; }
+.talla[aria-checked="true"] { background: var(--tinta); color: var(--sobre-tinta); }
+.talla:disabled {
+  cursor: not-allowed; color: var(--tinta-2); border-color: var(--linea);
+  background: linear-gradient(to top right, transparent calc(50% - 0.6px), var(--linea) 50%, transparent calc(50% + 0.6px));
+}
+.error { color: var(--chicle); font-size: 14px; font-weight: 500; }
+.nota-chica { font-size: 14px; color: var(--tinta-2); }
+
+/* ---------- Catálogo ---------- */
+.catalogo { padding-block: 40px 64px; }
+.catalogo-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.catalogo-cab h2 { font-family: var(--display); font-weight: 500; font-size: 28px; line-height: 1.15; min-width: 0; overflow-wrap: anywhere; }
+.conteo { color: var(--tinta-2); font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rejilla { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 12px; }
+.tarjeta a { display: grid; gap: 12px; text-decoration: none; }
+.foto { position: relative; aspect-ratio: 3 / 4; max-width: 100%; overflow: hidden; background: radial-gradient(72% 62% at 50% 44%, var(--estudio-luz), var(--estudio) 76%); }
+.foto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.foto img:not([src]) { visibility: hidden; }
+.foto.sin-foto::after { content: "Sin vista previa"; position: absolute; inset: auto 0 45%; text-align: center; font-size: 13px; color: var(--estudio-tinta-2); }
+.tarjeta-nombre { font-family: var(--display); font-weight: 500; font-size: 19px; line-height: 1.2; }
+.tarjeta-pie { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+.nuevo { font-size: 13px; font-weight: 500; color: var(--chicle); }
+.puntos { display: flex; gap: 5px; margin-left: auto; }
+.punto { width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 0 1px var(--linea); }
+@media (hover: hover) { .tarjeta a:hover .tarjeta-nombre { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; } }
+@media (min-width: 720px) { .rejilla { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px 20px; } }
+@media (min-width: 1100px) { .rejilla { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.vacio { display: grid; gap: 10px; justify-items: start; padding-block: 24px; max-width: 44ch; }
+.vacio-tit { font-family: var(--display); font-size: 22px; font-weight: 500; }
+.vacio .btn { margin-top: 8px; }
+
+.pie { border-top: 1px solid var(--linea); padding-block: 40px calc(40px + env(safe-area-inset-bottom, 0px)); color: var(--tinta-2); font-size: 15px; }
+.pie-rejilla { display: grid; gap: 32px; }
+.pie-bloque { display: grid; gap: 6px; align-content: start; justify-items: start; min-width: 0; }
+.marca-pie { font-size: 26px; margin-bottom: 4px; }
+.pie-tit { font-family: var(--display); font-weight: 500; font-size: 20px; line-height: 1.2; color: var(--tinta); margin-bottom: 4px; }
+.pie address { font-style: normal; color: var(--tinta); }
+.pie-enlace { margin-top: 4px; color: var(--tinta); }
+.pie-arroba { color: var(--tinta); text-underline-offset: 3px; text-decoration-thickness: 1px; overflow-wrap: anywhere; }
+.pie-nota { font-size: 13px; margin-top: 36px; max-width: 60ch; }
+@media (min-width: 720px) { .pie-rejilla { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 40px; } }
+.seleccionable { -webkit-user-select: all; user-select: all; color: var(--tinta); font-variant-numeric: tabular-nums; }
+
+/* ---------- Ficha de la prenda ---------- */
+.ficha {
+  position: fixed; inset: 0; z-index: 40; background: var(--papel); overflow-y: auto; overscroll-behavior: contain;
+  opacity: 0; transform: translateY(18px); transition: opacity 0.24s ease, transform 0.24s ease;
+}
+.ficha.abierta { opacity: 1; transform: none; }
+.ficha-barra {
+  position: absolute; z-index: 3; top: env(safe-area-inset-top, 0px); left: 0; right: 0; display: flex; justify-content: space-between;
+  padding: 12px max(12px, env(safe-area-inset-right, 0px)) 0 max(12px, env(safe-area-inset-left, 0px)); pointer-events: none;
+}
+.ficha-barra > * { pointer-events: auto; }
+.ficha-cuerpo { padding-top: env(safe-area-inset-top, 0px); }
+.ficha .probador { padding-top: 52px; }
+.ficha .escena { height: clamp(360px, 56vh, 620px); }
+.ficha-info { display: grid; gap: 26px; padding: 26px var(--lado-der) 0 var(--lado-izq); max-width: 640px; }
+.ficha-cab { display: grid; gap: 8px; }
+.opcion-fila { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+.detalles { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 24px; padding-top: 22px; border-top: 1px solid var(--linea); font-size: 15px; }
+.detalles dt { color: var(--tinta-2); }
+.ficha-accion {
+  position: sticky; bottom: 0; z-index: 2; margin-left: calc(-1 * var(--lado-izq)); margin-right: calc(-1 * var(--lado-der));
+  padding: 12px var(--lado-der) calc(12px + env(safe-area-inset-bottom, 0px)) var(--lado-izq);
+  background: var(--papel); border-top: 1px solid var(--linea);
+}
+@media (min-width: 960px) {
+  .ficha-cuerpo { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); min-height: 100%; }
+  .ficha .probador { position: sticky; top: 0; height: 100vh; height: 100dvh; padding-top: 40px; justify-content: center; }
+  .ficha .escena { height: auto; flex: 1; }
+  .ficha-info { align-content: start; padding: 104px 56px 64px; }
+  .ficha-accion { position: static; margin: 0; padding: 4px 0 0; border: 0; background: none; }
+}
+
+/* ---------- Carrito ---------- */
+.velo { position: fixed; inset: 0; z-index: 50; background: var(--velo); opacity: 0; transition: opacity 0.25s; }
+.velo.visible { opacity: 1; }
+.carrito {
+  position: fixed; z-index: 51; top: 0; right: 0; bottom: 0; width: 100%; max-width: 460px; display: flex; flex-direction: column;
+  padding-top: env(safe-area-inset-top, 0px); padding-right: env(safe-area-inset-right, 0px); background: var(--papel);
+  transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.carrito.abierto { transform: none; }
+.carrito-cab { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 8px 10px 20px; border-bottom: 1px solid var(--linea); }
+.carrito-cab h2 { font-family: var(--display); font-weight: 500; font-size: 26px; }
+.carrito-cuerpo { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 20px 28px; }
+.items { list-style: none; margin: 0; padding: 0; }
+.item { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; gap: 14px; padding: 18px 0; border-bottom: 1px solid var(--linea); }
+.item-foto { width: 76px; height: auto; aspect-ratio: 3 / 4; object-fit: cover; background: var(--estudio); }
+.item-nombre { font-family: var(--display); font-weight: 500; font-size: 17px; line-height: 1.2; }
+.item-meta { font-size: 14px; color: var(--tinta-2); margin-top: 3px; }
+.item-fin { display: grid; justify-items: end; align-content: space-between; }
+.cantidad { display: inline-flex; align-items: center; margin-top: 10px; border: 1px solid var(--linea); border-radius: 999px; }
+.cantidad button { width: 38px; height: 38px; border: 0; background: none; font-size: 18px; line-height: 1; border-radius: 50%; }
+.cantidad output { min-width: 22px; text-align: center; font-variant-numeric: tabular-nums; font-weight: 500; }
+.carrito-vacio { padding-top: 32px; }
+.datos { display: grid; gap: 20px; padding-top: 26px; }
+.datos h3 { font-family: var(--display); font-weight: 500; font-size: 21px; }
+.campo { display: grid; gap: 8px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.campo > label, .campo > legend { padding: 0; margin-bottom: 8px; font-weight: 500; font-size: 15px; }
+.campo > label { margin-bottom: 0; }
+.opcional { font-weight: 400; color: var(--tinta-2); }
+.campo input, .campo textarea {
+  width: 100%; padding: 12px 14px; border: 1px solid var(--linea); border-radius: 6px; background: var(--papel); font-size: 16px; resize: vertical;
+}
+.campo input:focus, .campo textarea:focus { border-color: var(--tinta); }
+.opciones-entrega { display: grid; gap: 8px; }
+.opcion-entrega { display: flex; gap: 12px; align-items: center; padding: 13px 14px; border: 1px solid var(--linea); border-radius: 6px; cursor: pointer; }
+.opcion-entrega:has(input:checked) { border-color: var(--tinta); }
+.opcion-entrega input { margin: 0; accent-color: var(--tinta); width: 18px; height: 18px; flex: none; }
+.entrega-nombre { font-weight: 500; }
+.pagos { display: flex; flex-wrap: wrap; gap: 8px; }
+.pago { position: relative; }
+.pago input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.pago span { display: inline-flex; align-items: center; height: 40px; padding: 0 18px; border: 1px solid var(--linea); border-radius: 999px; font-size: 15px; }
+.pago input:checked + span { background: var(--tinta); border-color: var(--tinta); color: var(--sobre-tinta); }
+.pago input:focus-visible + span { outline: 2px solid var(--chicle); outline-offset: 3px; }
+.carrito-pie { display: grid; gap: 10px; padding: 16px 20px calc(16px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--linea); background: var(--papel); }
+.total { display: flex; justify-content: space-between; align-items: baseline; font-size: 18px; font-weight: 500; }
+.total .precio { font-size: 22px; }
+.enviar-hecho { background: transparent; color: var(--tinta); border-color: var(--tinta); }
+.enviado { display: grid; gap: 10px; }
+.enviado-acciones { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.enviado-acciones .btn { padding: 0 12px; min-height: 48px; font-size: 15px; }
+
+/* ---------- Guía de tallas ---------- */
+.guia { width: min(520px, calc(100% - 32px)); padding: 20px 24px 24px; border: 0; border-radius: 8px; background: var(--papel); color: var(--tinta); }
+.guia::backdrop { background: rgba(10, 2, 6, 0.5); }
+.guia[open] { display: grid; gap: 14px; }
+.guia-cab { display: flex; align-items: center; justify-content: space-between; margin-right: -10px; }
+.guia h2 { font-family: var(--display); font-weight: 500; font-size: 26px; }
+.guia > p:not(.nota-chica) { color: var(--tinta-2); }
+.tabla-scroll { overflow-x: auto; }
+.guia table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.guia th, .guia td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--linea); white-space: nowrap; }
+.guia thead th { font-size: 13px; font-weight: 500; color: var(--tinta-2); }
+.guia tbody th { font-weight: 600; }
+
+/* ---------- Aviso ---------- */
+.aviso {
+  position: fixed; z-index: 60; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); width: max-content; max-width: calc(100% - 32px);
+  display: flex; align-items: center; gap: 14px; padding: 8px 8px 8px 20px; border-radius: 999px; background: var(--tinta); color: var(--sobre-tinta);
+  font-size: 15px; line-height: 1.3; opacity: 0; transform: translate(-50%, 16px); pointer-events: none; transition: opacity 0.2s, transform 0.2s;
+}
+.aviso.visible { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.aviso:empty { display: none; }
+.aviso-accion { flex: none; height: 38px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--sobre-tinta); color: var(--tinta); font-size: 14px; font-weight: 500; }
+@media (max-width: 959px) { html.con-ficha .aviso { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); } }
+
+/* ---------- Bolívares y agotados ---------- */
+.precios { display: grid; gap: 2px; }
+.precio-bs { font-size: 14px; color: var(--tinta-2); font-variant-numeric: tabular-nums; }
+.tarjeta .precio-bs { font-size: 13px; margin-top: 2px; }
+.tasa-linea { margin: -8px 0 22px; font-size: 14px; color: var(--tinta-2); }
+.agotada-etiqueta { font-size: 13px; font-weight: 500; color: var(--tinta-2); }
+.tarjeta-agotada .foto img { opacity: 0.45; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.total-bs { margin-top: -6px; font-size: 14px; color: var(--tinta-2); text-align: right; font-variant-numeric: tabular-nums; }
+
+.precios-pendientes .precio, .precios-pendientes .precio-bs, .precios-pendientes .tasa-linea, .precios-pendientes .total-bs { visibility: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+[hidden] { display: none !important; }
+
+/* ---------- Piezas de la plataforma ---------- */
+:root{--eu-fondo:var(--papel);--eu-tarjeta:var(--papel);--eu-texto:var(--tinta);--eu-suave:var(--tinta-2);--eu-linea:var(--linea);
+  --eu-principal:var(--chicle);--eu-sobre-principal:var(--sobre-chicle);--eu-acento:var(--palo);--eu-titulos:var(--display);--eu-cuerpo:var(--texto)}
+.marca-caja{display:flex;align-items:center;gap:10px;min-width:0}
+.marca-logo{width:36px;height:36px;border-radius:50%;object-fit:cover;flex:none}
+[data-eu-avisos]:empty{display:none}
+.destacado > .eu-particulas{z-index:3}
+.pago-detalle:empty{display:none}
+.pago-detalle .eu-pago-detalle{margin-top:10px}
+.tarjeta.eu-rev{transition:opacity .5s ease,transform .55s cubic-bezier(.2,.8,.2,1)}
+.escena:has(.foto360) .escena-aviso{display:none}
+</style>
+</head>
+<body>
+<header class="barra" id="barra">
+  <div class="envoltura barra-in">
+    <div class="marca-caja"><img class="marca-logo" id="marca-logo" alt="" hidden data-eu-logo><a class="marca" href="#" id="ir-inicio">Tienda</a></div>
+    <button class="btn-bolsa" type="button" id="abrir-carrito" aria-label="Abrir carrito, vacío">
+      <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 8.5h13l-1.1 11.5H6.6L5.5 8.5Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg>
+      <span class="bolsa-texto">Carrito</span>
+      <span class="contador" hidden>0</span>
+    </button>
+  </div>
+</header>
+<div data-eu-avisos></div>
+
+<main id="tienda">
+  <div class="envoltura filtros">
+    <label class="buscador" for="buscar">
+      <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg>
+      <span class="sr">Buscar prendas</span>
+      <input id="buscar" type="search" placeholder="Busca vestidos, lino, lunares…" autocomplete="off" enterkeyhint="search">
+    </label>
+  </div>
+  <nav class="categorias-barra" aria-label="Categorías">
+    <div class="envoltura categorias" id="categorias"></div>
+  </nav>
+
+  <section class="destacado" id="destacado" aria-labelledby="destacado-nombre" data-eu-portada>
+    <div class="envoltura destacado-in">
+      <div class="probador" id="probador-destacado">
+        <div class="escena" role="img" aria-label="Prenda en 360 grados" data-estado="cargando"></div>
+        <div class="cinta" tabindex="0" role="slider" aria-label="Girar la prenda" aria-valuemin="0" aria-valuemax="359" aria-valuenow="0" aria-valuetext="Vista de frente">
+          <canvas aria-hidden="true"></canvas>
+          <span class="muesca" aria-hidden="true"></span>
+        </div>
+        <p class="pista">Desliza sobre la prenda para girarla</p>
+      </div>
+      <div class="destacado-info">
+        <h1 class="nombre-grande" id="destacado-nombre"></h1>
+        <p class="desc" id="destacado-desc"></p>
+        <div class="precios">
+          <p class="precio precio-grande" id="destacado-precio"></p>
+          <p class="precio-bs" id="destacado-bs" hidden></p>
+        </div>
+        <div class="opcion">
+          <p class="opcion-tit">Color: <span id="destacado-color"></span></p>
+          <div class="muestras" id="destacado-muestras" role="radiogroup" aria-label="Color"></div>
+        </div>
+        <a class="btn btn-negro" id="destacado-ver" href="#" data-eu-boton>Elegir talla</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="catalogo" aria-labelledby="catalogo-titulo">
+    <div class="envoltura">
+      <div class="catalogo-cab">
+        <h2 id="catalogo-titulo">Toda la colección</h2>
+        <p class="conteo" id="conteo"></p>
+      </div>
+      <p class="tasa-linea" id="tasa-linea" hidden></p>
+      <ul class="rejilla" id="rejilla"></ul>
+      <div class="vacio" id="vacio" hidden>
+        <p class="vacio-tit">No hay prendas con esa búsqueda.</p>
+        <p>Prueba con otra palabra, como “vestido”, “lino” o “negro”.</p>
+        <button class="btn btn-borde" type="button" id="ver-todo">Ver toda la colección</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="pie" id="la-tienda">
+    <div class="envoltura">
+      <div class="pie-rejilla">
+        <div class="pie-bloque">
+          <p class="marca marca-pie">Tienda</p>
+          <p id="pie-desc"></p>
+        </div>
+        <div class="pie-bloque" id="bloque-ubicacion">
+          <h2 class="pie-tit">Dónde estamos</h2>
+          <address id="pie-direccion"></address>
+          <p id="pie-horario"></p>
+          <a class="enlace pie-enlace" id="pie-mapa" href="https://www.google.com/maps" target="_blank" rel="noopener">Abrir en Google Maps</a>
+        </div>
+        <div class="pie-bloque">
+          <h2 class="pie-tit">Pedidos e Instagram</h2>
+          <p>WhatsApp: <span class="seleccionable" id="pie-whatsapp"></span></p>
+          <p id="bloque-instagram">Instagram: <a class="pie-arroba" id="pie-instagram" href="https://www.instagram.com/" target="_blank" rel="noopener"></a></p>
+        </div>
+      </div>
+      <p class="pie-nota" id="pie-nota" hidden>Tienda de muestra: el catálogo, los precios, la dirección y el Instagram son de ejemplo.</p>
+    </div>
+  </footer>
+</main>
+
+<div class="ficha" id="ficha" role="dialog" aria-modal="true" aria-labelledby="ficha-nombre" hidden>
+  <div class="ficha-barra">
+    <button class="btn-redondo" type="button" id="cerrar-ficha" aria-label="Volver al catálogo">
+      <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg>
+    </button>
+    <button class="btn-redondo" type="button" id="ficha-carrito" aria-label="Abrir carrito, vacío">
+      <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 8.5h13l-1.1 11.5H6.6L5.5 8.5Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg>
+      <span class="contador" hidden>0</span>
+    </button>
+  </div>
+  <div class="ficha-cuerpo">
+    <div class="probador" id="probador-ficha">
+      <div class="escena" role="img" aria-label="Prenda en 360 grados" data-estado="cargando"></div>
+      <div class="cinta" tabindex="0" role="slider" aria-label="Girar la prenda" aria-valuemin="0" aria-valuemax="359" aria-valuenow="0" aria-valuetext="Vista de frente">
+        <canvas aria-hidden="true"></canvas>
+        <span class="muesca" aria-hidden="true"></span>
+      </div>
+      <p class="pista">Desliza sobre la prenda o toca Frente, Lado y Espalda en la cinta</p>
+    </div>
+    <div class="ficha-info">
+      <div class="ficha-cab">
+        <h2 class="nombre-grande" id="ficha-nombre"></h2>
+        <div class="precios">
+          <p class="precio precio-grande" id="ficha-precio"></p>
+          <p class="precio-bs" id="ficha-bs" hidden></p>
+        </div>
+      </div>
+      <p class="desc" id="ficha-desc"></p>
+      <div class="opcion">
+        <p class="opcion-tit">Color: <span id="ficha-color"></span></p>
+        <div class="muestras" id="ficha-muestras" role="radiogroup" aria-label="Color"></div>
+      </div>
+      <div class="opcion">
+        <div class="opcion-fila">
+          <p class="opcion-tit" id="tallas-tit">Talla</p>
+          <button class="enlace" type="button" id="abrir-guia">Guía de tallas</button>
+        </div>
+        <div class="tallas" id="ficha-tallas" role="radiogroup" aria-labelledby="tallas-tit"></div>
+        <p class="nota-chica" id="tallas-nota" hidden></p>
+        <p class="error" id="ficha-error" role="alert" hidden></p>
+      </div>
+      <dl class="detalles" id="ficha-detalles"></dl>
+      <div class="ficha-accion">
+        <button class="btn btn-negro btn-ancho" type="button" id="agregar">Agregar al carrito</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="velo" id="velo" hidden></div>
+<aside class="carrito" id="carrito" role="dialog" aria-modal="true" aria-labelledby="carrito-titulo" hidden>
+  <div class="carrito-cab">
+    <h2 id="carrito-titulo">Tu carrito</h2>
+    <button class="btn-redondo btn-redondo-plano" type="button" id="cerrar-carrito" aria-label="Cerrar carrito">
+      <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="m6.5 6.5 11 11M17.5 6.5l-11 11"/></svg>
+    </button>
+  </div>
+  <div class="carrito-cuerpo">
+    <ul class="items" id="items"></ul>
+    <div class="vacio carrito-vacio" id="carrito-vacio" hidden>
+      <p class="vacio-tit">Tu carrito está vacío.</p>
+      <p>Elige una prenda, su color y tu talla. Cuando la agregues, aquí podrás enviar el pedido por WhatsApp.</p>
+      <button class="btn btn-borde" type="button" id="seguir-comprando">Ver la colección</button>
+    </div>
+    <form class="datos" id="datos" novalidate>
+      <h3>Datos para el pedido</h3>
+      <div class="campo">
+        <label for="f-nombre">Tu nombre</label>
+        <input id="f-nombre" name="nombre" type="text" autocomplete="name" required>
+        <p class="error" id="e-nombre" hidden></p>
+      </div>
+      <fieldset class="campo">
+        <legend>Entrega</legend>
+        <div class="opciones-entrega" id="f-entregas"></div>
+      </fieldset>
+      <div class="campo" id="campo-direccion" hidden>
+        <label for="f-direccion" id="l-direccion">Dirección de entrega</label>
+        <textarea id="f-direccion" name="direccion" rows="2" autocomplete="street-address"></textarea>
+        <p class="error" id="e-direccion" hidden></p>
+      </div>
+      <fieldset class="campo">
+        <legend>Forma de pago</legend>
+        <div class="pagos" id="f-pagos"></div>
+        <div class="pago-detalle" id="f-pago-detalle"></div>
+      </fieldset>
+      <div class="campo">
+        <label for="f-nota">Nota para la tienda <span class="opcional">(opcional)</span></label>
+        <textarea id="f-nota" name="nota" rows="2" placeholder="Por ejemplo: es para regalo"></textarea>
+      </div>
+    </form>
+  </div>
+  <div class="carrito-pie" id="carrito-pie">
+    <div class="total"><span>Total</span><span class="precio" id="total"></span></div>
+    <p class="total-bs" id="total-bs" hidden></p>
+    <p class="nota-chica" id="nota-entrega"></p>
+    <a class="btn btn-negro btn-ancho" id="enviar" href="https://wa.me/" target="_blank" rel="noopener">
+      <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 19.5 6 15.6A7.5 7.5 0 1 1 9 18.6l-4.5.9Z"/></svg>
+      Enviar pedido por WhatsApp
+    </a>
+    <div class="enviado" id="enviado" hidden>
+      <p>Cuando envíes el mensaje en WhatsApp, la tienda te confirma el pedido y el pago.</p>
+      <p class="nota-chica">¿No se abrió WhatsApp? Escribe al <span class="seleccionable" id="enviado-numero"></span>.</p>
+      <div class="enviado-acciones">
+        <button class="btn btn-borde" type="button" id="vaciar">Vaciar carrito</button>
+        <button class="btn btn-borde" type="button" id="seguir">Seguir comprando</button>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<dialog class="guia" id="guia" aria-labelledby="guia-titulo">
+  <div class="guia-cab">
+    <h2 id="guia-titulo">Guía de tallas</h2>
+    <button class="btn-redondo btn-redondo-plano" type="button" id="cerrar-guia" aria-label="Cerrar guía de tallas">
+      <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="m6.5 6.5 11 11M17.5 6.5l-11 11"/></svg>
+    </button>
+  </div>
+  <p>Medidas del cuerpo en centímetros. Si estás entre dos tallas, elige la más grande.</p>
+  <div class="tabla-scroll">
+    <table>
+      <thead><tr><th scope="col">Talla</th><th scope="col">Busto</th><th scope="col">Cintura</th><th scope="col">Cadera</th></tr></thead>
+      <tbody id="guia-filas"></tbody>
+    </table>
+  </div>
+  <p class="nota-chica">Mide sobre la ropa interior, con la cinta firme pero sin apretar.</p>
+</dialog>
+
+<div class="aviso" id="aviso" role="status" aria-live="polite"></div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
+<script src="/core/config.js"></script>
+<script src="/core/catalogos.js"></script>
+<script src="/t/boutique/datos.js"></script>
+<script src="/core/sitio.js"></script>
+<script src="/t/boutique/puente.js"></script>
+</body>
+</html>

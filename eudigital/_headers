@@ -1,0 +1,16 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: SAMEORIGIN
+
+/core/*
+  Cache-Control: public, max-age=300
+
+/t/*/img/*
+  Cache-Control: public, max-age=604800
+
+/panel/*
+  Cache-Control: no-cache
+
+/admin/*
+  Cache-Control: no-cache

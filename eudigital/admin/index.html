@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#19202B">
+<meta name="robots" content="noindex">
+<title>EU Digital: administración</title>
+<link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap">
+<link rel="stylesheet" href="/core/panel.css">
+<style>
+/* Panel de EU Digital: barra oscura arriba, secciones en pastillas, y las hojas del talonario:
+   pagos por revisar como recibos que se sellan, clientes como fichas. */
+.adm-arriba { position: sticky; top: 0; z-index: 20; padding-top: env(safe-area-inset-top, 0px); background: var(--tinta); }
+.adm-cab, .adm-nav-in, .adm-main { max-width: 1180px; margin: 0 auto; }
+.adm-cab { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px 4px; color: #fff; }
+.adm-cab .marca-eu { color: #fff; }
+.adm-cab .btn-plano { color: #C9D3FF; }
+.adm-cab .btn-plano:hover { background: rgba(255, 255, 255, .1); }
+.adm-cab .acciones { flex-wrap: nowrap; flex: none; }
+.adm-cab .marca-eu { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.adm-nav-in { display: flex; gap: 8px; overflow-x: auto; padding: 8px 16px 12px; scrollbar-width: none; }
+.adm-nav-in::-webkit-scrollbar { display: none; }
+.adm-nav-in button { flex: none; min-height: 40px; padding: 0 15px; border-radius: 999px; border: 1.5px solid rgba(255, 255, 255, .22); background: transparent; color: #E6EAF2; font-weight: 700; }
+.adm-nav-in button[aria-current="page"] { background: #fff; color: var(--tinta); border-color: #fff; }
+.adm-nav-in .cuenta { display: inline-grid; place-items: center; min-width: 22px; height: 22px; margin-left: 6px; padding: 0 6px; border-radius: 11px; background: #F2B544; color: #2B1C00; font-size: 13px; }
+.adm-main { display: flex; flex-direction: column; gap: 14px; padding: 18px 16px calc(40px + env(safe-area-inset-bottom, 0px)); }
+.adm-titulo { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 2px; }
+.adm-titulo h1 { font-size: 26px; }
+.adm-titulo p { color: var(--suave); }
+.cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.cifra { display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; border-radius: var(--radio); background: var(--papel); border: 1px solid var(--linea-2); box-shadow: var(--sombra); text-align: left; }
+.cifra b { font-family: var(--titulos); font-weight: 800; font-size: 30px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.cifra span { color: var(--suave); font-size: 14px; font-weight: 700; }
+.cifra.ambar b { color: var(--ambar); }
+.cifra.rojo b { color: var(--rojo); }
+.cifra.verde b { color: var(--verde); }
+button.cifra { cursor: pointer; font: inherit; color: inherit; }
+button.cifra:hover { border-color: var(--carbon); }
+.recibos { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.recibo-pago { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 26px 18px 16px; border-radius: var(--radio); background: var(--papel); border: 1px solid var(--linea-2); box-shadow: var(--sombra); overflow: hidden; }
+.recibo-pago::before { content: ""; position: absolute; left: 16px; right: 16px; top: 12px; border-top: 2px dashed var(--linea); }
+.recibo-pago .monto { font-family: var(--titulos); font-weight: 800; font-size: 28px; line-height: 1; font-variant-numeric: tabular-nums; }
+.recibo-pago .quien { font-weight: 700; }
+.recibo-pago .sello-pos { position: absolute; right: 14px; top: 30px; }
+.recibo-pago .nota { background: var(--papel-2); border-radius: 10px; padding: 8px 10px; font-size: 14px; }
+.ficha { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: center; width: 100%; padding: 14px 16px; border-radius: var(--radio); background: var(--papel); border: 1px solid var(--linea-2); box-shadow: var(--sombra); text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.ficha:hover { border-color: var(--carbon); }
+.ficha b { font-family: var(--titulos); font-weight: 800; font-size: 18px; overflow-wrap: anywhere; }
+.ficha .suave { font-size: 14px; }
+.fichas { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 10px; }
+.filtros { display: flex; flex-direction: column; gap: 10px; }
+.plantillas { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.plantilla { display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1.5px solid var(--linea); border-radius: var(--radio); background: var(--papel); text-align: left; font: inherit; color: inherit; }
+.plantilla img { width: 100%; aspect-ratio: 390 / 600; object-fit: cover; object-position: top; border-radius: 10px; background: var(--papel-2); border: 1px solid var(--linea-2); }
+.plantilla b { font-family: var(--titulos); font-weight: 800; font-size: 17px; }
+.plantilla p { color: var(--suave); font-size: 14px; }
+button.plantilla { cursor: pointer; }
+button.plantilla[aria-pressed="true"] { border-color: var(--carbon); box-shadow: 0 0 0 3px var(--carbon-suave); }
+.credenciales { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; background: var(--papel-2); border: 1.5px dashed var(--linea); border-radius: 12px; padding: 12px 14px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 15px; }
+.comprobante { max-width: 100%; border-radius: 10px; border: 1px solid var(--linea-2); }
+.vacio-adm { padding: 26px 16px; text-align: center; color: var(--suave); background: var(--papel); border: 1.5px dashed var(--linea); border-radius: var(--radio); }
+</style>
+</head>
+<body class="pnl">
+<div id="app"><div class="cargando-pantalla"><p><span class="punto-carga"></span>Cargando</p></div></div>
+<script src="/core/config.js"></script>
+<script src="/core/catalogos.js"></script>
+<script src="/t/sushi/datos.js"></script>
+<script src="/t/arepera/datos.js"></script>
+<script src="/t/pizzeria/datos.js"></script>
+<script src="/t/burgers/datos.js"></script>
+<script src="/t/boutique/datos.js"></script>
+<script src="/core/util.js"></script>
+<script src="/core/api.js"></script>
+<script src="/core/campos.js"></script>
+<script src="/admin/admin.js"></script>
+</body>
+</html>
