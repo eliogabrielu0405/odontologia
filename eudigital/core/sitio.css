@@ -102,6 +102,21 @@
 .eu-red span { color: var(--eu-suave, #666); font-size: 14px; overflow-wrap: anywhere; text-align: right; }
 .eu-boton-sec { display: inline-flex; align-self: flex-start; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 12px; text-decoration: none; font-weight: 800; background: var(--eu-principal, #222); color: var(--eu-sobre-principal, #fff); }
 
+/* ---------- Fila de redes sociales: toma el color del texto de donde la pongan ---------- */
+.eu-redes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-family: var(--eu-cuerpo, system-ui, sans-serif); }
+.eu-redes:empty { display: none; }
+.eu-redes-tit { font-size: 14px; font-weight: 700; opacity: .85; margin-right: 2px; }
+.eu-red-pill {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 999px;
+  border: 1.5px solid currentColor; color: inherit; text-decoration: none; font-size: 14px; line-height: 1;
+  transition: transform .15s ease, background-color .15s ease;
+}
+.eu-red-pill b { font-weight: 800; }
+.eu-red-pill small { font-size: 13px; font-weight: 600; opacity: .85; }
+a.eu-red-pill:hover { background-color: color-mix(in srgb, currentColor 12%, transparent); }
+a.eu-red-pill:active { transform: scale(.96); }
+a.eu-red-pill:focus-visible { outline: 3px solid var(--eu-acento, #fc0); outline-offset: 2px; }
+
 /* ---------- Forma de pago en el pedido ---------- */
 .eu-pago { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .eu-pago legend { font-weight: 800; font-size: 13px; padding: 0; margin-bottom: 6px; }

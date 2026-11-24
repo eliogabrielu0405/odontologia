@@ -1,0 +1,10 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Mascotas</title>
+<link rel="stylesheet" href="/core/mascotas.css">
+<style>body{font:14px system-ui;margin:16px;background:#f3f1ea}.g{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}.c{background:#fff;border-radius:12px;padding:8px;text-align:center}.c div{width:110px;height:121px;margin:auto}</style></head>
+<body><div class="g" id="g"></div>
+<script src="/core/mascotas.js"></script>
+<script>
+const M = EU_MASCOTAS, q = new URLSearchParams(location.search), b = q.get("b");
+const lista = b === "todos" ? M.bailes.map((x) => [q.get("p") || "arepa", x.id, x.nombre]) : M.personajes.map((p) => [p.id, b || "", p.nombre]);
+g.innerHTML = lista.map(([p, baile, n]) => `<div class="c"><div class="eu-mascota eu-baile-${baile}">${M.svg(p)}</div>${n}</div>`).join("");
+</script></body></html>

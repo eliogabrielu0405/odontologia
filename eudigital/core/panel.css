@@ -272,3 +272,51 @@ dialog.modal::backdrop { background: rgba(25, 32, 43, .5); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* Selector de mascota */
+.mascotas { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+.mascota-op { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px 8px; border: 1.5px solid var(--linea); border-radius: 12px; background: var(--papel); font-weight: 700; font-size: 14px; line-height: 1.2; text-align: center; overflow: hidden; }
+.mascota-op[aria-pressed="true"] { border-color: var(--carbon); box-shadow: 0 0 0 3px var(--carbon-suave); }
+.mascota-op .eu-mascota, .mascota-op .mascota-nada { display: block; width: 64px; height: 70px; }
+.mascota-op .mascota-nada { border-radius: 50%; height: 64px; margin: 3px 0; border: 2px dashed var(--linea); background: linear-gradient(to top right, transparent calc(50% - 1.5px), var(--linea) calc(50% - 1.5px), var(--linea) calc(50% + 1.5px), transparent calc(50% + 1.5px)); }
+/* En la lista solo baila la elegida, para no marear */
+.mascota-op:not([aria-pressed="true"]):not(:hover) .eu-mascota * { animation-play-state: paused; }
+
+/* ---------- Planes ---------- */
+.planes { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.plan { display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1.5px solid var(--linea); border-radius: 14px; background: var(--papel); min-width: 0; }
+.plan-premium { border-color: var(--tinta); }
+.plan-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 30px; }
+.plan-cab h3 { font-size: 20px; }
+.plan-precio { font-family: var(--titulos); font-weight: 800; font-size: 40px; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.plan-precio small { font-size: 16px; font-weight: 700; letter-spacing: 0; color: var(--suave); }
+.plan-nota { color: var(--suave); font-size: 14px; line-height: 1.4; min-height: 2.8em; }
+.plan-puntos { margin: 0; padding: 0; list-style: none; display: grid; gap: 7px; }
+.plan-puntos li { position: relative; padding-left: 26px; font-size: 15px; line-height: 1.4; }
+.plan-puntos li::before { content: ""; position: absolute; left: 0; top: 2px; width: 17px; height: 17px; border-radius: 50%; background: var(--verde-suave) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F7A4D' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12 4 4 8-8'/%3E%3C/svg%3E") center / 11px no-repeat; }
+.plan > .btn { margin-top: auto; }
+
+/* ---------- Elegir plantilla ---------- */
+.plantillas-op { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 8px; }
+.plantilla-op { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px 10px 8px 8px; border: 1.5px solid var(--linea); border-radius: 12px; background: var(--papel); text-align: left; }
+.plantilla-op:hover { border-color: var(--suave); }
+.plantilla-op img { width: 44px; height: 58px; object-fit: cover; object-position: top; border-radius: 6px; border: 1px solid var(--linea-2); background: var(--papel-2); }
+.plantilla-op b { display: block; font-family: var(--titulos); font-weight: 800; font-size: 16px; line-height: 1.15; }
+.plantilla-op small { display: block; margin-top: 2px; color: var(--suave); font-size: 13px; line-height: 1.3; }
+.plantilla-op[aria-pressed="true"] { border-color: var(--carbon); box-shadow: 0 0 0 3px var(--carbon-suave); }
+.plantilla-detalle { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; padding: 12px 14px; border-radius: 12px; background: var(--papel-2); }
+
+/* ---------- Pasos numerados (instalar la app, primeros pasos) ---------- */
+.pasos-app { margin: 0; padding: 0; list-style: none; counter-reset: paso; display: grid; gap: 10px; }
+.pasos-app li { counter-increment: paso; position: relative; padding-left: 38px; min-height: 28px; }
+.pasos-app li::before { content: counter(paso); position: absolute; left: 0; top: -1px; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--tinta); color: #fff; font: 800 14px/1 var(--titulos); }
+
+/* ---------- Plan de cada cuenta (panel de EU Digital) ---------- */
+.chip-plan { display: inline-flex; align-items: center; padding: 1px 9px; border-radius: 999px; font: 700 13px/1.5 var(--cuerpo); color: var(--tinta); background: var(--papel-2); border: 1px solid var(--linea); white-space: nowrap; }
+.chip-plan.chip-prueba { color: var(--carbon-2); background: var(--carbon-suave); border-color: transparent; }
+.chip-plan.chip-premium { color: #fff; background: var(--tinta); border-color: var(--tinta); }
+.linea-plan { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 2px; font-weight: 700; }
+.paginas-adm { display: grid; gap: 10px; }
+.pagina-adm { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border: 1px solid var(--linea); border-radius: 12px; background: var(--papel); }
+.pagina-adm-cab { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.pagina-adm-cab > div { min-width: 0; }

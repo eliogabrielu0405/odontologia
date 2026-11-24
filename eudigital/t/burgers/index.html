@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Lexend:wght@500;700;800&display=swap">
 <link rel="stylesheet" href="/core/sitio.css">
+<link rel="stylesheet" href="/core/mascotas.css">
 <style>
 /* Layout: cartel de comida rápida — encabezado rojo con toldo, hamburguesa que se abre al bajar, botones de categoría tipo sticker, cuadrícula de productos y pedido (hoja en móvil, columna fija en escritorio) */
 :root{
@@ -112,6 +113,10 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{
 .local{margin-top:40px;display:flex;flex-direction:column;gap:12px}
 .local h2{font-family:var(--f-brush);font-weight:400;font-size:2.2rem;line-height:1}
 .local .eu-info-col{border:2px solid #000;box-shadow:3px 3px 0 #000}
+.redes-hb{margin:2px 0 14px;color:#000}
+.redes-hb .eu-redes-tit{opacity:1;font-weight:800}
+.redes-hb .eu-red-pill{background:#fff;border:2px solid #000;box-shadow:3px 3px 0 #000}
+.redes-hb a.eu-red-pill:hover{background:#fff6c7}
 
 /* ---------- Pedido ---------- */
 .lado{min-width:0}
@@ -215,6 +220,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{
 
 <main class="menu" id="menu">
   <section class="menu-col">
+    <div class="eu-redes redes-hb" data-eu-redes="Síguenos"></div>
     <nav class="cats" id="cats" aria-label="Categorías del menú"></nav>
     <div class="grid" id="grid"></div>
     <section class="local" aria-labelledby="local-t"><h2 id="local-t">El local</h2><div id="info"></div></section>
@@ -245,6 +251,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{
 <script src="/core/config.js"></script>
 <script src="/core/catalogos.js"></script>
 <script src="/t/burgers/datos.js"></script>
+<script src="/core/mascotas.js"></script>
 <script src="/core/sitio.js"></script>
 <script src="/t/burgers/app.js"></script>
 </body>

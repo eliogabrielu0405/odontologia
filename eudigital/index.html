@@ -4,26 +4,39 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#E9EDF3">
-<title>EU Digital Solutions: páginas de pedidos por WhatsApp</title>
-<meta name="description" content="Páginas de pedidos para restaurantes y tiendas en Venezuela. Precios en dólares y bolívares, pedidos directo a tu WhatsApp y un panel para cambiar todo desde el teléfono.">
+<title>EU Digital Solutions: tu página de pedidos por WhatsApp</title>
+<meta name="description" content="Páginas de pedidos para restaurantes y tiendas en Venezuela. Pruébala 15 días gratis: precios en dólares y bolívares, pedidos directo a tu WhatsApp y un panel para cambiar todo desde el teléfono.">
 <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="/panel/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/img/icono-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap">
 <link rel="stylesheet" href="/core/panel.css">
 <style>
-/* Portada de EU Digital: a la izquierda la promesa; a la derecha, el ticket del pedido tal como
-   llega al WhatsApp, con su sello. Debajo, las cinco plantillas y cómo funciona. */
+/* Portada de EU Digital. La idea es la de los paneles: un talonario. Arriba, el ticket del pedido tal
+   como llega al WhatsApp; en los planes, boletos con borde troquelado y el sello de lo que te ahorras.
+   El resto va callado para que lo que se recuerde sean esos dos papeles. */
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 .ld { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
 .ld-cab { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; }
-.ld-hero { display: grid; gap: 28px; padding: 18px 0 44px; align-items: center; }
+.ld-cab nav { display: flex; align-items: center; gap: 4px; }
+.ld-cab nav a:not(.btn) { display: none; padding: 8px 10px; border-radius: 8px; color: var(--tinta); font-weight: 700; text-decoration: none; }
+.ld-cab nav a:not(.btn):hover { background: var(--papel); }
+@media (min-width: 820px) { .ld-cab nav a:not(.btn) { display: inline-block; } }
+
+.ld-hero { display: grid; gap: 30px; padding: 18px 0 46px; align-items: center; }
 .ld-hero h1 { font-size: clamp(34px, 7.4vw, 60px); line-height: 1.02; letter-spacing: -.025em; }
 .ld-hero .sub { margin-top: 14px; font-size: 18px; color: var(--suave); max-width: 46ch; }
 .ld-hero .acciones { margin-top: 22px; }
-.ticket { position: relative; justify-self: center; width: min(360px, 100%); padding: 30px 22px 74px; background: var(--papel); border-radius: 6px; box-shadow: 0 28px 60px -34px rgba(25, 32, 43, .6); transform: rotate(1.6deg);
+.ld-nota { margin-top: 12px; font-size: 15px; color: var(--suave); }
+.btn-grande { min-height: 52px; padding: 0 22px; font-size: 17px; }
+.ticket { position: relative; justify-self: center; width: min(360px, 100%); padding: 30px 22px 74px; background: var(--papel); border-radius: 6px; transform: rotate(1.6deg);
   font: 15px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   -webkit-mask: radial-gradient(circle 7px at 50% 0, transparent 97%, #000) 0 0 / 18px 51% repeat-x, radial-gradient(circle 7px at 50% 100%, transparent 97%, #000) 0 100% / 18px 51% repeat-x;
   mask: radial-gradient(circle 7px at 50% 0, transparent 97%, #000) 0 0 / 18px 51% repeat-x, radial-gradient(circle 7px at 50% 100%, transparent 97%, #000) 0 100% / 18px 51% repeat-x; }
+.ticket-sombra { justify-self: center; width: min(360px, 100%); filter: drop-shadow(0 26px 30px rgba(25, 32, 43, .2)); }
 .ticket .de { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font: 700 13px/1.2 var(--cuerpo); color: var(--suave); }
 .ticket .de i { width: 10px; height: 10px; border-radius: 50%; background: #25D366; }
 .ticket b { font-weight: 800; }
@@ -31,33 +44,114 @@
 .ticket hr { border: 0; border-top: 1.5px dashed var(--linea); margin: 10px 0; }
 .ticket .total { font-size: 17px; }
 .ticket .sello { position: absolute; right: 22px; bottom: 28px; }
-.ld-sec { padding: 40px 0; }
-.ld-sec > h2 { font-size: clamp(26px, 4.6vw, 38px); }
-.ld-sec > p { color: var(--suave); margin-top: 6px; max-width: 60ch; }
-.ld-plantillas { margin-top: 22px; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
-@media (min-width: 720px) { .ld-plantillas { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; } }
-.ld-pl { display: flex; flex-direction: column; gap: 6px; padding: 10px 10px 14px; background: var(--papel); border: 1px solid var(--linea-2); border-radius: var(--radio); box-shadow: var(--sombra); text-decoration: none; color: inherit; }
-.ld-pl img { width: 100%; aspect-ratio: 390 / 600; object-fit: cover; object-position: top; border-radius: 10px; border: 1px solid var(--linea-2); background: var(--papel-2); }
-.ld-pl b { font-family: var(--titulos); font-weight: 800; font-size: 18px; margin-top: 4px; }
-.ld-pl span { color: var(--suave); font-size: 13px; line-height: 1.4; }
-@media (min-width: 720px) { .ld-pl span { font-size: 14px; } }
-.ld-pl:hover { border-color: var(--carbon); }
+
+.ld-sec { padding: 44px 0; scroll-margin-top: 12px; }
+.ld-sec > h2 { font-size: clamp(27px, 4.8vw, 40px); letter-spacing: -.015em; }
+.ld-sec > p { color: var(--suave); margin-top: 8px; max-width: 60ch; font-size: 17px; }
+
+/* Plantillas */
+.ld-plantillas { margin-top: 24px; display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 680px) { .ld-plantillas { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1000px) { .ld-plantillas { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.ld-pl { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px; align-items: start; padding: 12px; background: var(--papel); border: 1px solid var(--linea-2); border-radius: var(--radio); box-shadow: var(--sombra); }
+.ld-pl-foto { display: block; border-radius: 10px; overflow: hidden; border: 1px solid var(--linea-2); background: var(--papel-2); }
+.ld-pl-foto img { display: block; width: 100%; height: auto; aspect-ratio: 390 / 600; object-fit: cover; object-position: top; }
+.ld-pl-txt { display: flex; flex-direction: column; gap: 8px; min-width: 0; height: 100%; }
+.ld-pl h3 { font-size: 21px; }
+.ld-pl-desc { font-size: 15px; line-height: 1.45; }
+.ld-pl-ideal { font-size: 14px; color: var(--suave); }
+.ld-pl .plan-puntos li { font-size: 14px; }
+/* En el teléfono basta la descripción; la lista completa se ve desde la tableta */
+@media (max-width: 679px) { .ld-pl .plan-puntos { display: none; } }
+.ld-pl .acciones { margin-top: auto; padding-top: 4px; }
+@media (min-width: 1000px) {
+  .ld-pl { grid-template-columns: minmax(0, 1fr); padding: 12px 12px 16px; }
+  .ld-pl-foto img { aspect-ratio: 390 / 360; }
+  .ld-pl-txt { padding: 2px 4px 0; }
+}
+
+/* Planes: boletos troquelados */
+.ld-ciclo { margin-top: 22px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.ld-ciclo .segmento { width: min(340px, 100%); background: var(--papel); }
+.ld-ciclo p { color: var(--verde); font-weight: 700; font-size: 15px; }
+.boletos { margin-top: 22px; display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 820px) { .boletos { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; } }
+.boleto-sombra { display: flex; min-width: 0; filter: drop-shadow(0 18px 22px rgba(25, 32, 43, .13)) drop-shadow(0 1px 1px rgba(25, 32, 43, .08)); }
+.boleto { --muescas: radial-gradient(circle 7px at 50% 0, transparent 97%, #000) 0 0 / 18px 51% repeat-x, radial-gradient(circle 7px at 50% 100%, transparent 97%, #000) 0 100% / 18px 51% repeat-x;
+  position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; padding: 30px 22px 28px; background: var(--papel); border-radius: 4px;
+  -webkit-mask: var(--muescas); mask: var(--muescas); }
+.boleto h3 { font-size: 23px; }
+.boleto-para { color: var(--suave); font-size: 15px; margin-top: -8px; min-height: 2.9em; }
+.boleto-precio { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; font-family: var(--titulos); }
+.boleto-precio b { font-size: 54px; line-height: .95; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.boleto-precio span { font-weight: 700; font-size: 17px; color: var(--suave); }
+.boleto-equiv { color: var(--suave); font-size: 14px; min-height: 1.5em; margin-top: -6px; }
+.boleto-corte { border: 0; border-top: 2px dashed var(--linea); margin: 2px -22px; }
+.boleto .plan-puntos { flex: 1; align-content: start; }
+.boleto .btn { width: 100%; }
+.boleto .sello { position: absolute; top: 24px; right: 16px; }
+.boleto-premium { background: var(--tinta); color: #fff; }
+.boleto-premium .boleto-para, .boleto-premium .boleto-precio span, .boleto-premium .boleto-equiv { color: #C2CAD8; }
+.boleto-premium .boleto-corte { border-top-color: #3A4555; }
+.boleto-premium .sello { --c: #8FE3B3; box-shadow: inset 0 0 0 2px var(--tinta), inset 0 0 0 3.5px var(--c); }
+.boleto-premium .btn { background: #fff; color: var(--tinta); border-color: #fff; }
+.boleto-premium .btn:hover { background: var(--carbon-suave); border-color: var(--carbon-suave); }
+.ld-planes-nota { margin-top: 18px; color: var(--suave); font-size: 15px; max-width: 70ch; }
+
+/* Pasos (sí van en orden) */
 .ld-pasos { margin-top: 22px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; counter-reset: paso; list-style: none; padding: 0; }
 .ld-pasos li { counter-increment: paso; background: var(--papel); border: 1px solid var(--linea-2); border-radius: var(--radio); padding: 18px; box-shadow: var(--sombra); }
 .ld-pasos li::before { content: counter(paso); display: inline-grid; place-items: center; width: 34px; height: 34px; margin-bottom: 10px; border-radius: 50%; background: var(--carbon); color: #fff; font: 800 17px/1 var(--titulos); }
 .ld-pasos h3 { font-size: 19px; margin-bottom: 4px; }
 .ld-pasos p { color: var(--suave); }
+
+/* Cómo pagas: un recibo */
+.ld-pago { margin-top: 22px; display: grid; gap: 22px; align-items: start; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 860px) { .ld-pago { grid-template-columns: minmax(0, 1fr) minmax(0, 400px); gap: 40px; } }
+.ld-pago-txt { display: flex; flex-direction: column; gap: 12px; font-size: 17px; }
+.ld-pago-txt p { max-width: 52ch; }
+.ld-pago-txt .suave { font-size: 15px; }
+.recibo-ld { padding: 22px 22px 18px; background: var(--papel); border-radius: 6px; box-shadow: var(--sombra); font: 15px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+.recibo-ld h3 { font: 800 19px/1.2 var(--titulos); margin-bottom: 8px; }
+.recibo-ld ul { list-style: none; margin: 0; padding: 0; }
+.recibo-ld li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1.5px dashed var(--linea); }
+.recibo-ld li span:last-child { color: var(--verde); font-weight: 700; white-space: nowrap; }
+.recibo-ld p { margin-top: 12px; font: 14px/1.5 var(--cuerpo); color: var(--suave); }
+
+/* Instalar la app */
+.ld-app { display: grid; gap: 26px; align-items: center; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 760px) { .ld-app { grid-template-columns: minmax(0, 1fr) auto; gap: 48px; } }
+.ld-app > div > p { color: var(--suave); margin-top: 8px; max-width: 54ch; font-size: 17px; }
+.ld-app .acciones { margin-top: 18px; }
+.ld-tel { justify-self: center; width: 232px; padding: 30px 22px 26px; border-radius: 34px; background: var(--tinta); display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 12px; justify-items: center; box-shadow: 0 24px 40px -26px rgba(25, 32, 43, .7); }
+.ld-tel i { display: block; width: 38px; height: 38px; border-radius: 10px; background: rgba(255, 255, 255, .1); }
+.ld-tel figure { margin: 0; display: grid; justify-items: center; gap: 4px; grid-column: span 1; }
+.ld-tel img { width: 38px; height: 38px; border-radius: 10px; }
+.ld-tel figcaption { color: #fff; font-size: 11px; font-weight: 700; white-space: nowrap; }
+
 .ld-lista { margin-top: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px 22px; padding: 0; list-style: none; }
 .ld-lista li { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-top: 1px dashed var(--linea); }
 .ld-lista li::before { content: ""; flex: none; width: 18px; height: 18px; margin-top: 3px; border-radius: 50%; background: var(--verde-suave) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F7A4D' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12 4 4 8-8'/%3E%3C/svg%3E") center / 12px no-repeat; }
-.ld-cierre { margin: 10px 0 40px; padding: 26px 22px; border-radius: var(--radio); background: var(--tinta); color: #fff; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
-.ld-cierre h2 { font-size: 26px; }
+
+/* Preguntas */
+.ld-faq { margin-top: 18px; display: grid; gap: 10px; max-width: 780px; }
+.ld-faq details { background: var(--papel); border: 1px solid var(--linea-2); border-radius: 12px; padding: 0 18px; }
+.ld-faq summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 15px 0; font-weight: 700; font-size: 17px; }
+.ld-faq summary::-webkit-details-marker { display: none; }
+.ld-faq summary::after { content: "+"; flex: none; font: 800 22px/1 var(--titulos); color: var(--carbon); }
+.ld-faq details[open] summary::after { content: "−"; }
+.ld-faq details p { padding: 0 0 16px; color: var(--suave); max-width: 66ch; }
+
+.ld-cierre { margin: 14px 0 40px; padding: 28px 22px; border-radius: var(--radio); background: var(--tinta); color: #fff; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px; }
+.ld-cierre h2 { font-size: 28px; }
 .ld-cierre p { color: #C9D1DE; margin-top: 4px; }
+.ld-cierre .btn-sec { background: transparent; color: #fff; border-color: #4A5566; }
+.ld-cierre .btn-sec:hover { background: rgba(255, 255, 255, .08); border-color: #C9D1DE; }
 .ld-pie { padding: 18px 0 30px; color: var(--suave); font-size: 14px; display: flex; flex-wrap: wrap; gap: 8px 18px; justify-content: space-between; }
 .btn-wa { background: #1F7A4D; border-color: #1F7A4D; }
 .btn-wa:hover { background: #17603c; border-color: #17603c; }
 @media (min-width: 880px) {
-  .ld-hero { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); padding: 34px 0 64px; }
+  .ld-hero { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); padding: 34px 0 66px; }
 }
 </style>
 </head>
@@ -68,50 +162,106 @@
   <div class="ld">
     <header class="ld-cab">
       <div class="marca-eu"><img src="/img/favicon.svg" alt="">EU Digital Solutions</div>
-      <a class="btn btn-sec btn-chico" href="/panel/">Entrar a mi panel</a>
+      <nav aria-label="Secciones">
+        <a href="#plantillas">Plantillas</a>
+        <a href="#planes">Planes</a>
+        <a href="#pagar">Cómo pagar</a>
+        <a class="btn btn-sec btn-chico" href="/panel/">Entrar a mi panel</a>
+      </nav>
     </header>
 
     <section class="ld-hero">
       <div>
         <h1>Tu menú en línea, con los pedidos directo a tu WhatsApp</h1>
-        <p class="sub">Páginas de pedidos para restaurantes y tiendas. Tus clientes ven los precios en dólares y en bolívares, arman su pedido y te lo mandan por WhatsApp. Tú cambias precios, fotos y la tasa del día desde el teléfono.</p>
+        <p class="sub">Elige una plantilla, ponle tus precios y tus fotos, y compártela. Tus clientes arman el pedido y te llega listo al WhatsApp, con el total en dólares y en bolívares.</p>
         <div class="acciones">
-          <a class="btn btn-wa" id="cta-wa" href="#" target="_blank" rel="noopener">Quiero mi página</a>
-          <a class="btn btn-sec" href="#plantillas">Ver las plantillas</a>
+          <a class="btn btn-wa btn-grande" data-cta="registro" href="/registro/"><span>Probar gratis <span data-dias>15</span> días</span></a>
+          <a class="btn btn-sec btn-grande" href="#planes">Ver planes y precios</a>
         </div>
+        <p class="ld-nota" id="nota-hero">Sin tarjeta y sin contrato. Tu página queda en línea apenas te registras.</p>
       </div>
-      <figure class="ticket" aria-label="Así te llega un pedido al WhatsApp">
-        <div class="de"><i></i>WhatsApp, hace un momento</div>
-        <div><b>Nuevo pedido: Arepera Doña Rosa</b></div>
-        <div>Cliente: María G.</div>
-        <div>Tipo: Delivery</div>
-        <hr>
-        <div class="linea"><span>2 x Reina pepiada</span><span>$8.00</span></div>
-        <div class="linea"><span>1 x Malta</span><span>$1.50</span></div>
-        <div class="linea"><span>Delivery</span><span>$2.00</span></div>
-        <hr>
-        <div class="linea total"><b>Total</b><b>$11.50</b></div>
-        <div>Pago: Pago Móvil</div>
-        <div>En bolívares: Bs 419,75</div>
-        <span class="sello verde grande">Recibido</span>
-      </figure>
+      <div class="ticket-sombra">
+        <figure class="ticket" aria-label="Así te llega un pedido al WhatsApp">
+          <div class="de"><i></i>WhatsApp, hace un momento</div>
+          <div><b>Nuevo pedido: Arepera Doña Rosa</b></div>
+          <div>Cliente: María G.</div>
+          <div>Tipo: Delivery</div>
+          <hr>
+          <div class="linea"><span>2 x Reina pepiada</span><span>$8.00</span></div>
+          <div class="linea"><span>1 x Malta</span><span>$1.50</span></div>
+          <div class="linea"><span>Delivery</span><span>$2.00</span></div>
+          <hr>
+          <div class="linea total"><b>Total</b><b>$11.50</b></div>
+          <div>Pago: Pago Móvil</div>
+          <div>En bolívares: Bs 419,75</div>
+          <span class="sello verde grande">Recibido</span>
+        </figure>
+      </div>
     </section>
   </div>
 
   <div class="ld">
     <section class="ld-sec" id="plantillas">
-      <h2>Elige tu plantilla</h2>
-      <p>Ábrelas y haz un pedido de prueba: así lo vería tu cliente.</p>
+      <h2>Cinco plantillas, una para cada negocio</h2>
+      <p>Ábrelas y haz un pedido de prueba: así lo vería tu cliente. En la prueba gratis usas la que elijas.</p>
       <div class="ld-plantillas" id="lista-plantillas"></div>
+    </section>
+
+    <section class="ld-sec" id="planes">
+      <h2>Planes</h2>
+      <p>Todos empiezan con <span data-dias>15</span> días gratis. Cuando termina la prueba eliges tu plan desde tu panel: nada se cobra solo.</p>
+      <div class="ld-ciclo">
+        <div class="segmento" role="group" aria-label="Cómo quieres pagar">
+          <button type="button" data-ciclo="mensual" aria-pressed="true">Pago mensual</button>
+          <button type="button" data-ciclo="anual" aria-pressed="false">Pago anual</button>
+        </div>
+        <p id="ahorro-anual"></p>
+      </div>
+      <div class="boletos" id="boletos" aria-live="polite"></div>
+      <p class="ld-planes-nota" id="nota-planes"></p>
     </section>
 
     <section class="ld-sec">
       <h2>Cómo funciona</h2>
       <ol class="ld-pasos">
-        <li><h3>Eliges la plantilla</h3><p>Pizzería, arepera, comida rápida, sushi o tienda de ropa.</p></li>
-        <li><h3>Te creamos tu página</h3><p>Con tu nombre, tu menú, tus fotos y tu WhatsApp. Te mandamos el enlace y tu usuario.</p></li>
-        <li><h3>La manejas desde tu panel</h3><p>Cambias lo que quieras cuando quieras, sin pedirle nada a nadie.</p></li>
+        <li><h3>Te registras</h3><p>Eliges la plantilla y pones el nombre de tu negocio y tu WhatsApp. Tu página queda en línea con un menú de muestra.</p></li>
+        <li><h3>La pruebas <span data-dias>15</span> días</h3><p>Cambias precios, fotos y la tasa del día desde tu panel, y la compartes con tus clientes.</p></li>
+        <li><h3>Eliges tu plan y pagas</h3><p>Básico o Premium, por mes o por año. Reportas el pago en tu panel y lo confirmamos.</p></li>
       </ol>
+    </section>
+
+    <section class="ld-sec" id="pagar">
+      <h2>Cómo pagas</h2>
+      <div class="ld-pago">
+        <div class="ld-pago-txt">
+          <p>Pagas en dólares o en bolívares a la tasa del día. Los datos para pagar están en tu panel, en <b>Mi suscripción</b>: los copias con un toque, pagas y reportas la referencia o la captura.</p>
+          <p>Lo revisamos y tu plan queda al día. Si pagas el año completo, te ahorras dos meses o más.</p>
+          <p class="suave">¿Dudas con el pago? Escríbenos al <a data-wa href="#" target="_blank" rel="noopener"><span data-wa-visible>0414-474-1237</span></a>.</p>
+        </div>
+        <div class="recibo-ld">
+          <h3>Formas de pago</h3>
+          <ul id="metodos"></ul>
+          <p>Los montos en bolívares se calculan con la tasa del día.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="ld-sec" id="app">
+      <div class="ld-app">
+        <div>
+          <h2 style="font-size:clamp(27px,4.8vw,40px);letter-spacing:-.015em">Tu panel, como app en tu teléfono</h2>
+          <p>Instálalo y entras con un toque para cambiar precios, marcar lo que se acabó o ver tus pedidos. No pasa por la tienda de apps y casi no ocupa espacio.</p>
+          <div class="acciones">
+            <button class="btn btn-grande" type="button" data-instalar>Instalar la app</button>
+            <a class="btn btn-sec btn-grande" href="/panel/">Entrar a mi panel</a>
+          </div>
+        </div>
+        <div class="ld-tel" aria-hidden="true">
+          <i></i><i></i><i></i><i></i>
+          <i></i><figure><img src="/img/icono-192.png" alt=""><figcaption>Mi página</figcaption></figure><i></i><i></i>
+          <i></i><i></i><i></i><i></i>
+        </div>
+      </div>
     </section>
 
     <section class="ld-sec">
@@ -121,18 +271,34 @@
         <li>La tasa del día, para mostrar los precios en bolívares</li>
         <li>Lo que se acabó hoy, con un toque</li>
         <li>Horario, dirección, redes y formas de pago</li>
-        <li>Colores, letras y animaciones de la página</li>
+        <li>Colores, letras y la mascota que baila</li>
         <li>Avisos del día y cintas de promoción</li>
       </ul>
     </section>
 
+    <section class="ld-sec">
+      <h2>Preguntas frecuentes</h2>
+      <div class="ld-faq">
+        <details><summary>¿Necesito tarjeta para la prueba gratis?</summary><p>No. Solo el nombre de tu negocio, tu WhatsApp y una contraseña para tu panel.</p></details>
+        <details><summary><span>¿Qué pasa cuando terminan los <span data-dias>15</span> días?</span></summary><p>Tu página se pausa hasta que elijas un plan y reportes el pago. Todo lo que cargaste queda guardado: precios, fotos y colores.</p></details>
+        <details><summary>¿Cobran comisión por cada pedido?</summary><p>No. Pagas tu plan y los pedidos llegan directo a tu WhatsApp, sin intermediarios.</p></details>
+        <details><summary>¿Puedo cambiar de plantilla?</summary><p>Con Premium, cuando quieras, y el menú de cada plantilla queda guardado por si vuelves a ella. Con Básico usas la que elegiste; si quieres otra, escríbenos.</p></details>
+        <details><summary>¿Puedo tener varias páginas?</summary><p>Con Premium, hasta <span data-max>5</span>: una por sucursal, marca o línea de productos, cada una con su enlace y su plantilla.</p></details>
+        <details><summary>¿Puedo usar mi propio dominio?</summary><p>Sí. Si tienes o compras un dominio (por ejemplo minegocio.com), escríbenos y tu página se ve ahí.</p></details>
+      </div>
+    </section>
+
     <section class="ld-cierre">
-      <div><h2>¿Hacemos la tuya?</h2><p>Escríbenos y en poco tiempo tienes tu página lista.</p></div>
-      <a class="btn btn-wa" id="cta-wa-2" href="#" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+      <div><h2>Pruébala con tu menú</h2><p><span data-dias>15</span> días gratis, sin tarjeta. Si te gusta, eliges tu plan.</p></div>
+      <div class="acciones">
+        <a class="btn btn-wa btn-grande" data-cta="registro" href="/registro/"><span>Probar gratis <span data-dias>15</span> días</span></a>
+        <a class="btn btn-sec btn-grande" data-wa href="#" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+      </div>
     </section>
 
     <footer class="ld-pie">
       <span>EU Digital Solutions</span>
+      <span>WhatsApp <a data-wa href="#" target="_blank" rel="noopener"><span data-wa-visible>0414-474-1237</span></a></span>
       <span><a href="/panel/">Entrar a mi panel</a></span>
     </footer>
   </div>
@@ -157,7 +323,8 @@
     var n = (params.get("n") || params.get("negocio") || "").trim().toLowerCase();
     if (n) return { slug: n };
     var host = location.hostname.toLowerCase();
-    if (!host || host === "localhost" || host === "127.0.0.1" || /\.(workers|pages)\.dev$/.test(host)) return null;
+    /* Las direcciones gratis de Cloudflare, Vercel y Netlify son de la plataforma, no de un cliente. */
+    if (!host || host === "localhost" || host === "127.0.0.1" || /\.((workers|pages)\.dev|vercel\.app|netlify\.app)$/.test(host)) return null;
     if (C.dominioBase) {
       if (host === C.dominioBase || host === "www." + C.dominioBase) return null;
       if (host.slice(-(C.dominioBase.length + 1)) === "." + C.dominioBase) {
@@ -199,23 +366,13 @@
     location.replace("/t/" + encodeURIComponent(s.plantilla) + "/?" + extra.toString() + location.hash);
   }).catch(function () { noDisponible("No pudimos cargar la página", "Revisa tu conexión a internet y vuelve a intentar.", true); });
 
+  /* La portada carga aparte lo suyo (planes, instalar la app), para no demorar las páginas de los clientes. */
   function mostrarPortada() {
     document.getElementById("portada").hidden = false;
-    var wa = "https://wa.me/" + String(C.whatsappMarca || "").replace(/\D+/g, "") + "?text=" + encodeURIComponent("Hola, quiero una página de pedidos para mi negocio.");
-    document.getElementById("cta-wa").href = wa;
-    document.getElementById("cta-wa-2").href = wa;
-    var P = window.EU_PLANTILLAS || {};
-    var cont = document.getElementById("lista-plantillas");
-    ["pizzeria", "arepera", "burgers", "sushi", "boutique"].forEach(function (k) {
-      var t = P[k];
-      if (!t) return;
-      var a = document.createElement("a");
-      a.className = "ld-pl"; a.href = "/t/" + k + "/";
-      var img = document.createElement("img"); img.src = t.vistaPrevia; img.alt = "Vista de la plantilla " + t.nombre; img.loading = "lazy";
-      var b = document.createElement("b"); b.textContent = t.nombre;
-      var s = document.createElement("span"); s.textContent = t.descripcion;
-      a.append(img, b, s);
-      cont.append(a);
+    ["/core/planes.js", "/core/instalar.js", "/core/portada.js"].forEach(function (src) {
+      var s = document.createElement("script");
+      s.src = src; s.async = false;
+      document.body.append(s);
     });
   }
 })();

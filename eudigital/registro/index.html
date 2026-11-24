@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#E9EDF3">
+<title>Crea tu página de pedidos y pruébala gratis · EU Digital Solutions</title>
+<meta name="description" content="Elige una plantilla, pon los datos de tu negocio y tu página de pedidos por WhatsApp queda en línea de una vez. Pruébala gratis, sin tarjeta.">
+<link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="/panel/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/img/icono-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap">
+<link rel="stylesheet" href="/core/panel.css">
+<style>
+/* Registro: a la izquierda se elige la plantilla y se llenan los datos del negocio; a la derecha
+   (en computadora) queda a la vista la plantilla elegida. Es la misma hoja de talonario de los paneles. */
+.rg { max-width: 1080px; margin: 0 auto; padding: 0 16px calc(48px + env(safe-area-inset-bottom, 0px)); }
+.rg-cab { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; }
+.rg-cab .marca-eu { text-decoration: none; color: inherit; }
+.rg-titulo { padding: 10px 0 4px; }
+.rg-titulo h1 { font-size: clamp(30px, 6.4vw, 46px); line-height: 1.04; letter-spacing: -.022em; max-width: 18ch; }
+.rg-titulo p { margin-top: 12px; color: var(--suave); font-size: 17px; max-width: 54ch; }
+.rg-cuerpo { display: grid; gap: 14px; margin-top: 22px; align-items: start; grid-template-columns: minmax(0, 1fr); grid-template-areas: "pl" "vista" "datos"; }
+.rg-pl-hoja { grid-area: pl; }
+.rg-vista { grid-area: vista; }
+.rg-datos { grid-area: datos; }
+.rg-paso { display: flex; align-items: baseline; gap: 10px; }
+.rg-paso i { flex: none; display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--tinta); color: #fff; font: 800 15px/1 var(--titulos); font-style: normal; transform: translateY(-2px); }
+.rg-paso h2 { font-size: 21px; }
+.rg-lista { display: grid; gap: 8px; border: 0; margin: 0; padding: 0; min-width: 0; }
+.rg-pl { position: relative; display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 12px; align-items: center; padding: 9px 12px 9px 9px; border: 1.5px solid var(--linea); border-radius: 14px; background: var(--papel); cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+.rg-pl:hover { border-color: var(--suave); }
+.rg-pl input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.rg-pl img { width: 58px; height: 76px; object-fit: cover; object-position: top; border-radius: 8px; border: 1px solid var(--linea-2); background: var(--papel-2); }
+.rg-pl b { display: block; font-family: var(--titulos); font-weight: 800; font-size: 18px; line-height: 1.15; }
+.rg-pl span { display: block; margin-top: 2px; color: var(--suave); font-size: 14px; line-height: 1.35; }
+.rg-pl.elegida { border-color: var(--carbon); box-shadow: 0 0 0 3px var(--carbon-suave); }
+.rg-pl.elegida b::after { content: "Elegida"; display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: var(--carbon); color: #fff; font: 700 12px/1.4 var(--cuerpo); vertical-align: 2px; }
+.rg-pl:focus-within { outline: 3px solid var(--carbon); outline-offset: 2px; }
+.rg-vista { display: flex; flex-direction: column; gap: 12px; }
+.rg-vista[hidden] { display: none; }
+.rg-vista .tel { display: none; }
+.rg-vista h3 { font-size: 19px; }
+.rg-vista ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.rg-vista li { position: relative; padding-left: 26px; font-size: 15px; }
+.rg-vista li::before { content: ""; position: absolute; left: 0; top: 3px; width: 17px; height: 17px; border-radius: 50%; background: var(--verde-suave) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F7A4D' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12 4 4 8-8'/%3E%3C/svg%3E") center / 11px no-repeat; }
+.rg-enlace { font-weight: 700; padding: 10px 12px; border-radius: 10px; background: var(--papel-2); border: 1.5px dashed var(--linea); overflow-wrap: anywhere; font-size: 15px; }
+.rg-enlace small { display: block; font-weight: 400; color: var(--suave); font-size: 13px; }
+.rg-estado { font-size: 14px; font-weight: 700; min-height: 20px; }
+.rg-estado.ok { color: var(--verde); }
+.rg-estado.mal { color: var(--rojo); }
+.rg-clave { display: flex; gap: 8px; }
+.rg-clave .entrada { flex: 1; min-width: 0; }
+.rg-letra { color: var(--suave); font-size: 14px; }
+.rg-fin { text-align: center; padding: 34px 18px; align-items: center; }
+.rg-fin h1 { font-size: 26px; }
+@media (min-width: 940px) {
+  .rg-cuerpo { grid-template-columns: minmax(0, 1fr) 330px; column-gap: 28px; grid-template-areas: "pl vista" "datos vista"; }
+  .rg-vista { position: sticky; top: 16px; }
+  .rg-vista .tel { display: block; width: 100%; aspect-ratio: 390 / 560; object-fit: cover; object-position: top; border-radius: 12px; border: 1px solid var(--linea-2); background: var(--papel-2); }
+}
+</style>
+</head>
+<body class="pnl">
+<div id="app"><div class="cargando-pantalla"><p><span class="punto-carga"></span>Cargando</p></div></div>
+<noscript><p style="padding:24px">Esta página necesita JavaScript.</p></noscript>
+<script src="/core/config.js"></script>
+<script src="/core/catalogos.js"></script>
+<script src="/t/sushi/datos.js"></script>
+<script src="/t/arepera/datos.js"></script>
+<script src="/t/pizzeria/datos.js"></script>
+<script src="/t/burgers/datos.js"></script>
+<script src="/t/boutique/datos.js"></script>
+<script src="/core/util.js"></script>
+<script src="/core/api.js"></script>
+<script src="/core/planes.js"></script>
+<script src="/registro/registro.js"></script>
+</body>
+</html>

@@ -67,6 +67,15 @@
   EU.estadoCuenta = function (sitio, cuenta, diasGracia) {
     const vence = cuenta && cuenta.vence;
     const dias = EU.diasHasta(vence);
+    // Prueba gratis: cuenta los días que quedan y, al terminar, pide elegir un plan
+    if (cuenta && cuenta.plan === "prueba") {
+      if (sitio.estado === "suspendido" || (dias != null && dias < 0)) {
+        return { id: sitio.estado === "suspendido" ? "suspendida" : "vencida", sello: "Prueba terminada", tono: "rojo", prueba: true,
+          texto: sitio.estado === "suspendido" ? "Tu prueba gratis terminó y tu página no se ve. Elige un plan para activarla: todo lo que cargaste sigue guardado." : "Tu prueba gratis terminó. Elige un plan para que tu página siga en línea." };
+      }
+      return { id: dias != null && dias <= 5 ? "porvencer" : "activa", sello: "Prueba gratis", tono: dias != null && dias <= 3 ? "ambar" : "azul", prueba: true,
+        texto: dias == null ? "Estás en la prueba gratis." : dias === 0 ? "Hoy es el último día de tu prueba gratis." : `Te ${dias === 1 ? "queda 1 día" : "quedan " + dias + " días"} de prueba gratis.` };
+    }
     if (sitio.estado === "suspendido") return { id: "suspendida", sello: "Suspendida", tono: "rojo", texto: "La página no se ve. Reporta tu pago para activarla." };
     if (dias == null) return { id: "activa", sello: "Activa", tono: "verde", texto: "Sin fecha de vencimiento." };
     if (dias < 0) return { id: "vencida", sello: "Vencida", tono: "rojo", texto: `Venció hace ${-dias} día${dias === -1 ? "" : "s"}. ${diasGracia != null ? "Se suspende si no se paga pronto." : ""}`.trim() };

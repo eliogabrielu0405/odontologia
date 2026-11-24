@@ -9,6 +9,9 @@
 /t/*/img/*
   Cache-Control: public, max-age=604800
 
+/t/*/vendor/*
+  Cache-Control: public, max-age=2592000
+
 /panel/*
   Cache-Control: no-cache
 

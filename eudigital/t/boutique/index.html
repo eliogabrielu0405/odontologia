@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..700;1,6..96,400..700&family=Jost:wght@300..600&display=swap">
 <link rel="stylesheet" href="/core/sitio.css">
+<link rel="stylesheet" href="/core/mascotas.css">
 <style>:root{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}img{max-width:100%}</style>
 <style>
 /* El probador: cada prenda gira sobre una base rosa, con una cinta métrica que marca
@@ -208,7 +209,8 @@ a { color: inherit; }
 .pie-tit { font-family: var(--display); font-weight: 500; font-size: 20px; line-height: 1.2; color: var(--tinta); margin-bottom: 4px; }
 .pie address { font-style: normal; color: var(--tinta); }
 .pie-enlace { margin-top: 4px; color: var(--tinta); }
-.pie-arroba { color: var(--tinta); text-underline-offset: 3px; text-decoration-thickness: 1px; overflow-wrap: anywhere; }
+.pie-redes { margin-top: 6px; color: var(--tinta); }
+.pie-redes .eu-red-pill { border-width: 1px; }
 .pie-nota { font-size: 13px; margin-top: 36px; max-width: 60ch; }
 @media (min-width: 720px) { .pie-rejilla { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 40px; } }
 .seleccionable { -webkit-user-select: all; user-select: all; color: var(--tinta); font-variant-numeric: tabular-nums; }
@@ -341,6 +343,8 @@ a { color: inherit; }
 :root{--eu-fondo:var(--papel);--eu-tarjeta:var(--papel);--eu-texto:var(--tinta);--eu-suave:var(--tinta-2);--eu-linea:var(--linea);
   --eu-principal:var(--chicle);--eu-sobre-principal:var(--sobre-chicle);--eu-acento:var(--palo);--eu-titulos:var(--display);--eu-cuerpo:var(--texto)}
 .marca-caja{display:flex;align-items:center;gap:10px;min-width:0}
+.marca-mascota{width:46px;height:50px;flex:none;margin:0 6px 0 auto;padding:0;border:0;background:none;cursor:pointer}
+.eu-sin-mascota .marca-mascota{display:none}
 .marca-logo{width:36px;height:36px;border-radius:50%;object-fit:cover;flex:none}
 [data-eu-avisos]:empty{display:none}
 .destacado > .eu-particulas{z-index:3}
@@ -354,6 +358,7 @@ a { color: inherit; }
 <header class="barra" id="barra">
   <div class="envoltura barra-in">
     <div class="marca-caja"><img class="marca-logo" id="marca-logo" alt="" hidden data-eu-logo><a class="marca" href="#" id="ir-inicio">Tienda</a></div>
+    <button class="marca-mascota" type="button" aria-label="Mascota bailarina, tócala para que salte" data-eu-mascota></button>
     <button class="btn-bolsa" type="button" id="abrir-carrito" aria-label="Abrir carrito, vacío">
       <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 8.5h13l-1.1 11.5H6.6L5.5 8.5Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg>
       <span class="bolsa-texto">Carrito</span>
@@ -431,12 +436,12 @@ a { color: inherit; }
           <a class="enlace pie-enlace" id="pie-mapa" href="https://www.google.com/maps" target="_blank" rel="noopener">Abrir en Google Maps</a>
         </div>
         <div class="pie-bloque">
-          <h2 class="pie-tit">Pedidos e Instagram</h2>
+          <h2 class="pie-tit">Pedidos y redes</h2>
           <p>WhatsApp: <span class="seleccionable" id="pie-whatsapp"></span></p>
-          <p id="bloque-instagram">Instagram: <a class="pie-arroba" id="pie-instagram" href="https://www.instagram.com/" target="_blank" rel="noopener"></a></p>
+          <div class="eu-redes pie-redes" data-eu-redes></div>
         </div>
       </div>
-      <p class="pie-nota" id="pie-nota" hidden>Tienda de muestra: el catálogo, los precios, la dirección y el Instagram son de ejemplo.</p>
+      <p class="pie-nota" id="pie-nota" hidden>Tienda de muestra: el catálogo, los precios, la dirección y las redes son de ejemplo.</p>
     </div>
   </footer>
 </main>
@@ -569,10 +574,12 @@ a { color: inherit; }
 </dialog>
 
 <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
+<!-- El motor 3D (three.js 0.169, licencia MIT) va guardado en la propia página, en vendor/, para no depender de otro servicio. -->
+<script type="importmap">{"imports":{"three":"/t/boutique/vendor/three-0.169.0.module.min.js","three/addons/":"/t/boutique/vendor/"}}</script>
 <script src="/core/config.js"></script>
 <script src="/core/catalogos.js"></script>
 <script src="/t/boutique/datos.js"></script>
+<script src="/core/mascotas.js"></script>
 <script src="/core/sitio.js"></script>
 <script src="/t/boutique/puente.js"></script>
 </body>

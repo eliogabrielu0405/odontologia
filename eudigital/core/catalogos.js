@@ -81,12 +81,23 @@ window.EU_CATALOGOS = {
     sobre(h) { return K.color.luz(h) > 0.4 ? "#1a1a1a" : "#ffffff"; },
   };
 
+  /* Redes sociales que el negocio puede poner. "base" arma el enlace cuando escriben solo el usuario. */
+  K.redes = [
+    { id: "instagram", nombre: "Instagram", base: "https://www.instagram.com/" },
+    { id: "tiktok", nombre: "TikTok", base: "https://www.tiktok.com/@" },
+    { id: "facebook", nombre: "Facebook", base: "https://www.facebook.com/" },
+    { id: "youtube", nombre: "YouTube", base: "https://www.youtube.com/@" },
+    { id: "x", nombre: "X (Twitter)", corto: "X", base: "https://x.com/" },
+    { id: "threads", nombre: "Threads", base: "https://www.threads.net/@" },
+    { id: "telegram", nombre: "Telegram", base: "https://t.me/" },
+  ];
+
   K.contenidoBase = {
     negocio: {
       eslogan: "", descripcion: "", logo: "",
       whatsapp: "", telefono: "",
       direccion: "", referencia: "", ciudad: "", mapa: "",
-      instagram: "", tiktok: "", facebook: "",
+      instagram: "", tiktok: "", facebook: "", youtube: "", x: "", threads: "", telegram: "",
       horario: { 0: ["12:00", "22:00"], 1: ["11:00", "22:00"], 2: ["11:00", "22:00"], 3: ["11:00", "22:00"], 4: ["11:00", "22:00"], 5: ["11:00", "23:00"], 6: ["11:00", "23:00"] },
     },
     pedidos: { delivery: 0, notaDelivery: "El delivery tiene un costo adicional según la zona.", tipos: ["delivery", "llevar", "aqui"] },
@@ -101,7 +112,7 @@ window.EU_CATALOGOS = {
     tasa: { valor: 0, fecha: "" },
     hoy: { cerrado: false, aviso: "" },
     tema: { preset: "", colores: { principal: "", acento: "", fondo: "" }, fuente: "", modo: "" },
-    animaciones: { portada: "ninguna", emoji: "", logo: "ninguna", productos: "subir", boton: "ninguna", temporada: "ninguna", mascota: true },
+    animaciones: { portada: "ninguna", emoji: "", logo: "ninguna", productos: "subir", boton: "ninguna", temporada: "ninguna", mascota: true, personaje: "", baile: "meneo" },
     banner: { texto: "", estilo: "fijo" },
   };
 })(window.EU_CATALOGOS);

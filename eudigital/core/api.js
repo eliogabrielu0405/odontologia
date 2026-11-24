@@ -144,6 +144,10 @@
         }));
       },
       async borrar(tabla, filtro) { await pedir(rest(tabla + "?" + filtro), { method: "DELETE" }); },
+      // Funciones del servidor (Supabase Edge Functions), con la sesión de quien llama
+      async funcion(nombre, cuerpo) {
+        return json(await pedir(BASE + "/functions/v1/" + nombre, { method: "POST", headers: JSONH, body: JSON.stringify(cuerpo || {}) }));
+      },
       async rpc(funcion, args) {
         return json(await pedir(rest("rpc/" + funcion), { method: "POST", headers: JSONH, body: JSON.stringify(args || {}) }));
       },

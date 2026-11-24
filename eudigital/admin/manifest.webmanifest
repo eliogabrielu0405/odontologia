@@ -1,0 +1,16 @@
+{
+  "name": "EU Digital: administración",
+  "short_name": "EU Digital",
+  "description": "Panel para administrar las páginas de tus clientes.",
+  "lang": "es",
+  "start_url": "/admin/",
+  "scope": "/admin/",
+  "display": "standalone",
+  "background_color": "#E9EDF3",
+  "theme_color": "#19202B",
+  "icons": [
+    { "src": "/img/icono-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/img/icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/img/icono-512-m.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

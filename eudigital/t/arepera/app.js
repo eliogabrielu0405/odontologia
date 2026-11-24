@@ -45,8 +45,8 @@ EU.alListo(function (sitio) {
   $("waShow").textContent = EU.telefonoVisible();
   const est = EU.estado();
   $("puntoEstado").classList.toggle("cerrado", !est.abierto);
-  $("openInfo").setAttribute("aria-label", est.texto + ". Ver horario, dirección y formas de pago");
-  $("info").innerHTML = EU.htmlInfo();
+  $("openInfo").setAttribute("aria-label", est.texto + ". Ver horario, dirección, redes y formas de pago");
+  $("info").innerHTML = EU.htmlInfo({ redes: false });
   if (c.negocio.descripcion) { $("infoDesc").textContent = c.negocio.descripcion; $("infoDesc").hidden = false; }
 
   /* ---------- Pedido del cliente (sobrevive si la página se recarga) ---------- */
@@ -144,24 +144,6 @@ EU.alListo(function (sitio) {
       `<img src="${esc(fotoDe(it.id))}" alt="" style="width:${it.w.toFixed(1)}px;left:${it.left.toFixed(1)}px;bottom:${it.bottom.toFixed(1)}px;z-index:${it.z}">`).join("")}</div>`;
   }
 
-  const DANCER = `<svg viewBox="0 0 120 130" aria-hidden="true">
-  <g class="d-hop"><g class="d-body">
-    <g class="d-leg-l"><path d="M48 96 L42 120" stroke="#3A2414" stroke-width="5" stroke-linecap="round" fill="none"/><ellipse cx="39" cy="122" rx="8" ry="4.5" fill="#D9472B"/></g>
-    <g class="d-leg-r"><path d="M72 96 L78 120" stroke="#3A2414" stroke-width="5" stroke-linecap="round" fill="none"/><ellipse cx="81" cy="122" rx="8" ry="4.5" fill="#D9472B"/></g>
-    <g class="d-arm-l"><path d="M28 62 Q14 54 10 40" stroke="#3A2414" stroke-width="5" stroke-linecap="round" fill="none"/><circle cx="10" cy="38" r="5.5" fill="#fff" stroke="#3A2414" stroke-width="2"/></g>
-    <g class="d-arm-r"><path d="M92 62 Q106 54 110 40" stroke="#3A2414" stroke-width="5" stroke-linecap="round" fill="none"/><circle cx="110" cy="38" r="5.5" fill="#fff" stroke="#3A2414" stroke-width="2"/></g>
-    <ellipse cx="60" cy="62" rx="36" ry="38" fill="#F2B640" stroke="#B8732A" stroke-width="3"/>
-    <ellipse cx="60" cy="62" rx="30" ry="32" fill="#F7C65A"/>
-    <circle cx="42" cy="44" r="4" fill="#B8732A" opacity=".55"/><circle cx="78" cy="50" r="5" fill="#B8732A" opacity=".5"/>
-    <circle cx="72" cy="84" r="3.5" fill="#B8732A" opacity=".5"/><circle cx="44" cy="82" r="3" fill="#B8732A" opacity=".45"/>
-    <path d="M26 66 Q60 76 94 66 L94 70 Q60 82 26 70 Z" fill="#8A4B22"/>
-    <path d="M30 70 q6 5 12 0 q6 5 12 0 q6 5 12 0 q6 5 12 0 q6 5 12 0" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <ellipse cx="49" cy="52" rx="4" ry="5.5" fill="#3A2414"/><ellipse cx="71" cy="52" rx="4" ry="5.5" fill="#3A2414"/>
-    <circle cx="50.5" cy="50" r="1.5" fill="#fff"/><circle cx="72.5" cy="50" r="1.5" fill="#fff"/>
-    <ellipse cx="41" cy="60" rx="5" ry="3" fill="#E8735A" opacity=".55"/><ellipse cx="79" cy="60" rx="5" ry="3" fill="#E8735A" opacity=".55"/>
-    <path d="M52 59 Q60 66 68 59" stroke="#3A2414" stroke-width="3" fill="none" stroke-linecap="round"/>
-  </g></g></svg>`;
-  document.querySelectorAll("[data-dancer]").forEach((el) => { el.innerHTML = DANCER; });
 
   /* ---------- Tienda ---------- */
   $("tabs").style.gridTemplateColumns = `repeat(${Math.max(1, TABS.length)},minmax(0,1fr))`;
@@ -253,7 +235,7 @@ EU.alListo(function (sitio) {
   }
 
   function say(text) { const b = $("bubble"); b.textContent = text; restart(b, "pop"); }
-  function celebrate() { restart($("arepa"), "squish"); restart($("dancer"), "hop"); }
+  function celebrate() { restart($("arepa"), "squish"); EU.mascotaBrinca(); }
 
   function toggle(id) {
     if (isOut(id) || !ALL[id]) return;
@@ -301,7 +283,7 @@ EU.alListo(function (sitio) {
     if (isOut(id) || !DRINK[id]) return;
     drinks[id] = (drinks[id] || 0) + 1;
     updateDrinkCard(id); renderTabs(); renderOrder();
-    say(DRINK[id].frase || CHEERS[0]); restart($("dancer"), "hop");
+    say(DRINK[id].frase || CHEERS[0]); EU.mascotaBrinca();
     flyToCart(fromEl);
   }
   function removeDrink(id) {
@@ -471,7 +453,7 @@ EU.alListo(function (sitio) {
     current = []; renderArepa(); syncUI();
     say("¡Arma otra!");
   });
-  $("dancer").addEventListener("click", () => { restart($("dancer"), "hop"); say("¡A bailar!"); });
+  $("dancer").addEventListener("click", () => { EU.mascotaBrinca(); say("¡A bailar!"); });
   $("party").addEventListener("click", () => { $("party").hidden = true; });
   $("openOrder").addEventListener("click", () => openSheet("sheet", "closeOrder"));
   $("openInfo").addEventListener("click", () => openSheet("infoSheet", "closeInfo"));
@@ -503,6 +485,13 @@ EU.alListo(function (sitio) {
       return;
     }
     $("sendWa").href = EU.wa(orderMessage());
+    EU.registrarPedido({
+      items: [
+        ...order.map((a) => ({ nombre: `${NOMBRE}: ${describe(a)}`, cantidad: 1, precio: priceOf(a) })),
+        ...Object.entries(drinks).filter(([id]) => DRINK[id]).map(([id, n]) => ({ nombre: DRINK[id].nombre, cantidad: n, precio: DRINK[id].precio })),
+      ],
+      total: grandTotal(), tipo: (TIPOS.find((t) => t.id === tipoActual()) || {}).nombre, pago,
+    });
     flash(`Se abrió WhatsApp con tu pedido. Si no se abrió, cópialo y envíalo al ${EU.telefonoVisible()}.`, 7000);
   });
   $("copy").addEventListener("click", () => {

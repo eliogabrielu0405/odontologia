@@ -16,5 +16,9 @@ window.EU_CONFIG = {
   dominioBase: "",
 
   marca: "EU Digital Solutions",
-  whatsappMarca: "584144741237"
+  whatsappMarca: "584144741237",
+
+  // Avisos al teléfono de EU Digital cuando un cliente reporta un pago o alguien se registra.
+  // Usan la tabla eu_avisos y la función eu-avisos (ver sql/2026-11-13_avisos.sql y supabase/functions/).
+  avisos: true
 };

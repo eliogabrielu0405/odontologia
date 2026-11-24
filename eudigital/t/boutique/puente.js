@@ -63,12 +63,6 @@ EU.alListo(function (sitio) {
     const con = grupos.filter((g) => g.r);
     return con.map((g) => (g.ini === g.fin ? dias[g.ini] : dias[g.ini] + " a " + dias[g.fin].toLowerCase()) + ", de " + g.r).join(". ") + (con.length ? "." : "");
   }
-  const instagram = (() => {
-    const u = texto(n.instagram).trim();
-    if (!u) return "";
-    const m = /instagram\.com\/([^/?#]+)/i.exec(u);
-    return (m ? m[1] : u).replace(/^@/, "");
-  })();
   const entregas = (c.entregas || []).filter((e) => e && e.id && e.nombre).map((e) => ({
     id: texto(e.id), nombre: texto(e.nombre), campo: texto(e.campo), etiqueta: texto(e.etiqueta || e.campo || "Dirección"), nota: texto(e.nota),
   }));
@@ -83,7 +77,6 @@ EU.alListo(function (sitio) {
     destacado: productos.some((p) => p.id === (c.portada && c.portada.destacado)) ? c.portada.destacado : productos[0].id,
     clave: "eu:boutique:" + (sitio.slug || "demo"),
     tasaInicial: { valor: EU.tasa(), fecha: (c.tasa && c.tasa.fecha) || "" },
-    instagram,
     direccion: texto(n.direccion),
     ciudad: texto(n.ciudad),
     mapa: EU.url(n.mapa),

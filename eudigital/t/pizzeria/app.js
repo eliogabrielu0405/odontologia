@@ -64,25 +64,7 @@ EU.alListo(function (sitio) {
   $("#info").innerHTML = EU.htmlInfo();
 
   /* ===== Mascota ===== */
-  const MASCOT = `
-<g class="m-all">
- <g class="m-legL"><path d="M86 150 L78 192" stroke="#3a2412" stroke-width="7" stroke-linecap="round"/><ellipse cx="74" cy="196" rx="13" ry="7" fill="#d7262b"/></g>
- <g class="m-legR"><path d="M114 150 L122 192" stroke="#3a2412" stroke-width="7" stroke-linecap="round"/><ellipse cx="126" cy="196" rx="13" ry="7" fill="#d7262b"/></g>
- <g class="m-body">
-  <g class="m-armL"><path d="M52 70 Q28 58 18 36" stroke="#3a2412" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="17" cy="33" r="8" fill="#fff" stroke="#3a2412" stroke-width="3"/></g>
-  <g class="m-armR"><path d="M148 70 Q172 58 182 36" stroke="#3a2412" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="183" cy="33" r="8" fill="#fff" stroke="#3a2412" stroke-width="3"/></g>
-  <path d="M30 40 L170 40 L100 178 Z" fill="#f7c948" stroke="#3a2412" stroke-width="5" stroke-linejoin="round"/>
-  <path d="M40 46 Q70 62 98 52 Q128 64 160 46 L150 66 Q126 80 100 70 Q74 82 50 66 Z" fill="#fbe08a" opacity=".9"/>
-  <path d="M22 26 Q100 6 178 26 Q184 42 170 44 L30 44 Q16 42 22 26Z" fill="#d98c3d" stroke="#3a2412" stroke-width="5" stroke-linejoin="round"/>
-  <circle cx="78" cy="118" r="10" fill="#c22a20"/><circle cx="122" cy="104" r="9" fill="#c22a20"/><circle cx="100" cy="148" r="7" fill="#c22a20"/>
-  <ellipse cx="84" cy="80" rx="8" ry="10" fill="#fff" stroke="#3a2412" stroke-width="3"/><circle cx="86" cy="82" r="4" fill="#3a2412"/>
-  <ellipse cx="116" cy="80" rx="8" ry="10" fill="#fff" stroke="#3a2412" stroke-width="3"/><circle cx="118" cy="82" r="4" fill="#3a2412"/>
-  <path d="M86 98 Q100 112 114 98" stroke="#3a2412" stroke-width="4" fill="#9b1c1c" stroke-linecap="round"/>
-  <circle cx="72" cy="96" r="5" fill="#f08a7a" opacity=".7"/><circle cx="128" cy="96" r="5" fill="#f08a7a" opacity=".7"/>
- </g>
-</g>`;
-  $("#mascotBig").innerHTML = MASCOT; $("#mascotMini").innerHTML = MASCOT;
-  function party() { document.querySelectorAll(".mascot").forEach((m) => { m.classList.remove("party"); void m.getBoundingClientRect(); m.classList.add("party"); setTimeout(() => m.classList.remove("party"), 1600); }); }
+  const party = () => EU.mascotaBrinca();
 
   /* ===== Dibujo de pizzas ===== */
   const newHalf = (salsa = SALSAS[0].id, queso = QUESOS[0].id, tops = []) => ({ salsa, queso, tops: [...tops] });
@@ -500,6 +482,10 @@ EU.alListo(function (sitio) {
     $("#formErr").hidden = !miss; $("#formErr").textContent = miss;
     if (miss) { e.preventDefault(); $("#formErr").scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" }); return; }
     updateMsg();
+    EU.registrarPedido({
+      items: cart.map((x) => ({ nombre: x.kind === "drink" ? x.name : `${x.name} (${sizeName(x)})`, cantidad: x.qty, precio: x.unit })),
+      total: total(), tipo: (MODOS.find((m) => m[0] === modo) || [])[1], pago,
+    });
   });
   $("#copyMsg").onclick = async () => {
     try { await navigator.clipboard.writeText(buildMsg()); toast("Mensaje copiado"); }

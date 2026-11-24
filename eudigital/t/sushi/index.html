@@ -10,7 +10,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="/core/sitio.css">
-<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}</style>
+<link rel="stylesheet" href="/core/mascotas.css">
+<style>:root{--eu-mascota-abajo:86px;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}</style>
 <style>
 /* Layout: banda de cabecera con olas seigaiha + sello hanko, pestañas fijas, lista de platos tipo menú de barra, barra de carrito flotante abajo */
 :root{
@@ -55,6 +56,8 @@ header.hero::before{content:"";position:absolute;inset:0;opacity:.22;
 .hero-in{position:relative;display:flex;gap:16px;align-items:center;padding-block:28px 26px}
 .vert{writing-mode:vertical-rl;font-family:var(--f-display);font-weight:800;font-size:44px;line-height:1;color:var(--sakura);letter-spacing:.08em;flex:none}
 .hero-txt{flex:1;min-width:0}
+.hero-redes{margin-top:14px;position:relative;z-index:3;color:#fff}
+.hero-redes .eu-redes-tit{color:#E9D3D8}
 .eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--salmon);font-weight:700}
 .hero h1{font-family:var(--f-display);font-weight:800;font-size:clamp(32px,9vw,46px);line-height:1.02;margin:.15em 0 .25em;text-wrap:balance}
 .hero h1 span{color:var(--sakura)}
@@ -171,6 +174,7 @@ footer b{font-family:var(--f-display);color:var(--rojo)}
         <div class="eyebrow" id="eslogan"></div>
         <h1 id="nombre-local"></h1>
         <p id="descripcion"></p>
+        <div class="eu-redes hero-redes" data-eu-redes="Síguenos"></div>
       </div>
       <div class="hanko" id="hanko" aria-hidden="true" data-eu-logo></div>
     </div>
@@ -248,6 +252,7 @@ footer b{font-family:var(--f-display);color:var(--rojo)}
 <script src="/core/config.js"></script>
 <script src="/core/catalogos.js"></script>
 <script src="/t/sushi/datos.js"></script>
+<script src="/core/mascotas.js"></script>
 <script src="/core/sitio.js"></script>
 <script src="/t/sushi/app.js"></script>
 </body>

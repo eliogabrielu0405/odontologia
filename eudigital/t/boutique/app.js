@@ -1147,15 +1147,23 @@ const probadorDestacado = crearProbador($('#probador-destacado'), { alTocar: () 
 const probadorFicha = crearProbador($('#probador-ficha'));
 
 async function iniciarMotor() {
+  // El motor 3D va guardado en la propia página (vendor/). Si no baja es por la conexión;
+  // si baja pero no arranca, es que el teléfono no puede dibujar en 3D.
+  let bajo = false;
   try {
     const [THREE, { RoomEnvironment }] = await Promise.all([import('three'), import('three/addons/environments/RoomEnvironment.js')]);
+    bajo = true;
     motor = crearMotor(THREE, RoomEnvironment);
     escenario = motor.crearEscenario();
   } catch (error) {
     console.error(error);
+    motor = null;
+    const texto = bajo
+      ? 'Este teléfono no puede mostrar la vista 360. Igual puedes ver los colores, elegir tu talla y pedir.'
+      : 'La vista 360 no cargó. Revisa tu conexión y vuelve a abrir la página.';
     for (const escena of $$('.escena')) {
       escena.dataset.estado = 'error';
-      escena.append(el('p', { class: 'escena-aviso' }, 'La vista 360 no cargó. Revisa tu conexión y vuelve a abrir la página.'));
+      escena.append(el('p', { class: 'escena-aviso' }, texto));
     }
     for (const img of $$('img[data-foto]')) img.closest('.foto')?.classList.add('sin-foto');
     return;
@@ -1379,6 +1387,7 @@ function agregarAlCarrito(p, color, talla) {
   else estado.carrito.push({ id: p.id, color, talla, cantidad: 1 });
   pedirFoto(p, color, true);
   cambioCarrito();
+  if (window.EU && window.EU.mascotaBrinca) window.EU.mascotaBrinca();
 }
 
 function cambioCarrito() {
@@ -1494,6 +1503,12 @@ $('#enviar').addEventListener('click', (e) => {
   }
   if (primerError) { e.preventDefault(); primerError.focus(); return; }
   actualizarEnlace();
+  if (window.EU && window.EU.registrarPedido) {
+    window.EU.registrarPedido({
+      items: estado.carrito.map((item) => { const p = porId.get(item.id) || {}; return { nombre: p.nombre, cantidad: item.cantidad, precio: p.precio }; }),
+      total: totalPrecio(), tipo: entrega.nombre, pago: d.pago,
+    });
+  }
   setTimeout(() => { $('#enviado').hidden = false; $('#enviar').classList.add('enviar-hecho'); }, 400);
 });
 
@@ -1609,11 +1624,6 @@ if (direccionCompleta) {
   $('#pie-direccion').replaceChildren(...[CONFIG.direccion, CONFIG.ciudad].filter(Boolean).flatMap((linea, i) => (i ? [el('br'), linea] : [linea])));
   $('#pie-mapa').href = CONFIG.mapa || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccionCompleta)}`;
 } else $('#bloque-ubicacion').hidden = true;
-if (CONFIG.instagram) {
-  const usuario = CONFIG.instagram.replace(/^@/, '');
-  $('#pie-instagram').textContent = `@${usuario}`;
-  $('#pie-instagram').href = `https://www.instagram.com/${encodeURIComponent(usuario)}/`;
-} else $('#bloque-instagram').hidden = true;
 for (const marca of $$('.marca')) marca.textContent = CONFIG.tienda;
 renderCategorias();
 renderDestacado();

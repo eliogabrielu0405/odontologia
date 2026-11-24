@@ -1,0 +1,105 @@
+/* Mascotas bailarinas. El esqueleto (em-*) lo arma core/mascotas.js; aquí están los bailes.
+   La clase eu-baile-<id> va en el elemento que contiene la mascota. */
+.eu-mascota svg, svg.eu-mascota { overflow: visible; display: block; }
+.eu-mascota > svg { width: 100%; height: 100%; }
+.em-salto, .em-todo, .em-cuerpo { transform-origin: 100px 200px; }
+.em-brazo-i, .em-brazo-d, .em-pie-i, .em-pie-d, .em-todo, .em-cuerpo, .em-salto { transform-box: view-box; }
+
+@keyframes em-rot { from { transform: rotate(var(--a, 0deg)); } to { transform: rotate(var(--b, 0deg)); } }
+@keyframes em-sube { from { transform: translateY(0); } to { transform: translateY(var(--y, -6px)); } }
+@keyframes em-lado { from { transform: translateX(calc(var(--x, 8px) * -1)) rotate(calc(var(--r, 4deg) * -1)); } to { transform: translateX(var(--x, 8px)) rotate(var(--r, 4deg)); } }
+@keyframes em-brinco { 0%, 100% { transform: translateY(0) scale(1.08, .9); } 45% { transform: translateY(-30px) scale(.95, 1.06); } 75% { transform: translateY(0) scale(1.06, .93); } }
+@keyframes em-vuelta { 0%, 55%, 100% { transform: scaleX(1) translateY(0); } 65% { transform: scaleX(.05) translateY(-10px); } 75% { transform: scaleX(-1) translateY(-14px); } 85% { transform: scaleX(.05) translateY(-10px); } }
+@keyframes em-robot { 0% { transform: rotate(-8deg); } 25% { transform: rotate(0deg) translateY(-4px); } 50% { transform: rotate(8deg); } 75% { transform: rotate(0deg) translateY(-4px); } }
+@keyframes em-robot-i { 0% { transform: rotate(70deg); } 25% { transform: rotate(0deg); } 50% { transform: rotate(-30deg); } 75% { transform: rotate(40deg); } }
+@keyframes em-robot-d { 0% { transform: rotate(30deg); } 25% { transform: rotate(-40deg); } 50% { transform: rotate(-70deg); } 75% { transform: rotate(0deg); } }
+@keyframes em-cabeceo { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(12deg) translateY(4px); } }
+@keyframes em-respira { from { transform: scale(1, 1); } to { transform: scale(1.035, .965); } }
+@keyframes em-fiesta { 0%, 100% { transform: translateY(0) rotate(0); } 30% { transform: translateY(-28px) rotate(-12deg); } 60% { transform: translateY(-10px) rotate(14deg); } }
+
+.em-todo, .em-cuerpo, .em-brazo-i, .em-brazo-d, .em-pie-i, .em-pie-d { animation: 0s ease-in-out infinite alternate both; }
+
+/* Meneo clásico: se mece, saluda con los dos brazos y patea */
+.eu-baile-meneo .em-todo { animation-name: em-sube; animation-duration: .275s; --y: -6px; }
+.eu-baile-meneo .em-cuerpo { animation-name: em-rot; animation-duration: .55s; --a: -7deg; --b: 7deg; }
+.eu-baile-meneo .em-brazo-i { animation-name: em-rot; animation-duration: .55s; --a: 20deg; --b: -35deg; }
+.eu-baile-meneo .em-brazo-d { animation-name: em-rot; animation-duration: .55s; --a: -20deg; --b: 35deg; }
+.eu-baile-meneo .em-pie-i { animation-name: em-rot; animation-duration: .55s; --a: 0deg; --b: 22deg; }
+.eu-baile-meneo .em-pie-d { animation-name: em-rot; animation-duration: .55s; animation-delay: -.55s; --a: 0deg; --b: -22deg; }
+
+/* Brincos: salta aplastándose al caer, con los brazos arriba */
+.eu-baile-brincos .em-todo { animation: em-brinco .7s ease-in-out infinite; }
+.eu-baile-brincos .em-brazo-i { animation-name: em-rot; animation-duration: .35s; --a: 0deg; --b: 45deg; }
+.eu-baile-brincos .em-brazo-d { animation-name: em-rot; animation-duration: .35s; --a: 0deg; --b: -45deg; }
+.eu-baile-brincos .em-pie-i { animation-name: em-rot; animation-duration: .35s; --a: 10deg; --b: -12deg; }
+.eu-baile-brincos .em-pie-d { animation-name: em-rot; animation-duration: .35s; --a: -10deg; --b: 12deg; }
+
+/* Twist: gira la cintura rápido y los pies van juntos */
+.eu-baile-twist .em-cuerpo { animation-name: em-rot; animation-duration: .3s; --a: -13deg; --b: 13deg; }
+.eu-baile-twist .em-pie-i, .eu-baile-twist .em-pie-d { animation-name: em-rot; animation-duration: .3s; --a: 20deg; --b: -20deg; }
+.eu-baile-twist .em-brazo-i { animation-name: em-rot; animation-duration: .3s; --a: -70deg; --b: -30deg; }
+.eu-baile-twist .em-brazo-d { animation-name: em-rot; animation-duration: .3s; --a: 30deg; --b: 70deg; }
+.eu-baile-twist .em-todo { animation-name: em-sube; animation-duration: .6s; --y: 5px; }
+
+/* Salsa: paso de lado a lado con los brazos alternados */
+.eu-baile-salsa .em-todo { animation-name: em-lado; animation-duration: .5s; --x: 13px; --r: 5deg; }
+.eu-baile-salsa .em-brazo-i { animation-name: em-rot; animation-duration: .5s; --a: -60deg; --b: 30deg; }
+.eu-baile-salsa .em-brazo-d { animation-name: em-rot; animation-duration: .5s; --a: -30deg; --b: 60deg; }
+.eu-baile-salsa .em-pie-i { animation-name: em-rot; animation-duration: .5s; --a: 0deg; --b: 24deg; }
+.eu-baile-salsa .em-pie-d { animation-name: em-rot; animation-duration: .5s; --a: -24deg; --b: 0deg; }
+
+/* La ola: los brazos suben uno después del otro */
+.eu-baile-ola .em-brazo-i { animation-name: em-rot; animation-duration: .8s; --a: -80deg; --b: 40deg; }
+.eu-baile-ola .em-brazo-d { animation-name: em-rot; animation-duration: .8s; animation-delay: -.4s; --a: 80deg; --b: -40deg; }
+.eu-baile-ola .em-cuerpo { animation-name: em-lado; animation-duration: .8s; --x: 4px; --r: 5deg; }
+.eu-baile-ola .em-todo { animation-name: em-sube; animation-duration: .4s; --y: -5px; }
+
+/* Vueltas: baila y cada tanto da una vuelta completa */
+.eu-baile-giro .em-todo { animation: em-vuelta 2.4s ease-in-out infinite; }
+.eu-baile-giro .em-cuerpo { animation-name: em-rot; animation-duration: .4s; --a: -6deg; --b: 6deg; }
+.eu-baile-giro .em-brazo-i { animation-name: em-rot; animation-duration: .4s; --a: 10deg; --b: 40deg; }
+.eu-baile-giro .em-brazo-d { animation-name: em-rot; animation-duration: .4s; --a: -10deg; --b: -40deg; }
+.eu-baile-giro .em-pie-i { animation-name: em-rot; animation-duration: .4s; --a: 0deg; --b: 16deg; }
+.eu-baile-giro .em-pie-d { animation-name: em-rot; animation-duration: .4s; animation-delay: -.4s; --a: 0deg; --b: -16deg; }
+
+/* Robot: movimientos secos, por pasos */
+.eu-baile-robot .em-todo { animation: em-robot 1.6s steps(1, end) infinite; }
+.eu-baile-robot .em-brazo-i { animation: em-robot-i 1.6s steps(1, end) infinite; }
+.eu-baile-robot .em-brazo-d { animation: em-robot-d 1.6s steps(1, end) infinite; }
+.eu-baile-robot .em-pie-i { animation: em-rot .8s steps(1, end) infinite alternate; --a: 0deg; --b: 18deg; }
+.eu-baile-robot .em-pie-d { animation: em-rot .8s steps(1, end) infinite alternate; animation-delay: -.8s; --a: 0deg; --b: -18deg; }
+
+/* Rockero: cabecea con un brazo arriba y marca el ritmo con el pie */
+.eu-baile-rock .em-cuerpo { animation: em-cabeceo .42s ease-in-out infinite; }
+.eu-baile-rock .em-brazo-d { animation-name: em-rot; animation-duration: .21s; --a: -42deg; --b: -58deg; }
+.eu-baile-rock .em-brazo-i { animation-name: em-rot; animation-duration: .42s; --a: -75deg; --b: -55deg; }
+.eu-baile-rock .em-pie-i { animation-name: em-rot; animation-duration: .21s; --a: 0deg; --b: 16deg; }
+
+/* Tembleque: tiembla de la emoción */
+.eu-baile-tembleque .em-cuerpo { animation-name: em-lado; animation-duration: .1s; animation-timing-function: linear; --x: 3px; --r: 3deg; }
+.eu-baile-tembleque .em-brazo-i { animation-name: em-rot; animation-duration: .1s; --a: 30deg; --b: 44deg; }
+.eu-baile-tembleque .em-brazo-d { animation-name: em-rot; animation-duration: .1s; --a: -30deg; --b: -44deg; }
+.eu-baile-tembleque .em-todo { animation-name: em-sube; animation-duration: .3s; --y: -4px; }
+.eu-baile-tembleque .em-pie-i, .eu-baile-tembleque .em-pie-d { animation-name: em-rot; animation-duration: .1s; --a: -6deg; --b: 6deg; }
+
+/* Tranquilo: respira y saluda despacio */
+.eu-baile-tranquilo .em-todo { animation-name: em-respira; animation-duration: 1.5s; }
+.eu-baile-tranquilo .em-brazo-d { animation-name: em-rot; animation-duration: .75s; --a: 5deg; --b: 40deg; }
+.eu-baile-tranquilo .em-brazo-i { animation-name: em-rot; animation-duration: 1.5s; --a: -75deg; --b: -65deg; }
+
+/* Cuando el cliente agrega algo o la toca: tres saltos de fiesta */
+.eu-m-brinca .em-salto { animation: em-fiesta .5s ease-in-out 3; }
+
+/* Mascota flotante (plantillas sin un lugar propio para ella) */
+.eu-mascota-flota {
+  position: fixed; left: 8px; bottom: calc(var(--eu-mascota-abajo, 12px) + env(safe-area-inset-bottom, 0px)); z-index: 12;
+  width: 76px; height: 84px; padding: 0; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .28));
+}
+.eu-mascota-flota:focus-visible { outline: 3px solid var(--eu-acento, #fc0); outline-offset: 2px; border-radius: 16px; }
+@media (min-width: 900px) { .eu-mascota-flota { width: 104px; height: 114px; left: 18px; } }
+.eu-sin-mascota .eu-mascota-flota { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .em-salto, .em-todo, .em-cuerpo, .em-brazo-i, .em-brazo-d, .em-pie-i, .em-pie-d { animation: none !important; }
+}

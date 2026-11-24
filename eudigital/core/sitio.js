@@ -111,8 +111,88 @@
   };
   EU.costoDelivery = () => Math.max(0, Number(EU.sitio.c.pedidos.delivery) || 0);
 
+  /* ---------- Registro de pedidos para las estadísticas del panel del dueño ----------
+     Cada plantilla lo llama justo antes de abrir WhatsApp. Solo guarda productos, total,
+     tipo de entrega y forma de pago. Si falla, el pedido sigue su camino igual. */
+  EU.registrarPedido = function ({ items = [], total = 0, tipo = "", pago = "" } = {}) {
+    try {
+      const s = EU.sitio;
+      if (!s || s.demo || !s.id || enPanel) return;
+      const lista = (items || []).filter((it) => it && String(it.nombre || "").trim()).slice(0, 60).map((it) => ({
+        nombre: String(it.nombre).trim().slice(0, 120),
+        cantidad: Math.max(1, Math.round(Number(it.cantidad) || 1)),
+        precio: Math.max(0, Math.round((Number(it.precio) || 0) * 100) / 100),
+      }));
+      if (!lista.length) return;
+      const metodo = (s.c.pagos || []).find((m) => m && m.id === pago);
+      const datos = {
+        p_sitio: s.id, p_items: lista, p_total: Math.max(0, Math.round((Number(total) || 0) * 100) / 100),
+        p_tipo: String(tipo || "").slice(0, 40) || null, p_pago: String((metodo && metodo.nombre) || pago || "").slice(0, 60) || null,
+      };
+      // Si el cliente toca "enviar" dos veces con el mismo pedido, cuenta una sola vez
+      const huella = JSON.stringify([lista, datos.p_total, datos.p_tipo]);
+      try {
+        const clave = "eu:pedido:" + s.id;
+        const antes = JSON.parse(sessionStorage.getItem(clave) || "null");
+        if (antes && antes.h === huella && Date.now() - antes.t < 10 * 60000) return;
+        sessionStorage.setItem(clave, JSON.stringify({ h: huella, t: Date.now() }));
+      } catch (_) { /* sin almacenamiento: se registra igual */ }
+      fetch(BASE + "/rest/v1/rpc/eu_registrar_pedido", {
+        method: "POST", keepalive: true,
+        headers: { apikey: C.supabaseKey, Authorization: "Bearer " + C.supabaseKey, "Content-Type": "application/json" },
+        body: JSON.stringify(datos),
+      }).catch(() => { /* sin conexión: no pasa nada */ });
+    } catch (_) { /* las estadísticas nunca deben estorbar un pedido */ }
+  };
+
+  /* ---------- Redes sociales ---------- */
+  // Aceptan "@usuario", "usuario" o el enlace del perfil. Devuelve solo las que tienen algo.
+  const NO_ES_USUARIO = ["channel", "c", "user", "profile.php", "pages", "groups", "share", "p", "reel", "watch", "people"];
+  EU.redes = function () {
+    const n = (EU.sitio && EU.sitio.c.negocio) || {};
+    return (K.redes || []).map((r) => {
+      const v = String(n[r.id] || "").trim();
+      if (!v) return null;
+      let href = "", usuario = "";
+      if (/^(https?:\/\/|www\.)/i.test(v) || /^[\w-]+(\.[\w-]+)+\//.test(v)) {
+        href = EU.url(/^https?:/i.test(v) ? v : "https://" + v);
+        if (!href) return null;
+        try {
+          const seg = new URL(href).pathname.split("/").filter(Boolean)[0] || "";
+          if (/^@?[\w.-]+$/.test(seg) && !NO_ES_USUARIO.includes(seg.toLowerCase())) usuario = seg.replace(/^@/, "");
+        } catch (_) { /* enlace raro: se muestra sin usuario */ }
+      } else {
+        usuario = v.replace(/^@+/, "").replace(/\s+/g, "");
+        if (!usuario) return null;
+        href = r.base + encodeURIComponent(usuario);
+      }
+      return { id: r.id, nombre: r.nombre, corto: r.corto || r.nombre, href, usuario };
+    }).filter(Boolean);
+  };
+  // Fila de botones de redes. Instagram muestra el @ porque es por donde más los buscan.
+  EU.htmlRedes = function ({ titulo = "" } = {}) {
+    let lista = EU.redes(), muestra = false;
+    if (!lista.length && EU.sitio && EU.sitio.demo && !enPanel) {
+      lista = [{ id: "instagram", corto: "Instagram", usuario: "tunegocio" }, { id: "tiktok", corto: "TikTok" }, { id: "facebook", corto: "Facebook" }];
+      muestra = true;
+    }
+    if (!lista.length) return "";
+    const boton = (r) => {
+      const dentro = `<b>${EU.esc(r.corto)}</b>${r.id === "instagram" && r.usuario ? `<small>@${EU.esc(r.usuario)}</small>` : ""}`;
+      return muestra
+        ? `<span class="eu-red-pill">${dentro}</span>`
+        : `<a class="eu-red-pill" href="${EU.esc(r.href)}" target="_blank" rel="noopener">${dentro}</a>`;
+    };
+    return (titulo ? `<span class="eu-redes-tit">${EU.esc(titulo)}</span>` : "") + lista.map(boton).join("");
+  };
+  EU.pintarRedes = function (raiz = document) {
+    raiz.querySelectorAll("[data-eu-redes]").forEach((el) => {
+      el.innerHTML = EU.htmlRedes({ titulo: el.getAttribute("data-eu-redes") || "" });
+    });
+  };
+
   /* ---------- Bloque "El local": horario, dirección, redes y pagos ---------- */
-  EU.htmlInfo = function ({ titulo = "El local" } = {}) {
+  EU.htmlInfo = function ({ titulo = "El local", redes: conRedes = true } = {}) {
     const c = EU.sitio.c, n = c.negocio, est = EU.estado();
     const hoy = new Date().getDay();
     const H = n.horario || {};
@@ -123,13 +203,8 @@
     }).join("");
     const dir = [n.direccion, n.ciudad].filter(Boolean).join(", ");
     const mapa = EU.url(n.mapa) || (dir ? "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(dir) : "");
-    const red = (nombre, usuario, base) => {
-      if (!usuario) return "";
-      const u = String(usuario).trim();
-      const href = /^https?:\/\//i.test(u) ? EU.url(u) : base + encodeURIComponent(u.replace(/^@/, ""));
-      return href ? `<a class="eu-red" href="${EU.esc(href)}" target="_blank" rel="noopener"><b>${nombre}</b><span>${EU.esc(/^https?:/i.test(u) ? nombre : "@" + u.replace(/^@/, ""))}</span></a>` : "";
-    };
-    const redes = red("Instagram", n.instagram, "https://instagram.com/") + red("TikTok", n.tiktok, "https://www.tiktok.com/@") + red("Facebook", n.facebook, "https://facebook.com/");
+    const redes = !conRedes ? "" : EU.redes().map((r) =>
+      `<a class="eu-red" href="${EU.esc(r.href)}" target="_blank" rel="noopener"><b>${EU.esc(r.nombre)}</b><span>${EU.esc(r.usuario ? "@" + r.usuario : "Ver perfil")}</span></a>`).join("");
     const pagos = (c.pagos || []).filter((m) => m && m.nombre).map((m) => `<span class="eu-chip">${EU.esc(m.nombre)}</span>`).join("");
     return `<section class="eu-info" aria-label="${EU.esc(titulo)}">
       <div class="eu-info-col"><h3>Horario</h3><p class="eu-estado ${est.abierto ? "abierto" : "cerrado"}">${EU.esc(est.texto)}</p><div class="eu-horario">${filasHorario}</div></div>
@@ -144,7 +219,8 @@
     const n = (params.get("n") || params.get("negocio") || "").trim().toLowerCase();
     if (n) return { slug: n };
     const host = location.hostname.toLowerCase();
-    if (!host || host === "localhost" || host === "127.0.0.1" || /\.(workers|pages)\.dev$/.test(host)) return null;
+    /* Las direcciones gratis de Cloudflare, Vercel y Netlify son de la plataforma, no de un cliente. */
+    if (!host || host === "localhost" || host === "127.0.0.1" || /\.((workers|pages)\.dev|vercel\.app|netlify\.app)$/.test(host)) return null;
     if (C.dominioBase) {
       if (host === C.dominioBase || host === "www." + C.dominioBase) return null;
       if (host.endsWith("." + C.dominioBase)) {
@@ -244,9 +320,8 @@
     caja.className = "eu-tiras";
     const est = EU.estado();
     let html = "";
-    if (EU.sitio.demo && !enPanel && C.whatsappMarca) {
-      const txt = "Hola, vi la plantilla " + (P.nombre || "") + " y quiero una página así para mi negocio.";
-      html += `<div class="eu-tira eu-tira-demo">Esta es una página de muestra de ${EU.esc(C.marca || "EU Digital")}. <a href="https://wa.me/${EU.soloNumeros(C.whatsappMarca)}?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener">Quiero una así</a></div>`;
+    if (EU.sitio.demo && !enPanel) {
+      html += `<div class="eu-tira eu-tira-demo">Esta es una página de muestra de ${EU.esc(C.marca || "EU Digital")}. <a href="/registro/?plantilla=${encodeURIComponent(PLANTILLA)}">Pruébala gratis con tu negocio</a></div>`;
     }
     if (!est.abierto) html += `<div class="eu-tira eu-tira-cerrado" role="status"><b>${EU.esc(est.texto)}.</b> Puedes dejar tu pedido y te respondemos apenas abramos.</div>`;
     if (c.hoy.aviso) html += `<div class="eu-tira eu-tira-aviso" role="status">${EU.esc(c.hoy.aviso)}</div>`;
@@ -302,7 +377,6 @@
   function animaciones(c) {
     const a = c.animaciones || {}, raiz = document.documentElement;
     raiz.classList.add("eu-logo-" + (a.logo || "ninguna"), "eu-boton-" + (a.boton || "ninguna"));
-    if (a.mascota === false) raiz.classList.add("eu-sin-mascota");
     if (reducido) return;
     const portada = document.querySelector("[data-eu-portada]");
     if (portada && a.portada && a.portada !== "ninguna" && (PARTICULAS[a.portada] || a.portada === "emojis")) {
@@ -334,6 +408,43 @@
       new MutationObserver(() => marcar(document)).observe(document.body, { childList: true, subtree: true });
     }
   }
+
+  /* ---------- Mascota bailarina ----------
+     El dueño elige el personaje y el baile en su panel. Las plantillas con un lugar propio para ella
+     lo marcan con data-eu-mascota; en las demás sale flotando en una esquina. */
+  EU.mascota = function () {
+    const M = window.EU_MASCOTAS, s = EU.sitio;
+    if (!M || !s) return null;
+    const a = s.c.animaciones || {};
+    let personaje = a.personaje || (a.mascota === false ? "ninguna" : P.mascota || (s.demo && !enPanel ? P.mascotaDemo : "") || "ninguna");
+    if (!M.existe(personaje)) personaje = "ninguna";
+    return { personaje, baile: M.hayBaile(a.baile) ? a.baile : "meneo" };
+  };
+  EU.pintarMascotas = function () {
+    const m = EU.mascota(), M = window.EU_MASCOTAS, raiz = document.documentElement;
+    if (!m || m.personaje === "ninguna") { raiz.classList.add("eu-sin-mascota"); return; }
+    let lugares = [...document.querySelectorAll("[data-eu-mascota]")];
+    if (!lugares.length) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "eu-mascota-flota"; b.setAttribute("data-eu-mascota", "");
+      b.setAttribute("aria-label", "Mascota bailarina, tócala para que salte");
+      document.body.appendChild(b);
+      lugares = [b];
+    }
+    lugares.forEach((el) => {
+      el.classList.add("eu-mascota", "eu-baile-" + m.baile);
+      if (el instanceof SVGElement) { el.setAttribute("viewBox", "0 0 200 220"); el.innerHTML = M.interior(m.personaje); }
+      else el.innerHTML = M.svg(m.personaje);
+    });
+  };
+  // Tres saltos de fiesta: al tocarla y cuando el cliente agrega algo al pedido
+  EU.mascotaBrinca = function () {
+    document.querySelectorAll("[data-eu-mascota]").forEach((el) => {
+      el.classList.remove("eu-m-brinca"); void el.getBoundingClientRect(); el.classList.add("eu-m-brinca");
+      clearTimeout(el._euBrinca); el._euBrinca = setTimeout(() => el.classList.remove("eu-m-brinca"), 1600);
+    });
+  };
+  document.addEventListener("click", (e) => { if (e.target.closest("button[data-eu-mascota]:not([data-dancer])")) EU.mascotaBrinca(); });
 
   /* ---------- Copiar datos de pago ---------- */
   document.addEventListener("click", async (e) => {
@@ -390,6 +501,8 @@
     for (const fn of pendientes.splice(0)) {
       try { fn(sitio); } catch (err) { console.error(err); }
     }
+    EU.pintarRedes();
+    EU.pintarMascotas();
     animaciones(sitio.c);
     if (enPanel) {
       try {

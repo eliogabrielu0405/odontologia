@@ -1,0 +1,21 @@
+{
+  "id": "/panel/",
+  "name": "EU Digital: mi página",
+  "short_name": "Mi página",
+  "description": "El panel de tu página de pedidos: precios, fotos, tasa del día y tus pedidos.",
+  "lang": "es",
+  "start_url": "/panel/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#E9EDF3",
+  "theme_color": "#E9EDF3",
+  "icons": [
+    { "src": "/img/icono-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/img/icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/img/icono-512-m.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Ver mis pedidos", "url": "/panel/#pedidos-recibidos" },
+    { "name": "Mi suscripción", "url": "/panel/#suscripcion" }
+  ]
+}

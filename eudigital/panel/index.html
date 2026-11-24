@@ -7,10 +7,16 @@
 <meta name="robots" content="noindex">
 <title>Panel de mi página</title>
 <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="/panel/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/img/icono-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mi página">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap">
 <link rel="stylesheet" href="/core/panel.css">
+<link rel="stylesheet" href="/core/mascotas.css">
 <style>
 /* Panel del cliente: arriba el nombre y las secciones; en el centro las hojas para editar;
    a la derecha (en computadora) un teléfono con la vista previa. Abajo, la barra para guardar. */
@@ -76,6 +82,79 @@
   .pnl-main { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
 }
 .pnl-cab .acciones { flex-wrap: nowrap; flex: none; }
+
+/* Mis pedidos */
+.cifras { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+.cifras.tres { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.cifra { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1.5px solid var(--linea-2); border-radius: 14px; background: var(--papel-2); min-width: 0; }
+.cifra > span { font-size: 14px; font-weight: 700; color: var(--suave); }
+.cifra > b { font-family: var(--titulos); font-weight: 800; font-size: 34px; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.cifra > small { font-size: 14px; color: var(--suave); font-variant-numeric: tabular-nums; }
+.cifra em { font-style: normal; font-size: 13px; font-weight: 700; margin-top: 4px; }
+.cifra em.sube { color: var(--verde); }
+.cifra em.baja { color: var(--rojo); }
+@media (max-width: 560px) { .cifras.tres { grid-template-columns: 1fr 1fr; } .cifras.tres .cifra:last-child { grid-column: 1 / -1; } }
+.barras { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 6px; align-items: end; height: 170px; margin-top: 8px; }
+.barra-dia { display: grid; grid-template-rows: 18px 1fr 18px; height: 100%; align-items: end; justify-items: center; min-width: 0; }
+.barra-dia i { display: block; width: 100%; max-width: 28px; border-radius: 6px 6px 3px 3px; background: var(--carbon); opacity: .75; align-self: end; }
+.barra-dia.hoy i { opacity: 1; background: var(--verde); }
+.barra-n { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; align-self: end; }
+.barra-dia small { font-size: 12px; color: var(--suave); font-variant-numeric: tabular-nums; }
+.barra-dia.hoy small { color: var(--tinta); font-weight: 700; }
+.top-lista { margin: 4px 0 0; padding: 0; list-style: none; counter-reset: top; }
+.top-lista li { counter-increment: top; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px dashed var(--linea); }
+.top-lista li:first-child { border-top: 0; }
+.top-lista li::before { content: counter(top); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--papel-2); border: 1.5px solid var(--linea-2); font-weight: 800; font-size: 14px; }
+.top-nombre { overflow-wrap: anywhere; font-weight: 700; }
+.top-lista b { font-variant-numeric: tabular-nums; }
+.lista-pedidos { display: flex; flex-direction: column; }
+.pedido-fila { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 11px 0; border-top: 1px dashed var(--linea); }
+.pedido-fila:first-child { border-top: 0; }
+.pedido-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pedido-txt b { font-weight: 700; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pedido-txt .suave { font-size: 14px; }
+.pedido-total { font-variant-numeric: tabular-nums; }
+.vacio-pedidos h2 { font-size: 21px; margin-bottom: 6px; }
+.vacio-pedidos p { margin-bottom: 8px; }
+
+/* Compartir */
+.enlace-caja { font-weight: 700; padding: 12px 14px; border-radius: 12px; background: var(--papel-2); border: 1.5px dashed var(--linea); overflow-wrap: anywhere; margin-bottom: 12px; }
+.wa-chat { background: #E6DDD4; border-radius: 16px; padding: 16px; }
+.wa-burbuja { max-width: 420px; margin-left: auto; background: #D9FDD3; border-radius: 12px 4px 12px 12px; padding: 5px; box-shadow: 0 1px 1px rgba(0, 0, 0, .12); color: #111b21; }
+.wa-imagen { border-radius: 8px 8px 0 0; overflow: hidden; background: rgba(0, 0, 0, .06); aspect-ratio: 1200 / 630; display: grid; place-items: center; }
+.wa-imagen canvas { width: 100%; height: 100%; display: block; }
+.wa-texto { display: flex; flex-direction: column; gap: 2px; background: rgba(0, 0, 0, .05); padding: 8px 10px; border-radius: 0 0 8px 8px; }
+.wa-texto b { font-size: 15px; }
+.wa-texto span { font-size: 14px; color: #3b4a54; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.wa-texto small { font-size: 13px; color: #667781; }
+.wa-enlace { font-size: 14px; color: #027eb5; padding: 6px 6px 2px; overflow-wrap: anywhere; }
+.qr-fila { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; }
+.qr-vista { width: 180px; height: 180px; border-radius: 12px; border: 1.5px solid var(--linea-2); image-rendering: pixelated; flex: none; }
+.qr-botones { display: flex; flex-direction: column; align-items: stretch; gap: 10px; flex: 1 1 220px; min-width: 0; }
+
+/* Mis páginas, planes y la app */
+button.pnl-marca-btn { border: 0; background: none; padding: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; border-radius: 10px; }
+button.pnl-marca-btn span { color: var(--carbon); font-weight: 700; }
+.talon-precio { margin-top: 4px; font-weight: 700; color: var(--suave); font-variant-numeric: tabular-nums; }
+.paginas { display: flex; flex-direction: column; }
+.pagina { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 10px 14px; align-items: start; padding: 14px 0; border-top: 1px dashed var(--linea); }
+.pagina:first-child { border-top: 0; padding-top: 0; }
+.pagina:last-child { padding-bottom: 0; }
+.pagina > img { width: 56px; height: 74px; object-fit: cover; object-position: top; border-radius: 8px; border: 1px solid var(--linea-2); background: var(--papel-2); }
+.pagina-txt { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pagina-txt h3 { font-size: 18px; overflow-wrap: anywhere; }
+.pagina-enlace { font-size: 14px; overflow-wrap: anywhere; }
+.pagina > .acciones { grid-column: 1 / -1; }
+.pagina .chip { min-height: 36px; font-size: 14px; border-style: dashed; color: var(--suave); }
+.app-invita { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 12px 14px; align-items: center; }
+.app-invita > img { border-radius: 12px; }
+.app-invita > .acciones { grid-column: 1 / -1; }
+@media (min-width: 620px) {
+  .pagina { grid-template-columns: 56px minmax(0, 1fr) auto; }
+  .pagina > .acciones { grid-column: auto; justify-content: flex-end; max-width: 300px; }
+  .app-invita { grid-template-columns: 52px minmax(0, 1fr) auto; }
+  .app-invita > .acciones { grid-column: auto; }
+}
 </style>
 </head>
 <body class="pnl">
@@ -89,7 +168,12 @@
 <script src="/t/boutique/datos.js"></script>
 <script src="/core/util.js"></script>
 <script src="/core/api.js"></script>
+<script src="/core/planes.js"></script>
+<script src="/core/instalar.js"></script>
+<script src="/core/mascotas.js"></script>
 <script src="/core/campos.js"></script>
+<script src="/core/qr.js"></script>
+<script src="/core/compartir.js"></script>
 <script src="/panel/panel.js"></script>
 </body>
 </html>

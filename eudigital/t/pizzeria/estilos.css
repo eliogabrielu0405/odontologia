@@ -35,6 +35,7 @@ h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:.01em;text-wr
 .hero h1{font-size:clamp(30px,7vw,52px);line-height:1.02;margin-top:6px}
 .hero p{margin:10px 0 16px;max-width:36ch;opacity:.95}
 .hero-ctas{display:flex;gap:10px;flex-wrap:wrap}
+.hero-redes{margin-top:16px;position:relative;z-index:3}
 .btn{border:0;border-radius:999px;padding:12px 20px;font-weight:800;transition:transform .15s ease,background-color .2s}
 .btn:active{transform:scale(.96)}
 .btn-cheese{background:var(--cheese);color:#2a1b06}
@@ -42,21 +43,6 @@ h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:.01em;text-wr
 .mantel{height:22px;background:repeating-conic-gradient(#fff 0 25%,var(--tomato) 0 50%) 0 0/22px 22px;opacity:.95}
 .mascot{width:clamp(120px,26vw,200px);height:auto;overflow:visible}
 
-/* Mascot animations */
-.m-body{transform-origin:100px 190px;animation:sway 1.1s ease-in-out infinite}
-.m-armL{transform-origin:52px 70px;animation:waveL .55s ease-in-out infinite alternate}
-.m-armR{transform-origin:148px 70px;animation:waveR .55s ease-in-out infinite alternate}
-.m-legL{transform-origin:86px 150px;animation:kickL 1.1s ease-in-out infinite}
-.m-legR{transform-origin:114px 150px;animation:kickR 1.1s ease-in-out infinite}
-.m-all{transform-origin:100px 200px;animation:hop 1.1s ease-in-out infinite}
-.party .m-all{animation:party .5s ease-in-out 3}
-@keyframes sway{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
-@keyframes waveL{from{transform:rotate(20deg)}to{transform:rotate(-35deg)}}
-@keyframes waveR{from{transform:rotate(-20deg)}to{transform:rotate(35deg)}}
-@keyframes kickL{0%,100%{transform:rotate(0)}25%{transform:rotate(22deg)}}
-@keyframes kickR{0%,100%{transform:rotate(0)}75%{transform:rotate(-22deg)}}
-@keyframes hop{0%,50%,100%{transform:translateY(0)}25%,75%{transform:translateY(-6px)}}
-@keyframes party{0%,100%{transform:translateY(0) rotate(0)}30%{transform:translateY(-26px) rotate(-12deg)}60%{transform:translateY(-10px) rotate(14deg)}}
 
 /* Tabs */
 .tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
