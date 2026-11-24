@@ -70,6 +70,7 @@
     ],
     apariencia: [
       { tipo: "interruptor", ruta: "portada.hamburguesa", etiqueta: "Hamburguesa que se abre al bajar", ayuda: "La animación grande del inicio. Si la apagas, la página empieza con tu logo y el menú." },
+      { tipo: "foto", ruta: "portada.foto", etiqueta: "Tu foto de portada", max: 1200, cubre: true, ayuda: "Opcional. Si subes una foto (tu local, tu mejor hamburguesa…), sale en ese recuadro en vez de la hamburguesa que se abre. Mejor horizontal; se recorta al centro." },
       { tipo: "texto", ruta: "portada.aviso", etiqueta: "Texto sobre la hamburguesa", max: 30 },
       { tipo: "interruptor", ruta: "portada.letreroVer", etiqueta: "Nombre en la pared de la hamburguesa", ayuda: "Sale escrito en la pared del fondo, detrás de la hamburguesa." },
       { tipo: "texto", ruta: "portada.letrero", etiqueta: "Qué dice la pared", max: 30, placeholder: "El nombre de tu negocio", ayuda: "Si lo dejas vacío sale el nombre de tu negocio." },
@@ -86,7 +87,7 @@
     },
     pedidos: { tipos: ["llevar", "aqui", "delivery"] },
     animaciones: { productos: "zoom", boton: "latido" },
-    portada: { hamburguesa: true, aviso: "Desliza para abrirla", letreroVer: true, letrero: "", letreroColor: "" },
+    portada: { hamburguesa: true, aviso: "Desliza para abrirla", foto: "", letreroVer: true, letrero: "", letreroColor: "" },
     catalogo: {
       categorias: [
         { id: "perros", nombre: "Perros", emoji: "🌭" },

@@ -87,11 +87,12 @@ En el panel del cliente, **Apariencia > Mascota bailarina**: elige entre 19 pers
 - En la arepera y la pizzería viene encendida (arepa y pizza). En burgers, sushi y boutique viene apagada; cada cliente la enciende si quiere.
 - Los personajes están en `core/mascotas.js` y los bailes en `core/mascotas.css`. Para verlos todos juntos: `tools/mascotas.html`.
 
-## Nombre en la pared (plantilla Burgers)
+## Portada de la plantilla Burgers: nombre en la pared y foto propia
 
 La hamburguesa que se abre al bajar tiene una pared al fondo. Ahí sale escrito el nombre del negocio, detrás de la hamburguesa: las capas pasan por delante de las letras. Las fotos de la animación ya no traen ningún nombre, así que la plantilla sirve para cualquier negocio.
 
 - En el panel del cliente, **Apariencia**: encender o apagar el nombre, escribir otro texto (si queda vacío sale el nombre del negocio) y elegir el color de las letras.
+- **Tu foto de portada** (también en Apariencia): si el cliente sube una foto suya, sale en ese mismo recuadro en lugar de la hamburguesa animada. Si la quita, vuelve la hamburguesa.
 - Archivos: las 63 fotos limpias en `t/burgers/img/hamburguesa/f01.webp` a `f63.webp`, y `pared.webp`, que es la franja de pared sin nada delante. Al dibujar cada foto, `t/burgers/app.js` compara esa franja con la pared y escribe el letrero solo donde se ve la pared.
 
 ## Avisos al teléfono

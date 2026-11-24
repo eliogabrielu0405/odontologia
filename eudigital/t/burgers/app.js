@@ -66,6 +66,16 @@ EU.alListo(function (sitio) {
     $("portadaNombre").textContent = sitio.nombre;
     $("portadaTxt").textContent = c.negocio.descripcion || c.negocio.eslogan || "";
     fotoLogo($("logoGrande"));
+  } else if (EU.url(c.portada && c.portada.foto)) {
+    // Foto propia del cliente en el mismo recuadro, en lugar de la hamburguesa animada
+    const fuera = $("hb");
+    fuera.classList.add("quieta");
+    fuera.setAttribute("aria-label", "Portada");
+    $("hbAviso").textContent = "";
+    const im = new Image();
+    im.className = "hb-foto"; im.decoding = "async"; im.alt = sitio.nombre || "";
+    im.src = EU.url(c.portada.foto);
+    $("lienzo").replaceWith(im);
   } else {
     const CUADROS = 63, W = 640, H = 480;
     const ruta = (i) => `/t/burgers/img/hamburguesa/f${String(i + 1).padStart(2, "0")}.webp`;
