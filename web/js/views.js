@@ -27,8 +27,11 @@
   /** Número de pieza FDI: permanentes 11–48, temporales 51–85. */
   const validTooth = (t) => /^([1-4][1-8]|[5-8][1-5])$/.test(String(t).trim());
   const patientHref = (id, tab = 'info') => `#paciente-${id}${tab === 'info' ? '' : `-${tab}`}`;
+  /** "HC 0012": número de historia clínica (expediente) del paciente, para mostrar junto a la cédula. */
+  const recordLabel = (p) => (p && p.record ? `HC ${p.record}` : '');
+  const idLine = (p) => [recordLabel(p), p && p.dni ? `C.I. ${p.dni}` : ''].filter(Boolean).join(' · ');
   const patientCell = (p) => (p
-    ? `<a href="${patientHref(p.id)}" class="cell-user">${avatarFor(p)}<div><strong>${esc(fullName(p))}</strong><small>C.I. ${esc(p.dni)}</small></div></a>`
+    ? `<a href="${patientHref(p.id)}" class="cell-user">${avatarFor(p)}<div><strong>${esc(fullName(p))}</strong><small>${esc(idLine(p))}</small></div></a>`
     : '<span class="muted">Paciente eliminado</span>');
 
   const pageHead = (title, subtitle, actions = '') =>
@@ -61,6 +64,7 @@
       <label class="field"><span>Nombre <span class="req">*</span></span><input name="firstName" required value="${esc(p.firstName)}" autocomplete="off"></label>
       <label class="field"><span>Apellido <span class="req">*</span></span><input name="lastName" required value="${esc(p.lastName)}" autocomplete="off"></label>
       <label class="field"><span>Cédula <span class="req">*</span></span><input name="dni" required value="${esc(p.dni)}" placeholder="V-12345678"></label>
+      <label class="field">N.º de historia clínica<input name="record" maxlength="20" value="${esc(p.id ? p.record : DB.nextRecordNumber())}" placeholder="${esc(DB.nextRecordNumber())}" autocomplete="off"><small class="hint">Se asigna solo. Cámbialo si ya usas tus propios números de carpeta.</small></label>
       <label class="field">Fecha de nacimiento<input type="date" name="birthDate" value="${esc(p.birthDate)}"></label>
       <label class="field">Sexo<select name="sex"><option value="">—</option>${options([{ id: 'F', n: 'Femenino' }, { id: 'M', n: 'Masculino' }], p.sex, (x) => x.n)}</select></label>
       <label class="field"><span>Teléfono <span class="req">*</span></span><input name="phone" required inputmode="tel" value="${esc(p.phone)}" placeholder="0414-1234567"></label>
@@ -81,7 +85,10 @@
       const dni = data.dni.trim().toUpperCase();
       const dup = DB.all('patients').find((x) => String(x.dni).toUpperCase() === dni && (!p || x.id !== p.id));
       if (dup) { toast(`Ya existe un paciente con la cédula ${dni}: ${fullName(dup)}.`, 'err'); return false; }
-      const record = { ...data, dni };
+      const number = String(data.record || '').trim().slice(0, 20) || (p && p.record) || DB.nextRecordNumber();
+      const sameNumber = DB.all('patients').find((x) => DB.sameRecord(x.record, number) && (!p || x.id !== p.id));
+      if (sameNumber) { toast(`El N.º de historia ${number} ya es de ${fullName(sameNumber)}. Usa otro número.`, 'err'); return false; }
+      const record = { ...data, dni, record: number };
       if (p) {
         DB.update('patients', p.id, record, `Paciente ${record.lastName}, ${record.firstName} actualizado`);
         toast('Paciente actualizado');
@@ -263,7 +270,7 @@
     return `
       <header class="doc-head"><div><strong class="doc-brand">${esc(s.clinicName)}</strong><small>${clinicLine(s)}</small></div>
         <div class="doc-num"><span>Presupuesto</span><strong>N.º ${b.number}</strong><small>${fmtDate(b.date)}</small></div></header>
-      <dl class="doc-meta"><dt>Paciente</dt><dd>${esc(fullName(p))}${p ? ` · C.I. ${esc(p.dni)}` : ''}</dd><dt>Profesional</dt><dd>${esc(userName(b.dentistId))}</dd><dt>Estado</dt><dd>${esc(DB.BUDGET_STATUS[b.status])}</dd></dl>
+      <dl class="doc-meta"><dt>Paciente</dt><dd>${esc(fullName(p))}${p ? ` · ${esc(idLine(p))}` : ''}</dd><dt>Profesional</dt><dd>${esc(userName(b.dentistId))}</dd><dt>Estado</dt><dd>${esc(DB.BUDGET_STATUS[b.status])}</dd></dl>
       <div class="table-wrap"><table><thead><tr><th>Tratamiento</th><th>Pieza</th><th class="num">Cant.</th><th class="num">Precio</th><th class="num">Subtotal</th></tr></thead><tbody>
       ${b.items.map((it) => `<tr><td>${esc(it.description)}</td><td>${esc(it.tooth || '—')}</td><td class="num">${it.qty}</td><td class="num">${money(it.price)}</td><td class="num">${money(it.qty * it.price)}</td></tr>`).join('')}
       </tbody></table></div>
@@ -277,7 +284,7 @@
     return `
       <header class="doc-head"><div><strong class="doc-brand">${esc(s.clinicName)}</strong><small>${clinicLine(s)}</small></div>
         <div class="doc-num"><span>Recibo</span><strong>${esc(pay.receipt)}</strong><small>${fmtDate(pay.date)}</small></div></header>
-      <p>Recibimos de <strong>${esc(fullName(p))}</strong>${p ? ` (C.I. ${esc(p.dni)})` : ''} la cantidad de:</p>
+      <p>Recibimos de <strong>${esc(fullName(p))}</strong>${p ? ` (${esc(idLine(p))})` : ''} la cantidad de:</p>
       <div class="doc-amount">${money(pay.amount)}</div>
       <dl class="doc-meta"><dt>Concepto</dt><dd>${esc(pay.concept)}</dd><dt>Método</dt><dd>${esc(pay.method)}${pay.reference ? ` · ref. ${esc(pay.reference)}` : ''}</dd></dl>
       <p class="doc-foot">${esc(s.receiptFooter)}</p>`;
@@ -401,8 +408,7 @@
     let current = [];
     const render = () => {
       current = sortedPatients().filter((p) => {
-        const hay = `${p.firstName} ${p.lastName} ${p.dni} ${p.phone} ${p.email}`.toLowerCase();
-        return (!q || hay.includes(q.toLowerCase())) && (!insurance || (p.insurance || 'Particular') === insurance);
+        return DB.patientMatches(p, q) && (!insurance || (p.insurance || 'Particular') === insurance);
       });
       el.querySelector('[data-body]').innerHTML = current.length ? current.map((p) => {
         const balance = DB.patientBalance(p.id).balance;
@@ -428,7 +434,7 @@
       ${pageHead('Pacientes', 'Fichas, seguro y saldo de cada paciente', `<button class="btn" data-csv>${icon('download')}CSV</button><button class="btn btn-primary" data-new>${icon('plus')}Nuevo paciente</button>`)}
       <div class="card">
         <div class="toolbar">
-          <input class="grow" data-q type="search" placeholder="Buscar por nombre, cédula, teléfono o correo…" aria-label="Buscar pacientes">
+          <input class="grow" data-q type="search" placeholder="Buscar por nombre, N.º de historia, cédula, teléfono o correo…" aria-label="Buscar pacientes">
           <select data-insurance aria-label="Seguro"><option value="">Todos los seguros</option>${insurers.map((i) => `<option>${esc(i)}</option>`).join('')}</select>
           <span class="muted" data-count></span>
         </div>
@@ -440,7 +446,7 @@
     el.querySelector('[data-insurance]').addEventListener('change', (e) => { insurance = e.target.value; render(); });
     el.querySelector('[data-new]').addEventListener('click', () => openPatientModal(null, (id) => App.go(`paciente-${id}`)));
     el.querySelector('[data-csv]').addEventListener('click', () => csvFile('pacientes.csv', current, [
-      { label: 'Apellido', value: (p) => p.lastName }, { label: 'Nombre', value: (p) => p.firstName }, { label: 'Cédula', value: (p) => p.dni },
+      { label: 'N.º historia', value: (p) => p.record }, { label: 'Apellido', value: (p) => p.lastName }, { label: 'Nombre', value: (p) => p.firstName }, { label: 'Cédula', value: (p) => p.dni },
       { label: 'Nacimiento', value: (p) => p.birthDate }, { label: 'Teléfono', value: (p) => p.phone }, { label: 'Correo', value: (p) => p.email },
       { label: 'Seguro', value: (p) => p.insurance }, { label: 'Póliza', value: (p) => p.insuranceNumber }, { label: 'Saldo', value: (p) => DB.patientBalance(p.id).balance },
     ], 'Pacientes'));
@@ -531,7 +537,7 @@
       return `<div class="patient-head">
         <a href="#pacientes" class="icon-btn" title="Volver a pacientes" aria-label="Volver a pacientes">${icon('back')}</a>
         <button type="button" class="avatar lg avatar-edit" data-avatar${photoAttr(p.photo)} title="${p.photo ? 'Cambiar foto de perfil' : 'Agregar foto de perfil'}" aria-label="${p.photo ? 'Cambiar foto de perfil' : 'Agregar foto de perfil'}"><span>${esc(initials(p.firstName, p.lastName))}</span><i class="avatar-cam" aria-hidden="true">${icon('camera')}</i></button>
-        <div class="grow"><h1>${esc(fullName(p))}</h1><div class="muted">C.I. ${esc(p.dni)}${p.birthDate ? ` · ${ageFrom(p.birthDate)} años` : ''} · ${esc(p.insurance || 'Particular')}${p.phone ? ` · <a href="${esc(U.waLink(p.phone))}" target="_blank" rel="noopener">${esc(p.phone)}</a>` : ''}</div></div>
+        <div class="grow"><h1>${esc(fullName(p))}</h1><div class="muted">${p.record ? `<span class="record-tag">${esc(recordLabel(p))}</span> ` : ''}C.I. ${esc(p.dni)}${p.birthDate ? ` · ${ageFrom(p.birthDate)} años` : ''} · ${esc(p.insurance || 'Particular')}${p.phone ? ` · <a href="${esc(U.waLink(p.phone))}" target="_blank" rel="noopener">${esc(p.phone)}</a>` : ''}</div></div>
         <div class="balance-box ${balance > 0 ? 'balance-debt' : 'balance-ok'}"><small>Saldo</small><strong>${balance > 0 ? money(balance) : 'Al día'}</strong></div>
       </div>
       ${alerts.length ? `<div class="banner banner-warn">${icon('alert')}<div class="grow"><strong>Alertas médicas:</strong> ${alerts.join(' · ')}</div></div>` : ''}
@@ -544,7 +550,7 @@
           return '<div class="card card-pad"><h3 class="section-title">Odontograma digital</h3><div data-odo></div></div>';
         case 'historia': {
           const list = DB.all('history').filter((h) => h.patientId === p.id).sort((a, b) => b.date.localeCompare(a.date));
-          return `<div class="card"><div class="card-head"><h3>Historia clínica</h3>${can('clinical') ? `<button class="btn btn-primary btn-sm" data-new-h>${icon('plus')}Nueva evolución</button>` : ''}</div>
+          return `<div class="card"><div class="card-head"><h3>Historia clínica${p.record ? ` <span class="record-tag">N.º ${esc(p.record)}</span>` : ''}</h3>${can('clinical') ? `<button class="btn btn-primary btn-sm" data-new-h>${icon('plus')}Nueva evolución</button>` : ''}</div>
             <div class="card-body">${list.length ? `<div class="timeline">${list.map((h) => `<div class="tl-item"><div class="date">${fmtDate(h.date)} · ${esc(userName(h.dentistId))}</div><h4>${esc(h.title)}</h4><p>${esc(h.notes)}</p>
               ${can('clinical') ? `<div class="act"><button data-edit-h="${h.id}" title="Editar" aria-label="Editar">${icon('edit')}</button>${can('delete') ? `<button class="del" data-del-h="${h.id}" title="Eliminar" aria-label="Eliminar">${icon('trash')}</button>` : ''}</div>` : ''}</div>`).join('')}</div>` : `<div class="empty">Todavía no hay evoluciones en la historia clínica.${can('clinical') ? '' : ' Solo los odontólogos pueden agregarlas.'}</div>`}</div></div>`;
         }
@@ -617,6 +623,7 @@
             <div class="card"><div class="card-head"><h3>Datos personales</h3><button class="btn btn-sm" data-edit-p>${icon('edit')}Editar</button></div>
               <div class="card-body"><dl class="kv">
                 <dt>Nombre completo</dt><dd>${esc(p.firstName)} ${esc(p.lastName)}</dd>
+                <dt>N.º de historia clínica</dt><dd>${esc(p.record) || '—'}</dd>
                 <dt>Cédula</dt><dd>${esc(p.dni)}</dd>
                 <dt>Fecha de nacimiento</dt><dd>${fmtDate(p.birthDate)}${p.birthDate ? ` (${ageFrom(p.birthDate)} años)` : ''}</dd>
                 <dt>Sexo</dt><dd>${{ F: 'Femenino', M: 'Masculino' }[p.sex] || '—'}</dd>
@@ -1338,5 +1345,5 @@
     });
   };
 
-  window.Views = { dashboard, patients, patientDetail, agenda, treatments, budgets, payments, reports, activity, settings, openPatientModal, ensureCatalog };
+  window.Views = { dashboard, patients, patientDetail, agenda, treatments, budgets, payments, reports, activity, settings, openPatientModal, ensureCatalog, recordLabel, idLine };
 })();
