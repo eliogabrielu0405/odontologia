@@ -1,6 +1,8 @@
 # EU Digital · copia de respaldo
 
-Copia de la plataforma EU Digital (páginas de pedidos por WhatsApp), igual a la que está en línea.
+Copia de la plataforma EU Digital (páginas de pedidos por WhatsApp).
+
+Trae un cambio que **todavía no está en línea**: la plantilla Burgers sin el letrero de Papi Burgers y con el nombre de la pared editable (ver `LEEME.md`, "Nombre en la pared"). Para publicarlo hay que llevarlo al repositorio original.
 
 - **En línea:** https://eu-digital-solutions.vercel.app (proyecto `eu-digital-solutions` de Vercel)
 - **Código original:** repositorio `eliogabrielu0405/EU-digital-solution`, rama `main`, commit `e747091`
