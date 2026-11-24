@@ -15,7 +15,7 @@
     ideal: "Hamburguesas, perros calientes y comida rápida",
     puntos: ["Menú por categorías, las que tú crees", "Portada con la hamburguesa que se abre", "Cada producto con foto, descripción y precio", "Delivery, para llevar o comer en el local"],
     mascotaDemo: "hamburguesa",
-    nombreDemo: "Papi Burgers",
+    nombreDemo: "La Esquina Burger",
     vistaPrevia: "/t/burgers/vista.webp",
     varFuente: "--f-brush",
     galeria: FOTOS.map((id) => ({ src: IMG + id + ".webp", nombre: id })),
@@ -71,6 +71,9 @@
     apariencia: [
       { tipo: "interruptor", ruta: "portada.hamburguesa", etiqueta: "Hamburguesa que se abre al bajar", ayuda: "La animación grande del inicio. Si la apagas, la página empieza con tu logo y el menú." },
       { tipo: "texto", ruta: "portada.aviso", etiqueta: "Texto sobre la hamburguesa", max: 30 },
+      { tipo: "interruptor", ruta: "portada.letreroVer", etiqueta: "Nombre en la pared de la hamburguesa", ayuda: "Sale escrito en la pared del fondo, detrás de la hamburguesa." },
+      { tipo: "texto", ruta: "portada.letrero", etiqueta: "Qué dice la pared", max: 30, placeholder: "El nombre de tu negocio", ayuda: "Si lo dejas vacío sale el nombre de tu negocio." },
+      { tipo: "color", ruta: "portada.letreroColor", etiqueta: "Color de las letras de la pared", opcional: true, ayuda: "Si no eliges, sale en negro." },
     ],
   };
 
@@ -83,7 +86,7 @@
     },
     pedidos: { tipos: ["llevar", "aqui", "delivery"] },
     animaciones: { productos: "zoom", boton: "latido" },
-    portada: { hamburguesa: true, aviso: "Desliza para abrirla" },
+    portada: { hamburguesa: true, aviso: "Desliza para abrirla", letreroVer: true, letrero: "", letreroColor: "" },
     catalogo: {
       categorias: [
         { id: "perros", nombre: "Perros", emoji: "🌭" },

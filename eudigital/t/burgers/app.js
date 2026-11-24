@@ -69,13 +69,66 @@ EU.alListo(function (sitio) {
   } else {
     const CUADROS = 63, W = 640, H = 480;
     const ruta = (i) => `/t/burgers/img/hamburguesa/f${String(i + 1).padStart(2, "0")}.webp`;
-    const ctx = $("lienzo").getContext("2d");
+    const ctx = $("lienzo").getContext("2d", { willReadFrequently: true });
     const fuera = $("hb"), fijo = fuera.querySelector(".hb-fijo");
     if (EU.reducido) fuera.classList.add("quieta");
     const cuadros = Array.from({ length: CUADROS }, (_, i) => { const im = new Image(); im.decoding = "async"; im.src = ruta(EU.reducido ? CUADROS - 1 : i); return im; });
     let actual = -1, raf = 0;
+
+    /* Letrero en la pared del fondo: el nombre que el cliente quiera, pintado detrás de la hamburguesa.
+       Las fotos traen la pared limpia; "pared.webp" es esa franja sin nada delante. Donde el cuadro
+       coincide con la pared se ve el letrero; donde algo de la hamburguesa la tapa, no. */
+    const P = c.portada || {};
+    const textoLetrero = P.letreroVer === false ? "" : String((P.letrero || "").trim() || sitio.nombre || "").slice(0, 40);
+    const ALTO = 96; // la franja de pared encima de la raya amarilla
+    let capa = null, pared = null;
+    const armarLetrero = () => {
+      const cv = document.createElement("canvas");
+      cv.width = W; cv.height = ALTO;
+      const x = cv.getContext("2d");
+      const fuente = (n) => `${n}px "Caveat Brush", "Comic Sans MS", cursive`;
+      let n = 74;
+      x.font = fuente(n);
+      const ancho = x.measureText(textoLetrero).width, max = W - 90;
+      if (ancho > max) { n = Math.max(24, Math.floor(n * max / ancho)); x.font = fuente(n); }
+      x.textAlign = "center"; x.textBaseline = "middle";
+      x.fillStyle = EU.color(P.letreroColor) || "#1E1E1E";
+      if ("filter" in x) x.filter = "blur(1.2px)"; // la pared está un poco desenfocada en la foto
+      x.fillText(textoLetrero, W / 2, 48);
+      capa = x.getImageData(0, 0, W, ALTO);
+    };
+    const pintarLetrero = () => {
+      if (!capa || !pared) return;
+      const f = ctx.getImageData(0, 0, W, ALTO), d = f.data, t = capa.data, p = pared.data;
+      for (let j = 0; j < d.length; j += 4) {
+        let a = t[j + 3];
+        if (!a) continue;
+        const dif = Math.max(Math.abs(d[j] - p[j]), Math.abs(d[j + 1] - p[j + 1]), Math.abs(d[j + 2] - p[j + 2]));
+        const visible = dif <= 14 ? 1 : dif >= 34 ? 0 : (34 - dif) / 20; // 0 = la hamburguesa tapa la pared
+        a = (a / 255) * visible;
+        if (!a) continue;
+        d[j] += (t[j] - d[j]) * a; d[j + 1] += (t[j + 1] - d[j + 1]) * a; d[j + 2] += (t[j + 2] - d[j + 2]) * a;
+      }
+      ctx.putImageData(f, 0, 0);
+    };
+    if (textoLetrero) {
+      const im = new Image();
+      im.onload = () => {
+        const cv = document.createElement("canvas");
+        cv.width = W; cv.height = ALTO;
+        const x = cv.getContext("2d");
+        x.drawImage(im, 0, 0, W, ALTO);
+        pared = x.getImageData(0, 0, W, ALTO);
+        actual = -1; pedir();
+      };
+      im.src = "/t/burgers/img/hamburguesa/pared.webp";
+      const listo = () => { armarLetrero(); actual = -1; pedir(); };
+      if (document.fonts && document.fonts.load) document.fonts.load('74px "Caveat Brush"', textoLetrero).then(listo, listo);
+      else listo();
+    }
+
     const dibujar = (i) => {
-      for (let k = i; k >= 0; k--) { const im = cuadros[k]; if (im.complete && im.naturalWidth) { ctx.drawImage(im, 0, 0, W, H); return; } }
+      for (let k = i; k >= 0; k--) { const im = cuadros[k]; if (im.complete && im.naturalWidth) { ctx.drawImage(im, 0, 0, W, H); pintarLetrero(); return; } }
     };
     const avanzar = () => {
       raf = 0;
