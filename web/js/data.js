@@ -410,6 +410,43 @@
     const paid = state.payments.filter((p) => p.patientId === patientId).reduce((s, p) => s + Number(p.amount), 0);
     return { charged: U.cents(charged), paid: U.cents(paid), balance: U.cents(charged - paid) };
   };
+  /* ---------- N.º de historia clínica (expediente) de cada paciente ----------
+     Se guarda en patients.record como texto ("0001"): se asigna solo al registrar y se puede editar,
+     por si el consultorio ya usa sus propios números de carpeta. */
+  const RECORD_DIGITS = 4;
+  const recordDigits = (value) => String(value || '').replace(/\D/g, '');
+  const nextRecordNumber = () => {
+    const last = state.patients.reduce((m, p) => Math.max(m, Number(recordDigits(p.record)) || 0), 0);
+    return String(last + 1).padStart(RECORD_DIGITS, '0');
+  };
+  /** Dos números de historia son el mismo: "12", "012" y "0012" cuentan como iguales. */
+  const sameRecord = (a, b) => {
+    const norm = (v) => String(v || '').trim().toLowerCase().replace(/[\s-]/g, '');
+    const x = norm(a); const y = norm(b);
+    if (!x || !y) return false;
+    return /^\d+$/.test(x) && /^\d+$/.test(y) ? Number(x) === Number(y) : x === y;
+  };
+  /** Pacientes sin número (registrados antes de que existiera): se numeran por fecha de registro.
+      El orden es fijo, así dos equipos que lo hagan a la vez ponen los mismos números. Devuelve cuántos numeró. */
+  const ensureRecordNumbers = () => {
+    const missing = state.patients.filter((p) => !String(p.record || '').trim())
+      .sort((a, b) => String(a.createdAt || '').localeCompare(String(b.createdAt || '')) || String(a.id).localeCompare(String(b.id)));
+    if (!missing.length) return 0;
+    let next = Number(nextRecordNumber());
+    const changes = missing.map((p) => ({ id: p.id, patch: { record: String(next++).padStart(RECORD_DIGITS, '0') } }));
+    updateMany('patients', changes, `${changes.length === 1 ? 'Se asignó 1 número' : `Se asignaron ${changes.length} números`} de historia clínica`);
+    return changes.length;
+  };
+  /** Búsqueda de pacientes por nombre, cédula, teléfono, correo o N.º de historia ("12", "0012", "HC 12", "HC-0012"). */
+  const patientMatches = (p, query) => {
+    const q = String(query || '').trim().toLowerCase();
+    if (!q) return true;
+    if (`${p.firstName} ${p.lastName} ${p.lastName} ${p.firstName} ${p.dni} ${p.phone} ${p.email} ${p.record}`.toLowerCase().includes(q)) return true;
+    const asRecord = q.replace(/^(h\.?\s*c\.?|historia( cl[ií]nica)?|n[.ºo°]*|#)\s*[-:#]?\s*/i, '').trim();
+    const digits = recordDigits(asRecord);
+    return !!digits && digits === asRecord.replace(/[\s-]/g, '') && Number(digits) === Number(recordDigits(p.record)) && !!recordDigits(p.record);
+  };
+
   const nextBudgetNumber = () => state.budgets.reduce((m, b) => Math.max(m, Number(b.number) || 0), 1000) + 1;
   const nextReceipt = () => {
     const last = state.payments.reduce((m, p) => Math.max(m, Number(String(p.receipt || '').replace(/\D/g, '')) || 0), 0);
@@ -476,6 +513,7 @@
     all, get, insert, insertMany, update, updateMany, remove, removePatient, log,
     currentUser, role, clinic: () => clinic,
     budgetTotal, patientBalance, nextBudgetNumber, nextReceipt,
+    nextRecordNumber, ensureRecordNumbers, patientMatches, sameRecord,
     getOdontogram, setOdontogram, settings, saveConfig, setClinic,
     exportBackup, importBackup,
   };

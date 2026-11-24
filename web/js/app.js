@@ -354,7 +354,7 @@
             <div class="who"><strong>${esc(brandSub)}</strong><small>${esc(who.firstName)} ${esc(who.lastName)} · ${esc(who.roleLabel)}</small></div>
             <div class="spacer"></div>
             ${search ? '<span class="sync" data-sync></span>' : ''}
-            ${search ? `<div class="search-box">${icon('search')}<input data-search type="search" placeholder="Buscar paciente…" autocomplete="off" aria-label="Buscar paciente"><div class="search-results" data-results hidden></div></div>` : '<div class="spacer-mobile"></div>'}
+            ${search ? `<div class="search-box">${icon('search')}<input data-search type="search" placeholder="Buscar paciente o N.º de historia…" autocomplete="off" aria-label="Buscar paciente por nombre, cédula o número de historia"><div class="search-results" data-results hidden></div></div>` : '<div class="spacer-mobile"></div>'}
             <a class="avatar" href="${mode === 'admin' ? '#admin' : '#perfil'}" style="background:${esc(who.color || '#0d9488')}" title="Mi perfil" aria-label="Mi perfil">${esc(initials(who.firstName, who.lastName))}</a>
           </header>
           <main class="content">${banners}<div data-content></div></main>
@@ -376,9 +376,11 @@
     input.addEventListener('input', () => {
       const q = input.value.trim().toLowerCase();
       if (!q) { results.hidden = true; return; }
-      const found = DB.all('patients').filter((p) => `${p.firstName} ${p.lastName} ${p.dni} ${p.phone}`.toLowerCase().includes(q)).slice(0, 6);
+      // El número de historia exacto va primero (buscar "12" trae primero la HC 0012).
+      const exact = (p) => (DB.sameRecord(p.record, q.replace(/^(h\.?\s*c\.?|#)\s*[-:#]?\s*/i, '')) ? 0 : 1);
+      const found = DB.all('patients').filter((p) => DB.patientMatches(p, q)).sort((a, b) => exact(a) - exact(b)).slice(0, 6);
       results.innerHTML = found.length
-        ? found.map((p) => `<a href="#paciente-${p.id}"><div class="avatar sm">${esc(initials(p.firstName, p.lastName))}</div><div><strong>${esc(fullName(p))}</strong><br><small class="muted">C.I. ${esc(p.dni)}</small></div></a>`).join('')
+        ? found.map((p) => `<a href="#paciente-${p.id}"><div class="avatar sm">${esc(initials(p.firstName, p.lastName))}</div><div><strong>${esc(fullName(p))}</strong><br><small class="muted">${esc(Views.idLine(p))}</small></div></a>`).join('')
         : '<div class="empty compact">Sin resultados</div>';
       results.hidden = false;
     });
@@ -431,6 +433,8 @@
       } else {
         // Tratamientos automáticos: una sola vez por clínica. El aviso espera a que pase el de bienvenida.
         const added = Views.ensureCatalog();
+        // Pacientes registrados antes de que existiera el N.º de historia: se numeran solos una vez.
+        DB.ensureRecordNumbers();
         if (added) setTimeout(() => toast(`Cargamos ${U.plural(added, 'tratamiento', 'tratamientos')} en tu catálogo. Solo falta ponerles precio en Tratamientos.`), 3200);
         runRoute(CLINIC_ROUTES, 'inicio', CLINIC_NAV, { brandSub: ctx.clinic.name, who, search: true, banners: subscriptionBanner() });
       }
