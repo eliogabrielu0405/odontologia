@@ -346,10 +346,34 @@ EU.alListo(function (sitio) {
     if (EU.enPanel) { aviso("En la vista previa no se envían pedidos."); return; }
     const t = tiposOfrecidos.find((x) => x.id === tipo) || TIPOS[1];
     EU.registrarPedido({ items: lineas().map((l) => ({ nombre: l.nombre, cantidad: l.cant, precio: l.precio })), total: total(), tipo: t && t.nombre, pago });
+    EU.cliente.recordar({
+      nombre: $("cliente").value, direccion: $("direccion").value, tipo, pago,
+      pedido: { resumen: lineas().map((l) => ({ nombre: l.nombre, cantidad: l.cant })), total: total(), datos: { qty: Object.assign({}, qty), tipo } },
+    });
     window.open(EU.wa(mensaje()), "_blank", "noopener");
   });
+
+  /* ---------- Quien ya compró aquí: sus datos y "Repetir pedido" ---------- */
+  const yo = EU.cliente.datos();
+  if (!guardado.tipo && tiposOfrecidos.some((t) => t.id === yo.tipo)) tipo = yo.tipo;
+  if (EU.pagos.disponibles(tipo).some((m) => m.id === yo.pago)) pago = yo.pago;
 
   renderCats();
   renderGrid();
   renderPedido();
+  EU.cliente.rellenar({ nombre: $("cliente"), direccion: $("direccion") });
+  if (!cuenta()) {
+    EU.cliente.ofrecerRepetir((datos) => {
+      let n = 0;
+      Object.entries((datos && datos.qty) || {}).forEach(([id, k]) => {
+        if (sePuede(buscar(id)) && k > 0) { qty[id] = Math.min(99, Math.floor(k)); n++; }
+      });
+      if (!n) return 0;
+      if (tiposOfrecidos.some((t) => t.id === datos.tipo)) tipo = datos.tipo;
+      renderGrid();
+      renderPedido();
+      abrir();
+      return n;
+    });
+  }
 });

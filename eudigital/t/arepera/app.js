@@ -492,6 +492,16 @@ EU.alListo(function (sitio) {
       ],
       total: grandTotal(), tipo: (TIPOS.find((t) => t.id === tipoActual()) || {}).nombre, pago,
     });
+    EU.cliente.recordar({
+      nombre: $("cliente").value, direccion: $("direccion").value, tipo: tipoActual(), pago,
+      pedido: {
+        resumen: [
+          ...order.map((a) => ({ nombre: `${NOMBRE}: ${describe(a)}`, cantidad: 1 })),
+          ...Object.entries(drinks).filter(([id]) => DRINK[id]).map(([id, n]) => ({ nombre: DRINK[id].nombre, cantidad: n })),
+        ],
+        total: grandTotal(), datos: { order: order.map((a) => a.slice()), drinks: Object.assign({}, drinks), tipo: tipoActual() },
+      },
+    });
     flash(`Se abrió WhatsApp con tu pedido. Si no se abrió, cópialo y envíalo al ${EU.telefonoVisible()}.`, 7000);
   });
   $("copy").addEventListener("click", () => {
@@ -515,8 +525,33 @@ EU.alListo(function (sitio) {
   let resizeT;
   window.addEventListener("resize", () => { clearTimeout(resizeT); resizeT = setTimeout(() => renderArepa(), 120); });
 
+  /* ---------- Quien ya compró aquí: sus datos y "Repetir pedido" ---------- */
+  const marcarTipo = (id) => { const r = document.getElementById("t-" + id); if (r && TIPOS.some((t) => t.id === id)) r.checked = true; $("campo-dir").hidden = tipoActual() !== "delivery"; };
+  const yo = EU.cliente.datos();
+  marcarTipo(yo.tipo);
+  pago = yo.pago;
+
   renderTabs(); renderList(); renderArepa(); syncUI(); renderOrder();
   if (!TABS.length) $("add").disabled = true;
+  EU.cliente.rellenar({ nombre: $("cliente"), direccion: $("direccion") });
+  if (!count()) {
+    EU.cliente.ofrecerRepetir((datos) => {
+      if (count()) return 0;
+      // Cada arepa vuelve con lo que siga disponible hoy. Si se pidió sola, vuelve sola; si todo
+      // lo que llevaba se acabó, no se agrega.
+      const arepas = ((datos && datos.order) || []).slice(0, 20).filter(Array.isArray)
+        .map((a) => ({ antes: a.length, ahora: a.filter((id) => ALL[id] && !isOut(id)) }))
+        .filter((x) => x.antes === 0 || x.ahora.length).map((x) => x.ahora);
+      const bebidas = Object.entries((datos && datos.drinks) || {}).filter(([id, n]) => DRINK[id] && !isOut(id) && n > 0);
+      if (!arepas.length && !bebidas.length) return 0;
+      order = arepas;
+      drinks = Object.fromEntries(bebidas.map(([id, n]) => [id, Math.min(99, Math.floor(n))]));
+      marcarTipo(datos.tipo);
+      renderList(true); syncUI(); renderOrder();
+      openSheet("sheet", "closeOrder");
+      return arepas.length + bebidas.length;
+    });
+  }
   /* Precargar las fotos para que caigan al instante */
   ["tapa-abajo", "tapa-arriba", ...INGS.map((i) => i.id)].forEach((id) => { const f = fotoDe(id); if (f) { const im = new Image(); im.src = f; } });
 });

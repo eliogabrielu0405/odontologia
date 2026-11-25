@@ -75,6 +75,16 @@ Cuando un cliente final toca **Enviar por WhatsApp** en una página, el pedido q
 - Si un cliente toca enviar dos veces con el mismo pedido, cuenta una. Las demos no cuentan.
 - Los pedidos de más de 13 meses se borran solos.
 
+## Quien compra: sus datos y "Repetir pedido"
+
+En las cinco plantillas, cuando alguien envía un pedido, su teléfono recuerda su nombre, su dirección, el tipo de entrega, la forma de pago y lo que pidió. La próxima vez que entra a esa página:
+
+- El nombre y la dirección ya están escritos, con el aviso "Pusimos los datos de tu último pedido. **Borrarlos**" (por si el teléfono es compartido).
+- Si su carrito está vacío, arriba le sale **"¿Lo mismo de la otra vez?"** con lo que pidió y el botón **Repetir pedido**. Al tocarlo, el pedido vuelve al carrito con los **precios de hoy**, sin lo que se haya agotado o ya no exista, y se abre para que lo revise y lo envíe.
+- Todo queda **solo en el teléfono de quien compra** (no se guarda en la base de datos) y por separado para cada negocio.
+- En la vista previa del panel no aparece nada de esto.
+- Código: `EU.cliente` en `core/sitio.js` (guardar, rellenar y el aviso) y, en cada `t/<plantilla>/app.js`, cómo se guarda y se vuelve a armar su carrito. La pizzería recalcula el precio de las pizzas armadas por el cliente con los ingredientes de hoy.
+
 ## Compartir y código QR
 
 En el panel del cliente, **Compartir** tiene:

@@ -1509,6 +1509,15 @@ $('#enviar').addEventListener('click', (e) => {
       total: totalPrecio(), tipo: entrega.nombre, pago: d.pago,
     });
   }
+  if (window.EU && window.EU.cliente) {
+    window.EU.cliente.recordar({
+      nombre: d.nombre, direccion: d.direccion,
+      pedido: {
+        resumen: estado.carrito.map((item) => { const p = porId.get(item.id) || { colores: [] }; const col = p.colores[item.color]; return { nombre: `${p.nombre}${col ? ', ' + col.nombre.toLowerCase() : ''}, talla ${item.talla}`, cantidad: item.cantidad }; }),
+        total: totalPrecio(), datos: { carrito: estado.carrito.map((item) => ({ ...item })) },
+      },
+    });
+  }
   setTimeout(() => { $('#enviado').hidden = false; $('#enviar').classList.add('enviar-hecho'); }, 400);
 });
 
@@ -1633,3 +1642,18 @@ probadorDestacado.activar(porId.get(CONFIG.destacado), 0);
 rutear();
 iniciarMotor();
 if (API_TIENDA) cargarAjustes(); else quitarAgotadosDelCarrito();
+// Quien ya compró aquí y tiene el carrito vacío: "¿Lo mismo de la otra vez?"
+if (!estado.carrito.length && window.EU && window.EU.cliente) {
+  window.EU.cliente.ofrecerRepetir((datos) => {
+    if (estado.carrito.length) return 0;
+    const prendas = ((datos && datos.carrito) || []).slice(0, 30).filter((i) => {
+      const p = i && porId.get(i.id);
+      return p && p.colores[i.color] && p.tallas.includes(i.talla) && !p.agotadas.includes(i.talla) && i.cantidad > 0;
+    }).map((i) => ({ id: i.id, color: i.color, talla: i.talla, cantidad: Math.min(99, Math.floor(i.cantidad)) }));
+    if (!prendas.length) return 0;
+    estado.carrito = prendas;
+    cambioCarrito();
+    abrirCarrito();
+    return prendas.length;
+  });
+}

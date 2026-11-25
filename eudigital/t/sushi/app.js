@@ -161,6 +161,13 @@ EU.alListo(function (sitio) {
         items: [...carrito].map(([id, n]) => { const p = buscar(id) || {}; return { nombre: p.nombre, cantidad: n, precio: p.precio }; }),
         total: total(), tipo: t && t.nombre, pago,
       });
+      EU.cliente.recordar({
+        nombre: $("#cliente").value, direccion: $("#direccion").value, tipo: tipoActual(), pago,
+        pedido: {
+          resumen: [...carrito].map(([id, n]) => ({ nombre: (buscar(id) || {}).nombre || id, cantidad: n })),
+          total: total(), datos: { items: Object.fromEntries(carrito), tipo: tipoActual() },
+        },
+      });
       return;
     }
     if (el.dataset.add) {
@@ -205,7 +212,28 @@ EU.alListo(function (sitio) {
     setTimeout(() => document.querySelectorAll("section.cat").forEach((s) => obs.observe(s)), 0);
   }
 
+  /* ---------- Quien ya compró aquí: sus datos y "Repetir pedido" ---------- */
+  const marcarTipo = (id) => { const r = document.getElementById("t-" + id); if (r && TIPOS.some((t) => t.id === id)) r.checked = true; };
+  const yo = EU.cliente.datos();
+  marcarTipo(yo.tipo);
+  pago = yo.pago;
+
   renderMenu();
-  actualizar();
+  sincronizarTipo();
   cerrarCarrito();
+  EU.cliente.rellenar({ nombre: $("#cliente"), direccion: $("#direccion") });
+  EU.cliente.ofrecerRepetir((datos) => {
+    if (carrito.size) return 0;
+    let n = 0;
+    Object.entries((datos && datos.items) || {}).forEach(([id, k]) => {
+      const p = buscar(id);
+      if (p && !p.agotado && k > 0) { carrito.set(id, Math.min(99, Math.floor(k))); n++; }
+    });
+    if (!n) return 0;
+    marcarTipo(datos.tipo);
+    renderMenu();
+    sincronizarTipo();
+    abrirCarrito();
+    return n;
+  });
 });

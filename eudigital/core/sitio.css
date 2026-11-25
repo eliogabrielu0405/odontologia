@@ -21,6 +21,15 @@
 .eu-tira-promo { background: var(--eu-principal, #c62828); color: var(--eu-sobre-principal, #fff); font-weight: 800; }
 .eu-tira-demo { background: #19202b; color: #fff; font-weight: 600; }
 .eu-tira-demo a { color: #9fb4ff; font-weight: 800; white-space: nowrap; }
+/* "¿Lo mismo de la otra vez?" y la nota de los datos guardados */
+.eu-tira-repetir { background: #e9f7ef; color: #123d27; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 12px; }
+.eu-repetir-txt { min-width: 0; overflow-wrap: anywhere; }
+.eu-repetir-acc { display: inline-flex; align-items: center; gap: 6px; }
+.eu-repetir-si { min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: #1f7a4d; color: #fff; font: 800 14px/1 var(--eu-cuerpo, system-ui, sans-serif); cursor: pointer; }
+.eu-repetir-no { width: 36px; height: 36px; border: 0; border-radius: 50%; background: transparent; color: inherit; font: 400 22px/1 system-ui, sans-serif; cursor: pointer; }
+.eu-repetir-si:focus-visible, .eu-repetir-no:focus-visible, .eu-recordado button:focus-visible { outline: 3px solid #1f7a4d; outline-offset: 2px; }
+.eu-recordado { margin: 6px 0 0; font-size: 13px; line-height: 1.35; opacity: .85; }
+.eu-recordado button { padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; }
 .eu-parpadea { animation: eu-atencion 2.4s ease-in-out infinite; }
 @keyframes eu-atencion { 0%, 100% { filter: none; } 50% { filter: brightness(1.25) saturate(1.2); } }
 .eu-desliza { overflow: hidden; padding-inline: 0; white-space: nowrap; }

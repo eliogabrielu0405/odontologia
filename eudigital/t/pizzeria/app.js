@@ -260,12 +260,13 @@ EU.alListo(function (sitio) {
     el.querySelectorAll(".opt").forEach((b) => { b.onclick = () => { set(b.dataset.v); refreshBuilder(); }; });
   }
   function syncOptions() { OPTS.forEach(([sel, get]) => document.querySelectorAll(sel + " .opt").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === get())))); }
-  function builderPrice() {
-    const m = SIZES.find((x) => x.id === B.size).mult;
+  // Precio de una pizza armada: la del constructor o, al repetir un pedido, la que se guardó (mismos campos)
+  function builderPrice(P = B) {
+    const m = SIZES.find((x) => x.id === P.size).mult;
     const cost = (h) => (QUESOS.find((q) => q.id === h.queso) || { price: 0 }).price * m + h.tops.reduce((a, t) => a + (TOP[t] ? TOP[t].price : 0) * m, 0);
-    let p = BASE_PRICE * m + (MASAS.find((x) => x.id === B.masa) || { price: 0 }).price * m;
-    if (!B.mitad) p += cost(B.halves[0]);
-    else { const a = cost(B.halves[0]), b = cost(B.halves[1]); p += S.mitadCobro === "cara" ? Math.max(a, b) : (a + b) / 2; }
+    let p = BASE_PRICE * m + (MASAS.find((x) => x.id === P.masa) || { price: 0 }).price * m;
+    if (!P.mitad) p += cost(P.halves[0]);
+    else { const a = cost(P.halves[0]), b = cost(P.halves[1]); p += S.mitadCobro === "cara" ? Math.max(a, b) : (a + b) / 2; }
     return Math.round(p * 100) / 100;
   }
   function buildUI() {
@@ -486,6 +487,14 @@ EU.alListo(function (sitio) {
       items: cart.map((x) => ({ nombre: x.kind === "drink" ? x.name : `${x.name} (${sizeName(x)})`, cantidad: x.qty, precio: x.unit })),
       total: total(), tipo: (MODOS.find((m) => m[0] === modo) || [])[1], pago,
     });
+    EU.cliente.recordar({
+      nombre: $("#cName").value, direccion: $("#cAddr").value, tipo: modo, pago,
+      pedido: {
+        resumen: cart.map((x) => ({ nombre: x.kind === "drink" ? x.name : `${x.name} (${sizeName(x)})`, cantidad: x.qty })),
+        total: total(),
+        datos: { modo, lineas: cart.map((x) => ({ kind: x.kind || "", photo: x.photo || "", drink: x.drink || "", size: x.size, cfg: x.cfg, name: x.name, detail: x.detail || "", qty: x.qty })) },
+      },
+    });
   });
   $("#copyMsg").onclick = async () => {
     try { await navigator.clipboard.writeText(buildMsg()); toast("Mensaje copiado"); }
@@ -560,6 +569,51 @@ EU.alListo(function (sitio) {
     go("arma"); buildUI(); refreshBuilder(); setStep(4); window.scrollTo({ top: $(".tabs").offsetTop, behavior: reduced ? "auto" : "smooth" }); toast("Elige el sabor de la mitad 1");
   };
 
+  /* ===== Quien ya compró aquí: sus datos y "Repetir pedido" =====
+     Al repetir, cada línea se vuelve a armar con los precios de hoy; lo agotado o lo que ya no
+     existe se salta. */
+  const yo = EU.cliente.datos();
+  if (MODOS.some((m) => m[0] === yo.tipo)) modo = yo.tipo;
+  pago = yo.pago;
+  function lineaDeNuevo(x) {
+    if (!x) return null;
+    const qty = Math.min(99, Math.max(1, Math.floor(Number(x.qty)) || 1));
+    if (x.kind === "drink") {
+      const dr = DRINKS.find((d) => d.id === x.drink), zz = DRINK_SIZES.find((z) => z.id === x.size);
+      if (!dr || !zz || !drinkAvail(dr, x.size)) return null;
+      const dosTam = dr.precios["1l"] > 0 && dr.precios["2l"] > 0;
+      return { kind: "drink", drink: dr.id, name: dosTam ? `${dr.name} ${zz.name}` : dr.name, size: x.size, cfg: { drink: dr.id, z: x.size }, unit: dr.precios[x.size], detail: "", qty };
+    }
+    const tam = SIZES.find((z) => z.id === x.size);
+    if (!tam) return null;
+    if (x.photo) {
+      const p = MENU.find((m) => m.id === x.photo);
+      if (!p || pizzaFalta(p)) return null;
+      return { name: p.name, size: tam.id, cfg: p.cfg, photo: p.id, unit: p.price * tam.mult, detail: p.desc, qty };
+    }
+    const g = x.cfg || {}, mitad = !!g.mitad && CON_MITAD;
+    const halves = Array.isArray(g.halves) ? g.halves.slice(0, mitad ? 2 : 1) : [];
+    if (halves.length !== (mitad ? 2 : 1) || !MASAS.some((m) => m.id === g.masa)) return null;
+    const bien = halves.every((h) => h && SALSAS.some((z) => z.id === h.salsa) && QUESOS.some((q) => q.id === h.queso)
+      && Array.isArray(h.tops) && h.tops.every((t) => TOP[t] && !S.agotTops.includes(t)));
+    if (!bien) return null;
+    const cfg = { size: tam.id, masa: g.masa, mitad, halves: halves.map((h) => newHalf(h.salsa, h.queso, h.tops)) };
+    return { name: String(x.name || "Pizza a tu gusto").slice(0, 120), size: tam.id, cfg, unit: builderPrice(cfg), detail: String(x.detail || "").slice(0, 300), qty };
+  }
+  function repetirPedido(datos) {
+    if (cart.length) return 0;
+    const nuevas = ((datos && datos.lineas) || []).slice(0, 30).map(lineaDeNuevo).filter(Boolean);
+    nuevas.forEach((it) => {
+      const key = it.name + it.size + JSON.stringify(it.cfg);
+      const ex = cart.find((y) => y.key === key);
+      if (ex) ex.qty = Math.min(99, ex.qty + it.qty); else cart.push({ ...it, key });
+    });
+    if (!nuevas.length) return 0;
+    if (MODOS.some((m) => m[0] === datos.modo)) modo = datos.modo;
+    save(); renderModo(); renderCart(); openSheet();
+    return nuevas.length;
+  }
+
   // Lo que ya estaba en el pedido y ahora está agotado se quita
   cart = cart.filter((x) => (x.kind === "drink" ? DRINKS.some((d) => d.id === x.drink && drinkAvail(d, x.size)) : !(x.photo && S.agotPizzas.includes(x.photo))));
   save();
@@ -571,4 +625,6 @@ EU.alListo(function (sitio) {
     buildUI(); refreshBuilder(); baseKey = ""; renderCart();
   });
   renderCart(); requestAnimationFrame(frame);
+  EU.cliente.rellenar({ nombre: $("#cName"), direccion: $("#cAddr") });
+  if (!cart.length) EU.cliente.ofrecerRepetir(repetirPedido);
 });

@@ -148,6 +148,109 @@
     } catch (_) { /* las estadísticas nunca deben estorbar un pedido */ }
   };
 
+  /* ---------- Quien compra: sus datos y su último pedido ----------
+     Se guardan solo en el teléfono de quien compra (localStorage), uno por negocio. Nunca viajan a la
+     base de datos. Así, la próxima vez su nombre y su dirección ya están escritos y le ofrecemos
+     repetir lo que pidió. Cada plantilla decide cómo se guarda su carrito ("datos") y cómo se
+     vuelve a armar (la función que le pasa a ofrecerRepetir). */
+  const texto = (v, max) => String(v == null ? "" : v).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
+  const almacen = {
+    leer(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (_) { return null; } },
+    poner(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) { /* sin almacenamiento: no pasa nada */ } },
+    quitar(k) { try { localStorage.removeItem(k); } catch (_) { /* nada */ } },
+  };
+  const claveCliente = () => "eu:cliente:" + ((EU.sitio && EU.sitio.slug) || "demo-" + PLANTILLA);
+  EU.cliente = {
+    datos() {
+      const d = almacen.leer(claveCliente()) || {};
+      return { nombre: texto(d.nombre, 80), direccion: texto(d.direccion, 240), tipo: texto(d.tipo, 30), pago: texto(d.pago, 60) };
+    },
+    ultimo() {
+      const u = almacen.leer(claveCliente() + ":ultimo");
+      return u && Array.isArray(u.resumen) && u.resumen.length && u.datos ? u : null;
+    },
+    /* Se llama al enviar el pedido. pedido = { resumen: [{ nombre, cantidad }], total, datos } */
+    recordar({ nombre, direccion, tipo, pago, pedido } = {}) {
+      if (enPanel) return;
+      const antes = EU.cliente.datos();
+      almacen.poner(claveCliente(), {
+        nombre: texto(nombre, 80) || antes.nombre, direccion: texto(direccion, 240) || antes.direccion,
+        tipo: texto(tipo, 30) || antes.tipo, pago: texto(pago, 60) || antes.pago,
+      });
+      if (pedido && Array.isArray(pedido.resumen) && pedido.resumen.length) {
+        almacen.poner(claveCliente() + ":ultimo", {
+          fecha: Date.now(),
+          resumen: pedido.resumen.slice(0, 30).map((r) => ({ nombre: texto(r.nombre, 120), cantidad: Math.max(1, Math.round(Number(r.cantidad) || 1)) })),
+          total: Math.max(0, Number(pedido.total) || 0),
+          datos: pedido.datos,
+        });
+      }
+    },
+    olvidar() { almacen.quitar(claveCliente()); almacen.quitar(claveCliente() + ":ultimo"); },
+
+    /* Escribe el nombre y la dirección guardados en los campos vacíos, y pone debajo del nombre
+       un aviso con el botón para borrarlos (por si el teléfono es compartido). */
+    rellenar(campos = {}) {
+      if (enPanel) return;
+      const d = EU.cliente.datos();
+      let puso = false;
+      [["nombre", campos.nombre], ["direccion", campos.direccion]].forEach(([k, el]) => {
+        if (el && d[k] && !String(el.value || "").trim()) {
+          el.value = d[k];
+          el.dispatchEvent(new Event("input", { bubbles: true }));
+          puso = true;
+        }
+      });
+      if (!puso || !campos.nombre) return;
+      const nota = document.createElement("p");
+      nota.className = "eu-recordado";
+      nota.innerHTML = 'Pusimos los datos de tu último pedido. <button type="button">Borrarlos</button>';
+      nota.querySelector("button").addEventListener("click", () => {
+        EU.cliente.olvidar();
+        [campos.nombre, campos.direccion].forEach((el) => { if (el) { el.value = ""; el.dispatchEvent(new Event("input", { bubbles: true })); } });
+        nota.textContent = "Listo, borramos tus datos de este teléfono.";
+        setTimeout(() => nota.remove(), 3500);
+        if (campos.nombre) campos.nombre.focus();
+      });
+      campos.nombre.insertAdjacentElement("afterend", nota);
+    },
+
+    /* Si hay un pedido anterior, muestra arriba "¿Lo mismo de la otra vez?" con el botón Repetir.
+       restaurar(datos) vuelve a armar el carrito con lo que siga disponible y devuelve cuántos
+       productos pudo agregar. La plantilla lo llama solo si su carrito está vacío. */
+    ofrecerRepetir(restaurar) {
+      if (enPanel || typeof restaurar !== "function") return;
+      const u = EU.cliente.ultimo();
+      if (!u) return;
+      const lista = u.resumen.slice(0, 3).map((r) => (r.cantidad > 1 ? r.cantidad + " " : "") + r.nombre).join(", ") + (u.resumen.length > 3 ? " y " + (u.resumen.length - 3) + " más" : "");
+      const tira = document.createElement("div");
+      tira.className = "eu-tira eu-tira-repetir";
+      tira.setAttribute("role", "region");
+      tira.setAttribute("aria-label", "Tu último pedido");
+      tira.innerHTML = '<span class="eu-repetir-txt"><b>¿Lo mismo de la otra vez?</b> <span></span></span>' +
+        '<span class="eu-repetir-acc"><button type="button" class="eu-repetir-si">Repetir pedido</button><button type="button" class="eu-repetir-no" aria-label="No, gracias">×</button></span>';
+      tira.querySelector(".eu-repetir-txt span").textContent = lista;
+      tira.querySelector(".eu-repetir-no").addEventListener("click", () => tira.remove());
+      tira.querySelector(".eu-repetir-si").addEventListener("click", () => {
+        let n = 0;
+        try { n = Number(restaurar(u.datos)) || 0; } catch (_) { n = 0; }
+        tira.setAttribute("role", "status");
+        tira.textContent = n > 0
+          ? "Listo, agregamos tu último pedido" + (n < u.resumen.length ? " (lo que sigue disponible)" : "") + ". Revísalo y envíalo."
+          : "Lo que pediste la otra vez ya no está disponible. Mira el menú de hoy.";
+        setTimeout(() => tira.remove(), 5000);
+      });
+      let caja = document.querySelector(".eu-tiras");
+      if (!caja) {
+        caja = document.createElement("div");
+        caja.className = "eu-tiras";
+        const lugar = document.querySelector("[data-eu-avisos]");
+        if (lugar) lugar.appendChild(caja); else document.body.prepend(caja);
+      }
+      caja.prepend(tira);
+    },
+  };
+
   /* ---------- Redes sociales ---------- */
   // Aceptan "@usuario", "usuario" o el enlace del perfil. Devuelve solo las que tienen algo.
   const NO_ES_USUARIO = ["channel", "c", "user", "profile.php", "pages", "groups", "share", "p", "reel", "watch", "people"];
