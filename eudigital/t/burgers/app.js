@@ -1,6 +1,13 @@
 /* Plantilla Burgers: cartel con hamburguesa que se abre al bajar, menú por categorías y pedido por WhatsApp. */
 EU.alListo(function (sitio) {
   "use strict";
+  /* Si el navegador todavía tiene guardado el código común de antes, la página funciona igual,
+     solo que sin recordar al cliente ni promociones. Nunca debe quedar en blanco por eso. */
+  const memoria = EU.cliente || { datos: () => ({}), recordar() {}, rellenar() {}, ofrecerRepetir() {} };
+  const ofertas = EU.promos || {
+    calcular: () => ({ monto: 0, texto: "" }), lineas: () => [],
+    caja: () => Object.assign(document.createElement("div"), { hidden: true, actualizar() {} }),
+  };
   const c = sitio.c;
   const $ = (id) => document.getElementById(id);
   const esc = EU.esc;
@@ -41,10 +48,10 @@ EU.alListo(function (sitio) {
   const cuenta = () => lineas().reduce((s, l) => s + l.cant, 0);
   const subtotal = () => lineas().reduce((s, l) => s + l.cant * l.precio, 0);
   const delivery = () => (tipo === "delivery" && cuenta() ? EU.costoDelivery() : 0);
-  const descuento = () => EU.promos.calcular(subtotal());
+  const descuento = () => ofertas.calcular(subtotal());
   const total = () => subtotal() - descuento().monto + delivery();
   // Casilla "¿Tienes un cupón?" (solo sale si el negocio tiene cupones)
-  const cupon = EU.promos.caja({ subtotal, alCambiar: () => renderPedido() });
+  const cupon = ofertas.caja({ subtotal, alCambiar: () => renderPedido() });
   document.getElementById("pago").before(cupon);
 
   /* ---------- Encabezado ---------- */
@@ -308,7 +315,7 @@ EU.alListo(function (sitio) {
       "*Detalle del pedido:*",
       ...lineas().map((l) => `- ${l.cant}x ${l.nombre} - ${usd(l.cant * l.precio)}`),
       ...(delivery() ? [`- Delivery - ${usd(delivery())}`] : []),
-      ...EU.promos.lineas(subtotal()),
+      ...ofertas.lineas(subtotal()),
       LINEA,
       `*Total a pagar:* ${usd(total())} USD`,
       ...EU.pagos.lineas(pago, total()),
@@ -352,7 +359,7 @@ EU.alListo(function (sitio) {
     if (EU.enPanel) { aviso("En la vista previa no se envían pedidos."); return; }
     const t = tiposOfrecidos.find((x) => x.id === tipo) || TIPOS[1];
     EU.registrarPedido({ items: lineas().map((l) => ({ nombre: l.nombre, cantidad: l.cant, precio: l.precio })), total: total(), tipo: t && t.nombre, pago });
-    EU.cliente.recordar({
+    memoria.recordar({
       nombre: $("cliente").value, direccion: $("direccion").value, tipo, pago,
       pedido: { resumen: lineas().map((l) => ({ nombre: l.nombre, cantidad: l.cant })), total: total(), datos: { qty: Object.assign({}, qty), tipo } },
     });
@@ -360,16 +367,16 @@ EU.alListo(function (sitio) {
   });
 
   /* ---------- Quien ya compró aquí: sus datos y "Repetir pedido" ---------- */
-  const yo = EU.cliente.datos();
+  const yo = memoria.datos();
   if (!guardado.tipo && tiposOfrecidos.some((t) => t.id === yo.tipo)) tipo = yo.tipo;
   if (EU.pagos.disponibles(tipo).some((m) => m.id === yo.pago)) pago = yo.pago;
 
   renderCats();
   renderGrid();
   renderPedido();
-  EU.cliente.rellenar({ nombre: $("cliente"), direccion: $("direccion") });
+  memoria.rellenar({ nombre: $("cliente"), direccion: $("direccion") });
   if (!cuenta()) {
-    EU.cliente.ofrecerRepetir((datos) => {
+    memoria.ofrecerRepetir((datos) => {
       let n = 0;
       Object.entries((datos && datos.qty) || {}).forEach(([id, k]) => {
         if (sePuede(buscar(id)) && k > 0) { qty[id] = Math.min(99, Math.floor(k)); n++; }

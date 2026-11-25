@@ -1,6 +1,13 @@
 /* Plantilla Pizzería: menú con tamaños, mitad y mitad, armador con ingredientes reales y pedido por WhatsApp. */
 EU.alListo(function (sitio) {
   "use strict";
+  /* Si el navegador todavía tiene guardado el código común de antes, la página funciona igual,
+     solo que sin recordar al cliente ni promociones. Nunca debe quedar en blanco por eso. */
+  const memoria = EU.cliente || { datos: () => ({}), recordar() {}, rellenar() {}, ofrecerRepetir() {} };
+  const ofertas = EU.promos || {
+    calcular: () => ({ monto: 0, texto: "" }), lineas: () => [],
+    caja: () => Object.assign(document.createElement("div"), { hidden: true, actualizar() {} }),
+  };
   const c = sitio.c;
   const $ = (s) => document.querySelector(s);
   const money = EU.usd;
@@ -424,10 +431,10 @@ EU.alListo(function (sitio) {
   const sizeName = (x) => (SIZES.find((s) => s.id === x.size) || { name: "" }).name;
   const subtotal = () => cart.reduce((a, x) => a + x.unit * x.qty, 0);
   const deliveryAhora = () => (cart.length && modo === "delivery" ? deliveryCosto : 0);
-  const descuento = () => EU.promos.calcular(subtotal());
+  const descuento = () => ofertas.calcular(subtotal());
   const total = () => subtotal() - descuento().monto + deliveryAhora();
   // Casilla "¿Tienes un cupón?" (solo sale si el negocio tiene cupones)
-  const cupon = EU.promos.caja({ subtotal, alCambiar: () => renderCart() });
+  const cupon = ofertas.caja({ subtotal, alCambiar: () => renderCart() });
   $(".pago-wrap").before(cupon);
   const fotoLinea = (x) => {
     if (x.kind === "drink") { const d = DRINKS.find((y) => y.id === x.drink); return d && d.foto ? `<img class="dthumb" src="${esc(d.foto)}" alt="">` : `<canvas aria-hidden="true"></canvas>`; }
@@ -463,7 +470,7 @@ EU.alListo(function (sitio) {
   function buildMsg() {
     const lines = cart.map((x) => (x.kind === "drink" ? `• ${x.qty} x ${x.name} — ${money(x.unit * x.qty)}` : `• ${x.qty} x ${x.name} (${sizeName(x)}) — ${money(x.unit * x.qty)}\n   ${x.detail}`)).join("\n");
     const modoTxt = modo === "delivery" ? `Delivery${deliveryCosto ? ": " + money(deliveryCosto) : " (costo según la zona)"}\nDirección: ${$("#cAddr").value || "—"}` : modo === "llevar" ? "Para llevar (retiro en el local)" : "Para comer en el local";
-    let m = `Hola ${sitio.nombre}, quiero hacer un pedido:\n\n${lines}\n\n${modoTxt}\nNombre: ${$("#cName").value || "—"}${$("#cNote").value ? `\nNotas: ${$("#cNote").value}` : ""}${EU.promos.lineas(subtotal()).map((l) => "\n" + l).join("")}\n\nTotal: ${money(total())}`;
+    let m = `Hola ${sitio.nombre}, quiero hacer un pedido:\n\n${lines}\n\n${modoTxt}\nNombre: ${$("#cName").value || "—"}${$("#cNote").value ? `\nNotas: ${$("#cNote").value}` : ""}${ofertas.lineas(subtotal()).map((l) => "\n" + l).join("")}\n\nTotal: ${money(total())}`;
     EU.pagos.lineas(pago, total()).forEach((l) => { m += "\n" + l; });
     return m;
   }
@@ -492,7 +499,7 @@ EU.alListo(function (sitio) {
       items: cart.map((x) => ({ nombre: x.kind === "drink" ? x.name : `${x.name} (${sizeName(x)})`, cantidad: x.qty, precio: x.unit })),
       total: total(), tipo: (MODOS.find((m) => m[0] === modo) || [])[1], pago,
     });
-    EU.cliente.recordar({
+    memoria.recordar({
       nombre: $("#cName").value, direccion: $("#cAddr").value, tipo: modo, pago,
       pedido: {
         resumen: cart.map((x) => ({ nombre: x.kind === "drink" ? x.name : `${x.name} (${sizeName(x)})`, cantidad: x.qty })),
@@ -577,7 +584,7 @@ EU.alListo(function (sitio) {
   /* ===== Quien ya compró aquí: sus datos y "Repetir pedido" =====
      Al repetir, cada línea se vuelve a armar con los precios de hoy; lo agotado o lo que ya no
      existe se salta. */
-  const yo = EU.cliente.datos();
+  const yo = memoria.datos();
   if (MODOS.some((m) => m[0] === yo.tipo)) modo = yo.tipo;
   pago = yo.pago;
   function lineaDeNuevo(x) {
@@ -630,6 +637,6 @@ EU.alListo(function (sitio) {
     buildUI(); refreshBuilder(); baseKey = ""; renderCart();
   });
   renderCart(); requestAnimationFrame(frame);
-  EU.cliente.rellenar({ nombre: $("#cName"), direccion: $("#cAddr") });
-  if (!cart.length) EU.cliente.ofrecerRepetir(repetirPedido);
+  memoria.rellenar({ nombre: $("#cName"), direccion: $("#cAddr") });
+  if (!cart.length) memoria.ofrecerRepetir(repetirPedido);
 });

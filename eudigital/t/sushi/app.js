@@ -1,6 +1,13 @@
 /* Plantilla Sushi: menú por categorías, carrito y pedido por WhatsApp. */
 EU.alListo(function (sitio) {
   "use strict";
+  /* Si el navegador todavía tiene guardado el código común de antes, la página funciona igual,
+     solo que sin recordar al cliente ni promociones. Nunca debe quedar en blanco por eso. */
+  const memoria = EU.cliente || { datos: () => ({}), recordar() {}, rellenar() {}, ofrecerRepetir() {} };
+  const ofertas = EU.promos || {
+    calcular: () => ({ monto: 0, texto: "" }), lineas: () => [],
+    caja: () => Object.assign(document.createElement("div"), { hidden: true, actualizar() {} }),
+  };
   const c = sitio.c;
   const $ = (s) => document.querySelector(s);
   const esc = EU.esc;
@@ -19,7 +26,7 @@ EU.alListo(function (sitio) {
   const tipoActual = () => (document.querySelector('input[name="tipo"]:checked') || {}).value || (TIPOS[0] && TIPOS[0].id) || "llevar";
   const subtotal = () => [...carrito].reduce((s, [id, n]) => s + (Number(buscar(id).precio) || 0) * n, 0);
   const delivery = () => (tipoActual() === "delivery" && carrito.size ? EU.costoDelivery() : 0);
-  const descuento = () => EU.promos.calcular(subtotal());
+  const descuento = () => ofertas.calcular(subtotal());
   const total = () => subtotal() - descuento().monto + delivery();
   const unidades = () => [...carrito.values()].reduce((a, b) => a + b, 0);
 
@@ -97,7 +104,7 @@ EU.alListo(function (sitio) {
     if (tipoActual() === "delivery") m += `*Dirección:* ${$("#direccion").value.trim()}\n`;
     m += `\n*Detalle:*\n${lineas.join("\n")}\n`;
     if (delivery()) m += `• Delivery — ${usd(delivery())}\n`;
-    EU.promos.lineas(subtotal()).forEach((l) => { m += `• ${l}\n`; });
+    ofertas.lineas(subtotal()).forEach((l) => { m += `• ${l}\n`; });
     const notas = $("#notas").value.trim();
     if (notas) m += `\n*Notas:* ${notas}\n`;
     m += `\n*Total: ${usd(total())}*`;
@@ -144,7 +151,7 @@ EU.alListo(function (sitio) {
   }
 
   // Casilla "¿Tienes un cupón?" (solo sale si el negocio tiene cupones)
-  const cupon = EU.promos.caja({ subtotal, alCambiar: () => actualizar() });
+  const cupon = ofertas.caja({ subtotal, alCambiar: () => actualizar() });
   $("#pago").before(cupon);
 
   /* Tipo de pedido según lo que ofrece el negocio */
@@ -169,7 +176,7 @@ EU.alListo(function (sitio) {
         items: [...carrito].map(([id, n]) => { const p = buscar(id) || {}; return { nombre: p.nombre, cantidad: n, precio: p.precio }; }),
         total: total(), tipo: t && t.nombre, pago,
       });
-      EU.cliente.recordar({
+      memoria.recordar({
         nombre: $("#cliente").value, direccion: $("#direccion").value, tipo: tipoActual(), pago,
         pedido: {
           resumen: [...carrito].map(([id, n]) => ({ nombre: (buscar(id) || {}).nombre || id, cantidad: n })),
@@ -222,15 +229,15 @@ EU.alListo(function (sitio) {
 
   /* ---------- Quien ya compró aquí: sus datos y "Repetir pedido" ---------- */
   const marcarTipo = (id) => { const r = document.getElementById("t-" + id); if (r && TIPOS.some((t) => t.id === id)) r.checked = true; };
-  const yo = EU.cliente.datos();
+  const yo = memoria.datos();
   marcarTipo(yo.tipo);
   pago = yo.pago;
 
   renderMenu();
   sincronizarTipo();
   cerrarCarrito();
-  EU.cliente.rellenar({ nombre: $("#cliente"), direccion: $("#direccion") });
-  EU.cliente.ofrecerRepetir((datos) => {
+  memoria.rellenar({ nombre: $("#cliente"), direccion: $("#direccion") });
+  memoria.ofrecerRepetir((datos) => {
     if (carrito.size) return 0;
     let n = 0;
     Object.entries((datos && datos.items) || {}).forEach(([id, k]) => {

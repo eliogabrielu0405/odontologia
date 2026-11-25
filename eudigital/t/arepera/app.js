@@ -1,6 +1,13 @@
 /* Plantilla Arma tu Arepa: el cliente apila rellenos reales, suma bebidas y pide por WhatsApp. */
 EU.alListo(function (sitio) {
   "use strict";
+  /* Si el navegador todavía tiene guardado el código común de antes, la página funciona igual,
+     solo que sin recordar al cliente ni promociones. Nunca debe quedar en blanco por eso. */
+  const memoria = EU.cliente || { datos: () => ({}), recordar() {}, rellenar() {}, ofrecerRepetir() {} };
+  const ofertas = EU.promos || {
+    calcular: () => ({ monto: 0, texto: "" }), lineas: () => [],
+    caja: () => Object.assign(document.createElement("div"), { hidden: true, actualizar() {} }),
+  };
   const c = sitio.c;
   const $ = (id) => document.getElementById(id);
   const esc = EU.esc;
@@ -310,10 +317,10 @@ EU.alListo(function (sitio) {
   const tipoActual = () => (document.querySelector('input[name="tipo"]:checked') || {}).value || (TIPOS[0] && TIPOS[0].id) || "llevar";
   const count = () => order.length + drinkCount();
   const delivery = () => (tipoActual() === "delivery" && count() ? EU.costoDelivery() : 0);
-  const descuento = () => EU.promos.calcular(subtotal());
+  const descuento = () => ofertas.calcular(subtotal());
   const grandTotal = () => subtotal() - descuento().monto + delivery();
   // Casilla "¿Tienes un cupón?" (solo sale si el negocio tiene cupones)
-  const cupon = EU.promos.caja({ subtotal, alCambiar: () => renderOrder() });
+  const cupon = ofertas.caja({ subtotal, alCambiar: () => renderOrder() });
   $("pago").before(cupon);
 
   function arepaLines(a) {
@@ -337,7 +344,7 @@ EU.alListo(function (sitio) {
     const dl = Object.entries(drinks);
     if (dl.length) { out.push("*Bebidas*", ...dl.map(([id, n]) => `${n} x ${DRINK[id].nombre} · ${money(n * DRINK[id].precio)}`), ""); }
     if (delivery()) out.push(`Delivery · ${money(delivery())}`, "");
-    EU.promos.lineas(subtotal()).forEach((l) => out.push(l, ""));
+    ofertas.lineas(subtotal()).forEach((l) => out.push(l, ""));
     const notas = $("notas").value.trim();
     if (notas) out.push(`*Notas:* ${notas}`, "");
     out.push(`*Total: ${money(grandTotal())}*`);
@@ -500,7 +507,7 @@ EU.alListo(function (sitio) {
       ],
       total: grandTotal(), tipo: (TIPOS.find((t) => t.id === tipoActual()) || {}).nombre, pago,
     });
-    EU.cliente.recordar({
+    memoria.recordar({
       nombre: $("cliente").value, direccion: $("direccion").value, tipo: tipoActual(), pago,
       pedido: {
         resumen: [
@@ -535,15 +542,15 @@ EU.alListo(function (sitio) {
 
   /* ---------- Quien ya compró aquí: sus datos y "Repetir pedido" ---------- */
   const marcarTipo = (id) => { const r = document.getElementById("t-" + id); if (r && TIPOS.some((t) => t.id === id)) r.checked = true; $("campo-dir").hidden = tipoActual() !== "delivery"; };
-  const yo = EU.cliente.datos();
+  const yo = memoria.datos();
   marcarTipo(yo.tipo);
   pago = yo.pago;
 
   renderTabs(); renderList(); renderArepa(); syncUI(); renderOrder();
   if (!TABS.length) $("add").disabled = true;
-  EU.cliente.rellenar({ nombre: $("cliente"), direccion: $("direccion") });
+  memoria.rellenar({ nombre: $("cliente"), direccion: $("direccion") });
   if (!count()) {
-    EU.cliente.ofrecerRepetir((datos) => {
+    memoria.ofrecerRepetir((datos) => {
       if (count()) return 0;
       // Cada arepa vuelve con lo que siga disponible hoy. Si se pidió sola, vuelve sola; si todo
       // lo que llevaba se acabó, no se agrega.

@@ -155,6 +155,14 @@ Cómo está hecho: la función `eu-avisos` de Supabase (`supabase/functions/eu-a
 
 En **Ajustes** pon también tus datos de cobro (Pago Móvil, Zelle, Binance): tus clientes los ven en su panel con botón para copiar. En la portada solo se ven los nombres de las formas de pago, no los datos.
 
+## Publicar sin romper las páginas abiertas
+
+Al publicar, nadie debe quedar con una mezcla de código nuevo y viejo (eso dejaba el menú vacío durante unos minutos):
+
+- Los archivos de `core/` se revisan en cada visita (`max-age=0, must-revalidate` en `vercel.json` y `_headers`). Si no cambiaron, el servidor contesta "sigue igual" y no se vuelven a bajar, así que casi no cuesta velocidad.
+- Cada plantilla revisa que las funciones comunes nuevas existan antes de usarlas (`memoria` para `EU.cliente` y `ofertas` para `EU.promos` al principio de cada `t/<plantilla>/app.js`). Si faltan, la página funciona igual, solo sin esa función.
+- Al agregar una función común nueva que usen las plantillas, sigue la misma idea: que la plantilla no se caiga si todavía no está.
+
 ## Cuando compres el dominio
 
 1. En Vercel, abre el proyecto **eu-digital-solutions** y ve a **Settings > Domains**. Agrega `tudominio.com`.
