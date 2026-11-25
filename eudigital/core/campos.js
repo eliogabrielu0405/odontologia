@@ -171,6 +171,42 @@
         return caja(def, ctl);
       },
 
+      /* Un punto en el mapa { lat, lng }: con la ubicación del teléfono, marcándolo en el mapa o
+         pegando un enlace de Google Maps. Usa EU.geo (core/mapa.js). */
+      ubicacion(def, obj) {
+        const b = enlace(def, obj);
+        const info = h("p", { class: "suave" });
+        const error = h("p", { class: "error-campo", role: "alert", hidden: true });
+        const mal = (t) => { error.textContent = t; error.hidden = false; };
+        const poner = (p) => { b.set(EU.geo.punto(p.lat, p.lng)); error.hidden = true; pintar(); cambio(def); };
+        const gps = h("button", { class: "btn btn-sec btn-chico", type: "button" }, def.textoGps || "Usar mi ubicación");
+        const mapa = h("button", { class: "btn btn-sec btn-chico", type: "button" }, "Marcarlo en el mapa");
+        const pegar = h("input", { class: "entrada", type: "text", id: idDe(def), autocomplete: "off", placeholder: "O pega aquí un enlace de Google Maps" });
+        function pintar() {
+          const p = b.get();
+          if (EU.geo && EU.geo.valido(p)) info.replaceChildren("Guardado: ", h("a", { href: EU.geo.enlace(p), target: "_blank", rel: "noopener" }, "ver en Google Maps"), " (" + EU.geo.texto(p) + ")");
+          else info.textContent = def.vacio || "Todavía no has marcado el punto.";
+        }
+        gps.addEventListener("click", () => {
+          if (!EU.geo) return mal("No se pudo cargar el mapa. Recarga la página.");
+          gps.disabled = true; gps.textContent = "Buscando…";
+          EU.geo.miUbicacion().then(poner, (e) => mal(e.message)).finally(() => { gps.disabled = false; gps.textContent = def.textoGps || "Usar mi ubicación"; });
+        });
+        mapa.addEventListener("click", () => {
+          if (!EU.geo) return mal("No se pudo cargar el mapa. Recarga la página.");
+          const p = b.get();
+          EU.geo.elegir({ inicio: EU.geo.valido(p) ? p : null, titulo: def.tituloMapa || "Marca el punto en el mapa" }).then((x) => { if (x) poner(x); });
+        });
+        pegar.addEventListener("change", () => {
+          if (!pegar.value.trim()) return;
+          const p = EU.geo && EU.geo.deTexto(pegar.value);
+          if (p) { poner(p); pegar.value = ""; }
+          else mal("No encontramos el punto en ese enlace. Si es un enlace corto (maps.app.goo.gl), ábrelo y copia el enlace largo de arriba, o márcalo en el mapa.");
+        });
+        pintar();
+        return caja(def, h("div", { class: "campos" }, info, h("div", { class: "acciones" }, gps, mapa), pegar, error), { legend: true });
+      },
+
       // Fecha (AAAA-MM-DD). Vacía = sin fecha
       fecha(def, obj) {
         const b = enlace(def, obj);
@@ -497,12 +533,12 @@
           h("div", { class: "hoja-fila" }, h("span", { class: "etq" }, def.etiqueta, " ", contador), btnNuevo),
           def.ayuda ? h("p", { class: "ayuda" }, def.ayuda) : null,
           cont);
-        const tituloDe = (it) => String(it[def.titulo || "nombre"] || "").trim() || "Sin nombre";
+        const tituloDe = (it) => String(typeof def.tituloDe === "function" ? def.tituloDe(it) : it[def.titulo || "nombre"] || "").trim() || "Sin nombre";
         function miniDe(it) {
           const foto = EU.url(def.foto ? it[def.foto] : def.fotoDe ? EU.obtener(it, def.fotoDe) : "");
           if (foto) return h("span", { class: "fila-mini" + (def.foto ? " contiene" : "") }, h("img", { src: foto, alt: "", loading: "lazy" }));
           if (def.muestra && EU.color(it[def.muestra])) return h("span", { class: "fila-mini", style: "background:" + EU.color(it[def.muestra]) });
-          const letra = it.emoji || it.kanji || tituloDe(it).slice(0, 1).toUpperCase();
+          const letra = def.icono || it.emoji || it.kanji || tituloDe(it).slice(0, 1).toUpperCase();
           return h("span", { class: "fila-mini", "aria-hidden": "true" }, letra);
         }
         function subDe(it) {

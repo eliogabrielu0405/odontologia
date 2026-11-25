@@ -100,7 +100,11 @@ window.EU_CATALOGOS = {
       instagram: "", tiktok: "", facebook: "", youtube: "", x: "", threads: "", telegram: "",
       horario: { 0: ["12:00", "22:00"], 1: ["11:00", "22:00"], 2: ["11:00", "22:00"], 3: ["11:00", "22:00"], 4: ["11:00", "22:00"], 5: ["11:00", "23:00"], 6: ["11:00", "23:00"] },
     },
-    pedidos: { delivery: 0, notaDelivery: "El delivery tiene un costo adicional según la zona.", tipos: ["delivery", "llevar", "aqui"] },
+    pedidos: {
+      delivery: 0, notaDelivery: "El delivery tiene un costo adicional según la zona.", tipos: ["delivery", "llevar", "aqui"],
+      // Delivery según la distancia: dónde está el local y la tabla de precios por kilómetros
+      envio: { modo: "fijo", local: { lat: 0, lng: 0 }, tramos: [{ id: "km-1", hasta: 10, precio: 1 }, { id: "km-2", hasta: 20, precio: 2 }, { id: "km-3", hasta: 30, precio: 3 }] },
+    },
     pagos: [
       { id: "pagomovil", nombre: "Pago Móvil", datos: [["Banco", ""], ["Teléfono", ""], ["Cédula", ""]], nota: "Envía la captura del pago por WhatsApp.", delivery: true, local: true, bs: true },
       { id: "efectivo", nombre: "Efectivo", datos: [], nota: "Dólares o bolívares. Si necesitas cambio, dinos con cuánto pagas.", delivery: true, local: true, bs: false },

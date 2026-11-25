@@ -29,6 +29,18 @@
 .eu-repetir-no { width: 36px; height: 36px; border: 0; border-radius: 50%; background: transparent; color: inherit; font: 400 22px/1 system-ui, sans-serif; cursor: pointer; }
 .eu-repetir-si:focus-visible, .eu-repetir-no:focus-visible, .eu-recordado button:focus-visible { outline: 3px solid #1f7a4d; outline-offset: 2px; }
 .eu-recordado { margin: 6px 0 0; font-size: 13px; line-height: 1.35; opacity: .85; }
+.eu-envio[hidden], .eu-cupon[hidden] { display: none !important; }
+/* Ubicación para el delivery */
+.eu-envio { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; padding: 12px; border-radius: 12px; border: 1.5px dashed var(--eu-linea, #ccc); font-family: var(--eu-cuerpo, inherit); }
+.eu-envio-txt { margin: 0; font-size: 14px; line-height: 1.4; }
+.eu-envio-txt b { font-weight: 800; }
+.eu-envio-acc { display: flex; flex-wrap: wrap; gap: 8px; }
+.eu-envio-acc button { min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--eu-linea, #ccc); background: var(--eu-tarjeta, #fff); color: inherit; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
+.eu-envio-acc .eu-envio-si { background: var(--eu-principal, #222); border-color: var(--eu-principal, #222); color: var(--eu-sobre-principal, #fff); }
+.eu-envio-acc button:disabled { opacity: .6; cursor: default; }
+.eu-envio-acc button:focus-visible { outline: 3px solid var(--eu-acento, #1f7a4d); outline-offset: 2px; }
+.eu-envio-error { margin: 0; color: #c2362f; font-size: 13px; font-weight: 700; }
+
 /* Casilla del cupón: toma los colores de la plantilla */
 .eu-cupon { display: flex; flex-direction: column; gap: 6px; font-family: var(--eu-cuerpo, inherit); }
 .eu-cupon label { font-weight: 800; font-size: 13px; }

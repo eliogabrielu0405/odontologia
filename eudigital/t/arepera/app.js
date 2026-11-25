@@ -8,6 +8,7 @@ EU.alListo(function (sitio) {
     calcular: () => ({ monto: 0, texto: "" }), lineas: () => [],
     caja: () => Object.assign(document.createElement("div"), { hidden: true, actualizar() {} }),
   };
+  const envio = EU.envio || null; // delivery por distancia y ubicación del cliente
   const c = sitio.c;
   const $ = (id) => document.getElementById(id);
   const esc = EU.esc;
@@ -311,7 +312,8 @@ EU.alListo(function (sitio) {
   $("tipos").innerHTML = TIPOS.map((t, i) => `<input type="radio" name="tipo" id="t-${t.id}" value="${t.id}"${i === 0 ? " checked" : ""}><label for="t-${t.id}">${t.nombre}</label>`).join("");
   $("tipos").style.gridTemplateColumns = `repeat(${Math.max(1, TIPOS.length)},1fr)`;
   $("tipos").closest("fieldset").hidden = TIPOS.length < 2;
-  $("nota-delivery").textContent = EU.costoDelivery() ? `El delivery cuesta ${money(EU.costoDelivery())}.` : (c.pedidos.notaDelivery || "");
+  $("nota-delivery").textContent = envio ? envio.nota() : EU.costoDelivery() ? `El delivery cuesta ${money(EU.costoDelivery())}.` : (c.pedidos.notaDelivery || "");
+  if (envio) $("campo-dir").append(envio.caja({ alCambiar: () => renderOrder() }));
   if (!est.abierto) { $("cerrado").textContent = est.texto + ". Puedes enviar tu pedido y te respondemos apenas abramos."; $("cerrado").hidden = false; }
 
   const tipoActual = () => (document.querySelector('input[name="tipo"]:checked') || {}).value || (TIPOS[0] && TIPOS[0].id) || "llevar";
@@ -339,6 +341,7 @@ EU.alListo(function (sitio) {
     if (cliente) out.push(`*Cliente:* ${cliente}`);
     if (tipo) out.push(`*Tipo:* ${tipo.nombre}`);
     if (tipoActual() === "delivery" && $("direccion").value.trim()) out.push(`*Dirección:* ${$("direccion").value.trim()}`);
+    if (tipoActual() === "delivery" && envio) envio.lineas().forEach((l) => out.push(l));
     out.push("");
     order.forEach((a, k) => { out.push(`*${NOMBRE} ${k + 1}* · ${money(priceOf(a))}`, ...arepaLines(a), ""); });
     const dl = Object.entries(drinks);

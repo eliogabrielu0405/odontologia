@@ -248,8 +248,20 @@
       hojas: [
         ...(P.sinTipos ? [] : [{ titulo: "Pedidos", campos: [
           { tipo: "multi", ruta: "pedidos.tipos", etiqueta: "Cómo pueden pedir", minimo: 1, opciones: [{ id: "delivery", nombre: "Delivery" }, { id: "llevar", nombre: "Para llevar" }, { id: "aqui", nombre: "Comer en el local" }] },
-          { tipo: "dinero", ruta: "pedidos.delivery", etiqueta: "Costo del delivery", ayuda: "Déjalo en 0 si cambia según la zona: la página avisa que tiene un costo adicional." },
-          { tipo: "texto", ruta: "pedidos.notaDelivery", etiqueta: "Nota sobre el delivery", max: 120 },
+          { tipo: "selector", ruta: "pedidos.envio.modo", etiqueta: "Cómo cobras el delivery", opciones: [{ id: "fijo", nombre: "Precio fijo" }, { id: "distancia", nombre: "Según la distancia" }],
+            ayuda: "Según la distancia: tu cliente comparte su ubicación y la página calcula los kilómetros y el precio con tu tabla." },
+          { tipo: "dinero", ruta: "pedidos.delivery", etiqueta: "Costo del delivery", ayuda: "Déjalo en 0 si cambia según la zona: la página avisa que tiene un costo adicional.", si: { ruta: "pedidos.envio.modo", distinto: "distancia" } },
+          { tipo: "texto", ruta: "pedidos.notaDelivery", etiqueta: "Nota sobre el delivery", max: 120, si: { ruta: "pedidos.envio.modo", distinto: "distancia" } },
+          { tipo: "ubicacion", ruta: "pedidos.envio.local", etiqueta: "Dónde está tu local", textoGps: "Estoy en el local: usar mi ubicación", tituloMapa: "¿Dónde está tu local?",
+            vacio: "Todavía no has marcado dónde está tu local. Sin esto, el delivery se cobra como precio fijo.",
+            ayuda: "Desde aquí se miden los kilómetros hasta tu cliente.", si: { ruta: "pedidos.envio.modo", igual: "distancia" } },
+          { tipo: "lista", ruta: "pedidos.envio.tramos", etiqueta: "Precios por distancia", item: "tramo", tituloDe: (t) => "Hasta " + String(t.hasta).replace(".", ",") + " km", precio: "precio", icono: "🛵", prefijoId: "km", maximo: 12,
+            ayuda: "Ej: hasta 10 km $1, hasta 20 km $2. Se usa el primer tramo que alcance. Si el cliente está más lejos que el último, la página le dice que está fuera de tu zona y que le confirmas el costo por WhatsApp. La distancia es aproximada: en línea recta y un poco más por las calles.",
+            nuevo: { hasta: 40, precio: 4 }, si: { ruta: "pedidos.envio.modo", igual: "distancia" },
+            campos: [
+              { tipo: "numero", clave: "hasta", etiqueta: "Hasta cuántos kilómetros", decimal: true, min: 0.5, max: 500, sufijo: "km" },
+              { tipo: "dinero", clave: "precio", etiqueta: "Precio del delivery" },
+            ] },
         ] }]),
         { titulo: null, campos: [{
           tipo: "lista", ruta: "pagos", etiqueta: "Formas de pago", item: "forma de pago", titulo: "nombre", prefijoId: "pg", maximo: 10,

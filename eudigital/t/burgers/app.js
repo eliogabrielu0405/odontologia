@@ -8,6 +8,7 @@ EU.alListo(function (sitio) {
     calcular: () => ({ monto: 0, texto: "" }), lineas: () => [],
     caja: () => Object.assign(document.createElement("div"), { hidden: true, actualizar() {} }),
   };
+  const envio = EU.envio || null; // delivery por distancia y ubicación del cliente
   const c = sitio.c;
   const $ = (id) => document.getElementById(id);
   const esc = EU.esc;
@@ -244,7 +245,8 @@ EU.alListo(function (sitio) {
     `<button class="tipo sticker toca" type="button" data-tipo="${t.id}" aria-pressed="${t.id === tipo}"><svg class="ic"><use href="#${t.icono}"/></svg>${t.nombre}</button>`).join("");
   $("tipos").style.gridTemplateColumns = `repeat(${tiposOfrecidos.length},minmax(0,1fr))`;
   $("tipos").closest("fieldset").hidden = tiposOfrecidos.length < 2;
-  $("notaDelivery").textContent = EU.costoDelivery() ? `El delivery cuesta ${usd(EU.costoDelivery())}.` : (c.pedidos.notaDelivery || "");
+  $("notaDelivery").textContent = envio ? envio.nota() : EU.costoDelivery() ? `El delivery cuesta ${usd(EU.costoDelivery())}.` : (c.pedidos.notaDelivery || "");
+  if (envio) $("campoDir").append(envio.caja({ alCambiar: () => renderPedido() }));
   const est = EU.estado();
   if (!est.abierto) { $("cerrado").textContent = est.texto + ". Puedes enviar tu pedido y te respondemos apenas abramos."; $("cerrado").hidden = false; }
   $("info").innerHTML = EU.htmlInfo();
@@ -310,7 +312,7 @@ EU.alListo(function (sitio) {
       LINEA,
       `*Cliente:* ${$("cliente").value.trim()}`,
       `*Tipo:* ${t.nombre}`,
-      ...(tipo === "delivery" ? [`*Dirección:* ${$("direccion").value.trim()}`] : []),
+      ...(tipo === "delivery" ? [`*Dirección:* ${$("direccion").value.trim()}`, ...(envio ? envio.lineas() : [])] : []),
       LINEA,
       "*Detalle del pedido:*",
       ...lineas().map((l) => `- ${l.cant}x ${l.nombre} - ${usd(l.cant * l.precio)}`),

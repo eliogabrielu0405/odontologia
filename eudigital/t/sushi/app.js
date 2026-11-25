@@ -8,6 +8,7 @@ EU.alListo(function (sitio) {
     calcular: () => ({ monto: 0, texto: "" }), lineas: () => [],
     caja: () => Object.assign(document.createElement("div"), { hidden: true, actualizar() {} }),
   };
+  const envio = EU.envio || null; // delivery por distancia y ubicación del cliente
   const c = sitio.c;
   const $ = (s) => document.querySelector(s);
   const esc = EU.esc;
@@ -101,7 +102,10 @@ EU.alListo(function (sitio) {
     const lineas = [...carrito].map(([id, n]) => { const p = buscar(id); return `• ${n} x ${p.nombre} — ${usd(n * p.precio)}`; });
     let m = `🌸 *Nuevo pedido — ${sitio.nombre}*\n\n`;
     m += `*Cliente:* ${$("#cliente").value.trim()}\n*Tipo:* ${tipo ? tipo.nombre : ""}\n`;
-    if (tipoActual() === "delivery") m += `*Dirección:* ${$("#direccion").value.trim()}\n`;
+    if (tipoActual() === "delivery") {
+      m += `*Dirección:* ${$("#direccion").value.trim()}\n`;
+      (envio ? envio.lineas() : []).forEach((l) => { m += l + "\n"; });
+    }
     m += `\n*Detalle:*\n${lineas.join("\n")}\n`;
     if (delivery()) m += `• Delivery — ${usd(delivery())}\n`;
     ofertas.lineas(subtotal()).forEach((l) => { m += `• ${l}\n`; });
@@ -157,7 +161,8 @@ EU.alListo(function (sitio) {
   /* Tipo de pedido según lo que ofrece el negocio */
   $("#tipos").innerHTML = TIPOS.map((t, i) => `<input type="radio" name="tipo" id="t-${t.id}" value="${t.id}"${i === 0 ? " checked" : ""}><label for="t-${t.id}">${t.nombre}</label>`).join("");
   $("#tipos").style.gridTemplateColumns = `repeat(${Math.max(1, TIPOS.length)},1fr)`;
-  $("#nota-delivery").textContent = EU.costoDelivery() ? `El delivery cuesta ${usd(EU.costoDelivery())}.` : (c.pedidos.notaDelivery || "");
+  $("#nota-delivery").textContent = envio ? envio.nota() : EU.costoDelivery() ? `El delivery cuesta ${usd(EU.costoDelivery())}.` : (c.pedidos.notaDelivery || "");
+  if (envio) $("#campo-dir").append(envio.caja({ alCambiar: () => actualizar() }));
   if (!EU.estado().abierto) $("#cerrado").textContent = EU.estado().texto + ". Puedes enviar tu pedido y te respondemos apenas abramos.";
   $("#cerrado").hidden = EU.estado().abierto;
 

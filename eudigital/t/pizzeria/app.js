@@ -8,6 +8,7 @@ EU.alListo(function (sitio) {
     calcular: () => ({ monto: 0, texto: "" }), lineas: () => [],
     caja: () => Object.assign(document.createElement("div"), { hidden: true, actualizar() {} }),
   };
+  const envio = EU.envio || null; // delivery por distancia y ubicación del cliente
   const c = sitio.c;
   const $ = (s) => document.querySelector(s);
   const money = EU.usd;
@@ -56,7 +57,7 @@ EU.alListo(function (sitio) {
     agotPizzas: MENU.filter((p) => p.agotado).map((p) => p.id),
     agotTops: TOPS.filter((t) => t.agotado).map((t) => t.id),
   };
-  const deliveryCosto = EU.costoDelivery();
+  const deliveryCosto = () => EU.costoDelivery(); // puede cambiar cuando el cliente comparte su ubicación
 
   /* ===== Encabezado y textos ===== */
   $("#brandName").textContent = sitio.nombre;
@@ -406,7 +407,7 @@ EU.alListo(function (sitio) {
   const CLAVE = "eu:pizza:" + (sitio.slug || "demo");
   let cart = [];
   try { cart = JSON.parse(ss.get(CLAVE) || "[]"); if (!Array.isArray(cart)) cart = []; } catch (_) { cart = []; }
-  const MODOS_ALL = [["delivery", "Delivery", () => (deliveryCosto ? `+${money(deliveryCosto)}` : "A domicilio")], ["llevar", "Para llevar", () => "Retiras tú"], ["aqui", "Comer aquí", () => "En el local"]];
+  const MODOS_ALL = [["delivery", "Delivery", () => (deliveryCosto() ? `+${money(deliveryCosto())}` : "A domicilio")], ["llevar", "Para llevar", () => "Retiras tú"], ["aqui", "Comer aquí", () => "En el local"]];
   const MODOS = (c.pedidos.tipos || []).map((id) => MODOS_ALL.find((m) => m[0] === id)).filter(Boolean);
   if (!MODOS.length) MODOS.push(MODOS_ALL[1]);
   let modo = MODOS[0][0], pago = "";
@@ -430,7 +431,10 @@ EU.alListo(function (sitio) {
   }
   const sizeName = (x) => (SIZES.find((s) => s.id === x.size) || { name: "" }).name;
   const subtotal = () => cart.reduce((a, x) => a + x.unit * x.qty, 0);
-  const deliveryAhora = () => (cart.length && modo === "delivery" ? deliveryCosto : 0);
+  const deliveryAhora = () => (cart.length && modo === "delivery" ? deliveryCosto() : 0);
+  // Ubicación del cliente para el delivery (y su precio si el negocio cobra por distancia)
+  const envioCaja = envio ? envio.caja({ alCambiar: () => { renderModo(); renderCart(); } }) : null;
+  if (envioCaja) $("#addrWrap").after(envioCaja);
   const descuento = () => ofertas.calcular(subtotal());
   const total = () => subtotal() - descuento().monto + deliveryAhora();
   // Casilla "¿Tienes un cupón?" (solo sale si el negocio tiene cupones)
@@ -469,7 +473,7 @@ EU.alListo(function (sitio) {
   }
   function buildMsg() {
     const lines = cart.map((x) => (x.kind === "drink" ? `• ${x.qty} x ${x.name} — ${money(x.unit * x.qty)}` : `• ${x.qty} x ${x.name} (${sizeName(x)}) — ${money(x.unit * x.qty)}\n   ${x.detail}`)).join("\n");
-    const modoTxt = modo === "delivery" ? `Delivery${deliveryCosto ? ": " + money(deliveryCosto) : " (costo según la zona)"}\nDirección: ${$("#cAddr").value || "—"}` : modo === "llevar" ? "Para llevar (retiro en el local)" : "Para comer en el local";
+    const modoTxt = modo === "delivery" ? `Delivery${deliveryCosto() ? ": " + money(deliveryCosto()) : " (costo según la zona)"}\nDirección: ${$("#cAddr").value || "—"}${envio ? envio.lineas().map((l) => "\n" + l).join("") : ""}` : modo === "llevar" ? "Para llevar (retiro en el local)" : "Para comer en el local";
     let m = `Hola ${sitio.nombre}, quiero hacer un pedido:\n\n${lines}\n\n${modoTxt}\nNombre: ${$("#cName").value || "—"}${$("#cNote").value ? `\nNotas: ${$("#cNote").value}` : ""}${ofertas.lineas(subtotal()).map((l) => "\n" + l).join("")}\n\nTotal: ${money(total())}`;
     EU.pagos.lineas(pago, total()).forEach((l) => { m += "\n" + l; });
     return m;
@@ -479,6 +483,7 @@ EU.alListo(function (sitio) {
     $("#modo").innerHTML = MODOS.map(([v, n, s]) => `<button class="opt" type="button" data-v="${v}" aria-pressed="${modo === v}">${n}<small>${esc(s())}</small></button>`).join("");
     $("#modo").hidden = MODOS.length < 2;
     $("#addrWrap").hidden = modo !== "delivery";
+    if (envioCaja) envioCaja.hidden = modo !== "delivery";
     $("#modo").querySelectorAll(".opt").forEach((b) => { b.onclick = () => { modo = b.dataset.v; renderModo(); renderCart(); }; });
     renderPagos();
   }

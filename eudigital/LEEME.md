@@ -93,6 +93,20 @@ Cada página cuenta cuántas personas la abren: una visita por teléfono y por d
 - Base de datos: tabla `eu_visitas` (cada dueño solo ve las suyas), función `eu_registrar_visita` (solo suma en páginas activas, con tope por día) y `eu_resumen_pedidos` trae `visitas`. Se borran solas después de 13 meses. Ver `sql/2026-11-25_visitas.sql`.
 - Se cuentan desde el 25 de noviembre de 2026.
 
+## Delivery por distancia y ubicación del cliente
+
+En el panel del cliente, **Entregas y pagos > Cómo cobras el delivery**:
+
+- **Precio fijo** (como antes): un solo costo, o 0 si cambia según la zona.
+- **Según la distancia**: el dueño marca **dónde está su local** (con su ubicación estando en el local, marcándolo en el mapa o pegando un enlace largo de Google Maps) y arma su tabla de **precios por distancia** (de fábrica: hasta 10 km $1, hasta 20 km $2, hasta 30 km $3; se cambia, se agregan o se quitan tramos).
+
+Quien compra, al elegir delivery, toca **📍 Usar mi ubicación** o **Marcarla en el mapa**. La página le dice "Estás a unos 7,1 km. Delivery: $1.00" y lo suma al total. Si está más lejos que el último tramo, le dice que está fuera de la zona y que el costo se le confirma por WhatsApp. Con precio fijo, la ubicación es opcional y sirve para el repartidor. En los dos casos el mensaje de WhatsApp lleva el enlace de Google Maps de la ubicación.
+
+- Gratis, sin Google: la distancia es en línea recta multiplicada por 1,3 para acercarla a lo que se recorre por la calle. Es aproximada.
+- El mapa usa Leaflet, guardado en `core/vendor/leaflet-1.9.4/` (licencia BSD), y los mapas gratuitos de OpenStreetMap. Solo se descarga cuando alguien abre el mapa.
+- La ubicación de quien compra queda solo en su teléfono ("Borrarlos" también la quita).
+- Código: `core/mapa.js` (`EU.geo`: distancia, GPS, enlaces y el mapa), `EU.envio` en `core/sitio.js` (precio, recuadro y líneas del mensaje) y el campo `ubicacion` en `core/campos.js`. La boutique no cobra delivery, así que no lo usa.
+
 ## Promociones y cupones
 
 En el panel del cliente, **Promociones**:

@@ -112,7 +112,107 @@
       return out;
     },
   };
-  EU.costoDelivery = () => Math.max(0, Number(EU.sitio.c.pedidos.delivery) || 0);
+  /* ---------- Delivery: precio fijo o según la distancia ----------
+     El dueño elige en su panel (pedidos.envio). Por distancia: marca dónde está su local y pone su
+     tabla (hasta 10 km $1, hasta 20 km $2…). Quien compra comparte su ubicación (GPS o mapa) y se
+     calcula la distancia en línea recta por 1,3, para acercarla a lo que se recorre por la calle.
+     La ubicación queda solo en su teléfono. En los dos modos, si la comparte, el mensaje lleva el
+     enlace de Google Maps para el repartidor. Las cuentas y el mapa están en core/mapa.js (EU.geo). */
+  const POR_CALLE = 1.3;
+  const fijoDelivery = () => Math.max(0, Number(EU.sitio.c.pedidos.delivery) || 0);
+  const claveUbicacion = () => "eu:ubicacion:" + ((EU.sitio && EU.sitio.slug) || "demo-" + PLANTILLA);
+  EU.envio = {
+    conf() { return (EU.sitio && EU.sitio.c.pedidos && EU.sitio.c.pedidos.envio) || {}; },
+    tramos() {
+      return (EU.envio.conf().tramos || []).map((t) => ({ hasta: Number(t && t.hasta) || 0, precio: Math.max(0, Number(t && t.precio) || 0) }))
+        .filter((t) => t.hasta > 0).sort((a, b) => a.hasta - b.hasta);
+    },
+    local() { const p = EU.envio.conf().local; return EU.geo && EU.geo.valido(p) ? EU.geo.punto(p.lat, p.lng) : null; },
+    porDistancia() { return EU.envio.conf().modo === "distancia" && !!EU.envio.local() && EU.envio.tramos().length > 0; },
+    ubicacion() {
+      try { const p = JSON.parse(localStorage.getItem(claveUbicacion()) || "null"); return EU.geo && EU.geo.valido(p) ? EU.geo.punto(p.lat, p.lng) : null; }
+      catch (_) { return null; }
+    },
+    ponerUbicacion(p) {
+      try {
+        if (p && EU.geo && EU.geo.valido(p)) localStorage.setItem(claveUbicacion(), JSON.stringify(EU.geo.punto(p.lat, p.lng)));
+        else localStorage.removeItem(claveUbicacion());
+      } catch (_) { /* sin almacenamiento */ }
+    },
+    km() {
+      const u = EU.envio.ubicacion(), l = EU.envio.local();
+      return u && l ? Math.round(EU.geo.distanciaKm(l, u) * POR_CALLE * 10) / 10 : null;
+    },
+    /* { distancia, km, precio, sinUbicacion, fuera, max } */
+    estado() {
+      if (!EU.envio.porDistancia()) return { distancia: false, km: null, precio: fijoDelivery() };
+      const km = EU.envio.km();
+      if (km == null) return { distancia: true, km: null, precio: 0, sinUbicacion: true };
+      const ts = EU.envio.tramos(), t = ts.find((x) => km <= x.hasta);
+      return t ? { distancia: true, km, precio: t.precio } : { distancia: true, km, precio: 0, fuera: true, max: ts[ts.length - 1].hasta };
+    },
+    tabla() { return EU.envio.tramos().map((t) => "hasta " + String(t.hasta).replace(".", ",") + " km " + EU.usd(t.precio)).join(", "); },
+    // Texto fijo debajo de "Delivery" en cada plantilla
+    nota() {
+      if (EU.envio.porDistancia()) return "El delivery depende de la distancia: " + EU.envio.tabla() + ".";
+      return fijoDelivery() ? "El delivery cuesta " + EU.usd(fijoDelivery()) + "." : String(EU.sitio.c.pedidos.notaDelivery || "");
+    },
+    // Líneas para el mensaje de WhatsApp
+    lineas() {
+      const u = EU.envio.ubicacion();
+      if (!u) return [];
+      const e = EU.envio.estado();
+      const out = ["*Ubicación:* " + EU.geo.enlace(u) + (e.km != null ? " (a unos " + String(e.km).replace(".", ",") + " km)" : "")];
+      if (e.fuera) out.push("_Fuera de la zona de delivery: el costo se confirma por WhatsApp._");
+      return out;
+    },
+    /* Recuadro para quien compra, dentro de la parte de "Dirección". alCambiar: la plantilla vuelve
+       a pintar su pedido (el costo del delivery cambió). */
+    caja({ alCambiar } = {}) {
+      const caja = document.createElement("div");
+      caja.className = "eu-envio";
+      if (!EU.geo) { caja.hidden = true; return caja; }
+      let error = "", ocupado = false;
+      const avisar = () => { pintar(); if (alCambiar) alCambiar(); };
+      const boton = (texto, clase, fn) => { const b = document.createElement("button"); b.type = "button"; b.className = clase; b.textContent = texto; b.disabled = ocupado; b.addEventListener("click", fn); return b; };
+      const gps = () => {
+        ocupado = true; error = ""; pintar();
+        EU.geo.miUbicacion().then((p) => { EU.envio.ponerUbicacion(p); }, (e) => { error = e.message; })
+          .finally(() => { ocupado = false; avisar(); });
+      };
+      const mapa = () => {
+        const l = EU.envio.local();
+        EU.geo.elegir({ inicio: EU.envio.ubicacion() || l, titulo: "¿Dónde te llevamos el pedido?", ayuda: "Toca el mapa o arrastra el marcador hasta tu casa o el lugar de entrega." })
+          .then((p) => { if (p) { EU.envio.ponerUbicacion(p); error = ""; avisar(); } });
+      };
+      function pintar() {
+        const e = EU.envio.estado(), u = EU.envio.ubicacion();
+        caja.replaceChildren();
+        const p = document.createElement("p");
+        p.className = "eu-envio-txt";
+        p.setAttribute("role", "status");
+        const acc = document.createElement("div");
+        acc.className = "eu-envio-acc";
+        if (!u) {
+          p.textContent = ocupado ? "Buscando tu ubicación…"
+            : e.distancia ? "El delivery depende de la distancia. Comparte tu ubicación para calcularlo."
+            : "Opcional: comparte tu ubicación para que el repartidor llegue más fácil.";
+          acc.append(boton("📍 Usar mi ubicación", "eu-envio-si", gps), boton("Marcarla en el mapa", "eu-envio-mapa", mapa));
+        } else {
+          const km = e.km != null ? String(e.km).replace(".", ",") : "";
+          if (e.fuera) p.textContent = `📍 Estás a unos ${km} km, fuera de nuestra zona de delivery (hasta ${String(e.max).replace(".", ",")} km). Puedes enviar tu pedido y te confirmamos el costo por WhatsApp.`;
+          else if (e.distancia) { p.textContent = `📍 Estás a unos ${km} km. Delivery: `; const b = document.createElement("b"); b.textContent = EU.usd(e.precio); p.append(b); }
+          else p.textContent = "📍 Listo: le enviamos tu ubicación al repartidor.";
+          acc.append(boton("Cambiarla en el mapa", "eu-envio-mapa", mapa), boton("Quitar", "eu-envio-quitar", () => { EU.envio.ponerUbicacion(null); avisar(); }));
+        }
+        caja.append(p, acc);
+        if (error) { const er = document.createElement("p"); er.className = "eu-envio-error"; er.setAttribute("role", "alert"); er.textContent = error; caja.append(er); }
+      }
+      pintar();
+      return caja;
+    },
+  };
+  EU.costoDelivery = () => EU.envio.estado().precio;
 
   /* ---------- Registro de pedidos para las estadísticas del panel del dueño ----------
      Cada plantilla lo llama justo antes de abrir WhatsApp. Solo guarda productos, total,
@@ -331,7 +431,7 @@
         });
       }
     },
-    olvidar() { almacen.quitar(claveCliente()); almacen.quitar(claveCliente() + ":ultimo"); },
+    olvidar() { almacen.quitar(claveCliente()); almacen.quitar(claveCliente() + ":ultimo"); EU.envio.ponerUbicacion(null); },
 
     /* Escribe el nombre y la dirección guardados en los campos vacíos, y pone debajo del nombre
        un aviso con el botón para borrarlos (por si el teléfono es compartido). */
