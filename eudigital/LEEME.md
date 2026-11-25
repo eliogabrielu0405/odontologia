@@ -93,6 +93,7 @@ La hamburguesa que se abre al bajar tiene una pared al fondo. Ahí sale escrito 
 
 - En el panel del cliente, **Apariencia**: encender o apagar el nombre, escribir otro texto (si queda vacío sale el nombre del negocio) y elegir el color de las letras.
 - **Tu foto de portada** (también en Apariencia): si el cliente sube una foto suya, sale en ese mismo recuadro en lugar de la hamburguesa animada. Si la quita, vuelve la hamburguesa.
+- **Carga por partes:** la página no espera las 63 fotos (1,4 MB). Primero baja solo la que se ve arriba; cuando la página terminó de cargar, o apenas la persona empieza a bajar, llegan una de cada cuatro, después las del medio y al final el resto, de a tres a la vez. Mientras falta alguna se dibuja la más cercana. Con internet lento (4G de 1,6 Mbps) la página pasó de cargar en 10,5 a 1,4 segundos. Con "ahorro de datos" activado en el teléfono solo baja una de cada cuatro, y con "reducir movimiento" solo la última.
 - Archivos: las 63 fotos limpias en `t/burgers/img/hamburguesa/f01.webp` a `f63.webp`, y `pared.webp`, que es la franja de pared sin nada delante. Al dibujar cada foto, `t/burgers/app.js` compara esa franja con la pared y escribe el letrero solo donde se ve la pared.
 
 ## Avisos al teléfono

@@ -82,7 +82,7 @@ EU.alListo(function (sitio) {
     const ctx = $("lienzo").getContext("2d", { willReadFrequently: true });
     const fuera = $("hb"), fijo = fuera.querySelector(".hb-fijo");
     if (EU.reducido) fuera.classList.add("quieta");
-    const cuadros = Array.from({ length: CUADROS }, (_, i) => { const im = new Image(); im.decoding = "async"; im.src = ruta(EU.reducido ? CUADROS - 1 : i); return im; });
+    const cuadros = new Array(CUADROS).fill(null), listos = new Array(CUADROS).fill(false);
     let actual = -1, raf = 0;
 
     /* Letrero en la pared del fondo: el nombre que el cliente quiera, pintado detrás de la hamburguesa.
@@ -137,8 +137,13 @@ EU.alListo(function (sitio) {
       else listo();
     }
 
+    // Dibuja la foto pedida o, si todavía no llegó, la más cercana que ya esté lista
     const dibujar = (i) => {
-      for (let k = i; k >= 0; k--) { const im = cuadros[k]; if (im.complete && im.naturalWidth) { ctx.drawImage(im, 0, 0, W, H); pintarLetrero(); return; } }
+      for (let k = 0; k < CUADROS; k++) {
+        for (const j of k ? [i - k, i + k] : [i]) {
+          if (j >= 0 && j < CUADROS && listos[j]) { ctx.drawImage(cuadros[j], 0, 0, W, H); pintarLetrero(); return; }
+        }
+      }
     };
     const avanzar = () => {
       raf = 0;
@@ -154,7 +159,40 @@ EU.alListo(function (sitio) {
       $("hbAviso").classList.toggle("fuera", p >= 0.04 || EU.reducido);
     };
     const pedir = () => { if (!raf) raf = requestAnimationFrame(avanzar); };
-    cuadros.forEach((im) => { im.onload = () => { actual = -1; pedir(); }; });
+    /* Las 63 fotos no se piden de una vez (son casi 1,5 MB y frenaban la página con internet lento).
+       Primero va solo la que se ve arriba. Cuando la página terminó de cargar, o apenas la persona
+       empieza a bajar, llegan una de cada cuatro, después las del medio y al final el resto,
+       de a tres a la vez para no quitarle velocidad a las fotos del menú. Con "ahorro de datos"
+       solo se bajan las principales: la animación sigue funcionando, un poco menos fluida. */
+    const pedirCuadro = (i) => new Promise((fin) => {
+      if (cuadros[i]) return fin();
+      const im = new Image();
+      im.decoding = "async";
+      im.onload = () => { listos[i] = true; actual = -1; pedir(); fin(); };
+      im.onerror = () => fin();
+      im.src = ruta(i);
+      cuadros[i] = im;
+    });
+    if (EU.reducido) pedirCuadro(CUADROS - 1); // con "reducir movimiento" se muestra abierta, sin animación
+    else {
+      pedirCuadro(0);
+      const ahorro = !!(navigator.connection && navigator.connection.saveData);
+      const orden = [];
+      for (const paso of ahorro ? [4] : [4, 2, 1]) {
+        for (let i = paso; i < CUADROS; i += paso) if (!orden.includes(i)) orden.push(i);
+        if (!orden.includes(CUADROS - 1)) orden.push(CUADROS - 1);
+      }
+      let empezado = false;
+      const resto = () => {
+        if (empezado) return;
+        empezado = true;
+        const hilo = async () => { while (orden.length) await pedirCuadro(orden.shift()); };
+        for (let n = 0; n < 3; n++) hilo();
+      };
+      if (document.readyState === "complete") resto();
+      else addEventListener("load", resto, { once: true });
+      addEventListener("scroll", resto, { passive: true, once: true });
+    }
     addEventListener("scroll", pedir, { passive: true });
     addEventListener("resize", pedir);
     pedir();
