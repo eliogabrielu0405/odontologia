@@ -424,7 +424,11 @@ EU.alListo(function (sitio) {
   const sizeName = (x) => (SIZES.find((s) => s.id === x.size) || { name: "" }).name;
   const subtotal = () => cart.reduce((a, x) => a + x.unit * x.qty, 0);
   const deliveryAhora = () => (cart.length && modo === "delivery" ? deliveryCosto : 0);
-  const total = () => subtotal() + deliveryAhora();
+  const descuento = () => EU.promos.calcular(subtotal());
+  const total = () => subtotal() - descuento().monto + deliveryAhora();
+  // Casilla "¿Tienes un cupón?" (solo sale si el negocio tiene cupones)
+  const cupon = EU.promos.caja({ subtotal, alCambiar: () => renderCart() });
+  $(".pago-wrap").before(cupon);
   const fotoLinea = (x) => {
     if (x.kind === "drink") { const d = DRINKS.find((y) => y.id === x.drink); return d && d.foto ? `<img class="dthumb" src="${esc(d.foto)}" alt="">` : `<canvas aria-hidden="true"></canvas>`; }
     const p = x.photo && MENU.find((y) => y.id === x.photo);
@@ -447,18 +451,19 @@ EU.alListo(function (sitio) {
     $("#checkout").hidden = false;
     L.innerHTML = cart.map((x, i) => `<div class="line">${fotoLinea(x)}<div><b>${esc(x.name)}</b><div class="meta">${x.kind === "drink" ? "Bebida" : `${esc(sizeName(x))} · ${esc(x.detail)}`}</div>
       <div class="qty"><button type="button" data-m="${i}" aria-label="Quitar una">−</button><span>${x.qty}</span><button type="button" data-p="${i}" aria-label="Agregar una">+</button></div></div><div class="lp">${money(x.unit * x.qty)}</div></div>`).join("")
-      + (deliveryAhora() ? `<div class="line"><span></span><div class="meta">Delivery</div><div class="lp">${money(deliveryAhora())}</div></div>` : "");
+      + (deliveryAhora() ? `<div class="line"><span></span><div class="meta">Delivery</div><div class="lp">${money(deliveryAhora())}</div></div>` : "")
+      + (descuento().monto ? `<div class="line descuento"><span></span><div class="meta">${esc(descuento().texto)}</div><div class="lp">-${money(descuento().monto)}</div></div>` : "");
     L.querySelectorAll("canvas[data-i]").forEach((cv) => { const it = cart[cv.dataset.i]; if (it) drawPizza(cv, it.cfg); });
     L.querySelectorAll("[data-m]").forEach((b) => { b.onclick = () => { const x = cart[b.dataset.m]; x.qty--; if (!x.qty) cart.splice(b.dataset.m, 1); save(); renderCart(); }; });
     L.querySelectorAll("[data-p]").forEach((b) => { b.onclick = () => { cart[b.dataset.p].qty++; save(); renderCart(); }; });
     $("#sheetTot").textContent = money(total()); $("#sheetBs").textContent = bs(total());
     const est = EU.estado(); $("#closedNote").hidden = est.abierto; $("#closedNote").textContent = `${est.texto}. Puedes enviar tu pedido y te respondemos apenas abramos.`;
-    renderPagos(); updateMsg();
+    cupon.actualizar(); renderPagos(); updateMsg();
   }
   function buildMsg() {
     const lines = cart.map((x) => (x.kind === "drink" ? `• ${x.qty} x ${x.name} — ${money(x.unit * x.qty)}` : `• ${x.qty} x ${x.name} (${sizeName(x)}) — ${money(x.unit * x.qty)}\n   ${x.detail}`)).join("\n");
     const modoTxt = modo === "delivery" ? `Delivery${deliveryCosto ? ": " + money(deliveryCosto) : " (costo según la zona)"}\nDirección: ${$("#cAddr").value || "—"}` : modo === "llevar" ? "Para llevar (retiro en el local)" : "Para comer en el local";
-    let m = `Hola ${sitio.nombre}, quiero hacer un pedido:\n\n${lines}\n\n${modoTxt}\nNombre: ${$("#cName").value || "—"}${$("#cNote").value ? `\nNotas: ${$("#cNote").value}` : ""}\n\nTotal: ${money(total())}`;
+    let m = `Hola ${sitio.nombre}, quiero hacer un pedido:\n\n${lines}\n\n${modoTxt}\nNombre: ${$("#cName").value || "—"}${$("#cNote").value ? `\nNotas: ${$("#cNote").value}` : ""}${EU.promos.lineas(subtotal()).map((l) => "\n" + l).join("")}\n\nTotal: ${money(total())}`;
     EU.pagos.lineas(pago, total()).forEach((l) => { m += "\n" + l; });
     return m;
   }

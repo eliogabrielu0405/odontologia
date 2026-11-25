@@ -268,6 +268,32 @@
         }] },
       ],
     };
+    const TIPOS_DESC = [{ id: "porcentaje", nombre: "Porcentaje (%)" }, { id: "monto", nombre: "Monto fijo ($)" }];
+    const promos = {
+      id: "promos", titulo: "Promociones", intro: "Descuentos para todos y cupones para tus clientes.",
+      hojas: [
+        { titulo: "Descuento para todos", campos: [
+          { tipo: "interruptor", ruta: "promos.auto.activa", etiqueta: "Activar el descuento", ayuda: "Se aplica solo, sin código, y sale anunciado arriba de tu página. Ej: 10% en pedidos desde $20." },
+          { tipo: "selector", ruta: "promos.auto.tipo", etiqueta: "Tipo de descuento", opciones: TIPOS_DESC },
+          { tipo: "numero", ruta: "promos.auto.valor", etiqueta: "Cuánto descuentas", decimal: true, min: 0, max: 100000, ayuda: "Si es porcentaje, de 1 a 100. Si es monto fijo, en dólares." },
+          { tipo: "dinero", ruta: "promos.auto.minimo", etiqueta: "Compra mínima", ayuda: "Déjalo en 0 para que aplique a cualquier pedido." },
+          { tipo: "fecha", ruta: "promos.auto.hasta", etiqueta: "Último día de la promoción", ayuda: "Opcional. Después de ese día se apaga sola." },
+        ] },
+        { titulo: null, campos: [{
+          tipo: "lista", ruta: "promos.cupones", etiqueta: "Cupones", item: "cupón", titulo: "codigo", prefijoId: "cup", maximo: 20,
+          ayuda: "Tu cliente escribe el código al hacer su pedido y el descuento sale en el total y en el mensaje que te llega. Si hay descuento para todos, se usa el que más le convenga al cliente (no se suman). Para mandar tu enlace con el cupón ya puesto, agrégale al final &cupon= y el código (ej: …?n=tu-negocio&cupon=AMIGO10).",
+          nuevo: { codigo: "AMIGO", tipo: "porcentaje", valor: 10, minimo: 0, hasta: "", activo: true },
+          campos: [
+            { tipo: "texto", clave: "codigo", etiqueta: "Código", max: 20, requerido: true, placeholder: "Ej: AMIGO10", ayuda: "Letras y números, sin espacios. No importa si el cliente lo escribe en mayúsculas o minúsculas." },
+            { tipo: "selector", clave: "tipo", etiqueta: "Tipo de descuento", opciones: TIPOS_DESC },
+            { tipo: "numero", clave: "valor", etiqueta: "Cuánto descuenta", decimal: true, min: 0, max: 100000 },
+            { tipo: "dinero", clave: "minimo", etiqueta: "Compra mínima", ayuda: "0 = cualquier pedido." },
+            { tipo: "fecha", clave: "hasta", etiqueta: "Vence", ayuda: "Opcional. Después de ese día el cupón deja de funcionar." },
+            { tipo: "interruptor", clave: "activo", etiqueta: "Cupón activo" },
+          ],
+        }] },
+      ],
+    };
     const apariencia = {
       id: "apariencia", titulo: "Apariencia", intro: "Colores, letras y animaciones.",
       hojas: [
@@ -304,7 +330,7 @@
     return [
       hoy,
       { id: "pedidos-recibidos", titulo: "Mis pedidos", intro: "Los pedidos que te mandan desde tu página.", especial: "pedidos" },
-      ...propias, negocio, pedidos, apariencia,
+      ...propias, negocio, pedidos, promos, apariencia,
       { id: "compartir", titulo: "Compartir", intro: "Tu enlace, cómo se ve en WhatsApp y tu código QR.", especial: "compartir" },
       { id: "paginas", titulo: "Mis páginas", intro: plan() === "premium" ? "Las páginas de tu cuenta, cada una con su enlace y su plantilla." : "Tu página y tu plantilla.", especial: "paginas" },
       { id: "suscripcion", titulo: "Mi suscripción", intro: "Tu plan, cómo pagar y tu contraseña.", especial: "suscripcion" },
@@ -570,6 +596,17 @@
       h("small", {}, cuantos(n, "pedido", "pedidos").replace(/^\d+ /, "") + " · " + EU.usd(Number(x && x.total) || 0)),
       extra || null);
   }
+  // Visitas: personas que abrieron la página (una por teléfono por día)
+  function cifraVisitas(etiqueta, n, extra) {
+    n = Number(n) || 0;
+    return h("div", { class: "cifra" }, h("span", {}, etiqueta), h("b", {}, String(n)), h("small", {}, n === 1 ? "persona" : "personas"), extra || null);
+  }
+  // De cada 100 personas que entraron, cuántas pidieron (con menos de 10 visitas el número engaña)
+  function deCada100(pedidos, visitas) {
+    pedidos = Number(pedidos) || 0; visitas = Number(visitas) || 0;
+    if (visitas < 10) return null;
+    return Math.min(100, Math.round((pedidos / visitas) * 100));
+  }
   function resumenHoy() {
     const caja = h("section", { class: "hoja resumen-hoy", hidden: true });
     cargarResumen().then((r) => {
@@ -577,7 +614,7 @@
       caja.replaceChildren(
         h("div", { class: "hoja-fila" }, h("h2", {}, "Pedidos por tu página"),
           h("button", { class: "btn btn-sec btn-chico", type: "button", onclick: () => irA("pedidos-recibidos") }, "Ver mis pedidos")),
-        h("div", { class: "cifras" }, cifra("Hoy", r.hoy), cifra("Este mes", r.mes)));
+        h("div", { class: "cifras tres" }, cifraVisitas("Visitas hoy", r.visitas && r.visitas.hoy), cifra("Pedidos hoy", r.hoy), cifra("Este mes", r.mes)));
       caja.hidden = false;
     });
     return caja;
@@ -604,9 +641,12 @@
           h("div", { class: "acciones" }, actualizar)));
         return;
       }
+      const V = r.visitas || {};
+      const notaVisitas = h("p", { class: "suave chico" }, "Cuenta una visita por teléfono y por día. Tus propias visitas desde el teléfono donde abres este panel no cuentan. Empezamos a contarlas el 25 de noviembre de 2026.");
       if (!Number(r.historico)) {
         cuerpo.replaceChildren(h("section", { class: "hoja vacio-pedidos" },
-          h("h2", {}, "Todavía no te han llegado pedidos por tu página"),
+          Number(V.historico) ? h("div", { class: "cifras tres" }, cifraVisitas("Visitas hoy", V.hoy), cifraVisitas("Últimos 7 días", V.semana), cifraVisitas("Este mes", V.mes)) : null,
+          h("h2", {}, Number(V.semana) ? cuantos(Number(V.semana), "persona vio", "personas vieron") + " tu página esta semana, pero todavía no te han llegado pedidos" : "Todavía no te han llegado pedidos por tu página"),
           h("p", { class: "suave" }, "Cuando un cliente mande su pedido a tu WhatsApp desde tu página, aquí ves cuántos pedidos tienes, cuánto suman y lo que más te piden."),
           h("p", { class: "suave" }, "Para que empiecen a llegar, pon tu enlace en tu Instagram y en tus estados de WhatsApp."),
           h("div", { class: "acciones" }, h("button", { class: "btn", type: "button", onclick: () => irA("compartir") }, "Compartir mi página"), actualizar)));
@@ -619,6 +659,16 @@
         h("div", { class: "hoja-fila" }, h("h2", {}, "Resumen"), actualizar),
         h("div", { class: "cifras tres" }, cifra("Hoy", r.hoy), cifra("Últimos 7 días", r.semana), cifra("Este mes", r.mes, comparar))));
 
+      // Visitas: cuánta gente entra y cuántos de ellos piden
+      const tasa = deCada100(r.semana && r.semana.n, V.semana);
+      partes.push(h("section", { class: "hoja" },
+        h("div", { class: "hoja-cab" }, h("h2", {}, "Visitas a tu página"), h("p", {}, "Personas que abrieron tu página.")),
+        h("div", { class: "cifras tres" }, cifraVisitas("Hoy", V.hoy), cifraVisitas("Últimos 7 días", V.semana), cifraVisitas("Este mes", V.mes)),
+        tasa != null
+          ? h("p", { class: "banda verde" }, "Esta semana, de cada 100 personas que entraron, ", h("b", {}, String(tasa)), " te hicieron un pedido.")
+          : null,
+        notaVisitas));
+
       const dias = r.dias || [];
       const max = Math.max(1, ...dias.map((x) => Number(x.n) || 0));
       const hoy = EU.hoyISO();
@@ -628,11 +678,25 @@
         h("div", { class: "barras", role: "img", "aria-label": "Pedidos por día: " + dias.map((x) => nombreDia(x.dia) + ", " + cuantos(Number(x.n) || 0, "pedido", "pedidos")).join("; ") },
           dias.map((x) => {
             const n = Number(x.n) || 0;
-            return h("div", { class: "barra-dia" + (x.dia === hoy ? " hoy" : ""), title: nombreDia(x.dia) + ": " + cuantos(n, "pedido", "pedidos") + ", " + EU.usd(Number(x.total) || 0) },
+            return h("div", { class: "barra-dia" + (x.dia === hoy ? " hoy" : ""), title: nombreDia(x.dia) + ": " + cuantos(n, "pedido", "pedidos") + ", " + EU.usd(Number(x.total) || 0) + " · " + cuantos(Number(x.visitas) || 0, "visita", "visitas") },
               h("span", { class: "barra-n" }, n ? String(n) : ""),
               h("i", { style: "height:" + Math.max(n ? 6 : 2, Math.round((n / max) * 100)) + "%" }),
               h("small", {}, String(Number(x.dia.slice(8)))));
           }))));
+
+      if (Number(V.historico)) {
+        const maxV = Math.max(1, ...dias.map((x) => Number(x.visitas) || 0));
+        partes.push(h("section", { class: "hoja" },
+          h("div", { class: "hoja-cab" }, h("h2", {}, "Visitas por día"), h("p", {}, "Las últimas dos semanas.")),
+          h("div", { class: "barras visitas", role: "img", "aria-label": "Visitas por día: " + dias.map((x) => nombreDia(x.dia) + ", " + cuantos(Number(x.visitas) || 0, "visita", "visitas")).join("; ") },
+            dias.map((x) => {
+              const n = Number(x.visitas) || 0;
+              return h("div", { class: "barra-dia" + (x.dia === hoy ? " hoy" : ""), title: nombreDia(x.dia) + ": " + cuantos(n, "visita", "visitas") },
+                h("span", { class: "barra-n" }, n ? String(n) : ""),
+                h("i", { style: "height:" + Math.max(n ? 6 : 2, Math.round((n / maxV) * 100)) + "%" }),
+                h("small", {}, String(Number(x.dia.slice(8)))));
+            }))));
+      }
 
       const top = r.top || [];
       if (top.length) {

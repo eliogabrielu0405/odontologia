@@ -310,7 +310,11 @@ EU.alListo(function (sitio) {
   const tipoActual = () => (document.querySelector('input[name="tipo"]:checked') || {}).value || (TIPOS[0] && TIPOS[0].id) || "llevar";
   const count = () => order.length + drinkCount();
   const delivery = () => (tipoActual() === "delivery" && count() ? EU.costoDelivery() : 0);
-  const grandTotal = () => subtotal() + delivery();
+  const descuento = () => EU.promos.calcular(subtotal());
+  const grandTotal = () => subtotal() - descuento().monto + delivery();
+  // Casilla "¿Tienes un cupón?" (solo sale si el negocio tiene cupones)
+  const cupon = EU.promos.caja({ subtotal, alCambiar: () => renderOrder() });
+  $("pago").before(cupon);
 
   function arepaLines(a) {
     const used = {}, extra = {};
@@ -333,6 +337,7 @@ EU.alListo(function (sitio) {
     const dl = Object.entries(drinks);
     if (dl.length) { out.push("*Bebidas*", ...dl.map(([id, n]) => `${n} x ${DRINK[id].nombre} · ${money(n * DRINK[id].precio)}`), ""); }
     if (delivery()) out.push(`Delivery · ${money(delivery())}`, "");
+    EU.promos.lineas(subtotal()).forEach((l) => out.push(l, ""));
     const notas = $("notas").value.trim();
     if (notas) out.push(`*Notas:* ${notas}`, "");
     out.push(`*Total: ${money(grandTotal())}*`);
@@ -368,7 +373,9 @@ EU.alListo(function (sitio) {
         <span class="p">${money(n * d.precio)}<span class="step"><button type="button" data-dminus="${esc(id)}" aria-label="Quitar ${esc(d.nombre)}">−</button><b>${n}</b><button type="button" data-dplus="${esc(id)}" aria-label="Sumar ${esc(d.nombre)}">+</button></span></span></li>`;
     }).join("");
     const deliveryRow = delivery() ? `<li><span class="pic" aria-hidden="true">🛵</span><span class="d"><strong>Delivery</strong></span><span class="p">${money(delivery())}</span></li>` : "";
-    $("orderList").innerHTML = arepaRows + drinkRows + deliveryRow;
+    const d = descuento();
+    const descuentoRow = d.monto ? `<li class="descuento"><span class="pic" aria-hidden="true">🏷️</span><span class="d"><strong>${esc(d.texto)}</strong></span><span class="p">-${money(d.monto)}</span></li>` : "";
+    $("orderList").innerHTML = arepaRows + drinkRows + deliveryRow + descuentoRow;
     const n = count();
     $("orderEmpty").hidden = n > 0;
     $("form").hidden = n === 0;
@@ -376,6 +383,7 @@ EU.alListo(function (sitio) {
     $("totalBs").textContent = EU.bs(grandTotal());
     $("copy").disabled = n === 0;
     $("emptyOrder").disabled = n === 0;
+    cupon.actualizar();
     renderPago();
     const wa = $("sendWa");
     wa.href = n ? EU.wa(orderMessage()) : "#";

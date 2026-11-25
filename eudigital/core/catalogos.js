@@ -114,5 +114,7 @@ window.EU_CATALOGOS = {
     tema: { preset: "", colores: { principal: "", acento: "", fondo: "" }, fuente: "", modo: "" },
     animaciones: { portada: "ninguna", emoji: "", logo: "ninguna", productos: "subir", boton: "ninguna", temporada: "ninguna", mascota: true, personaje: "", baile: "meneo" },
     banner: { texto: "", estilo: "fijo" },
+    // Promociones: un descuento para todos (sin código) y cupones con código
+    promos: { auto: { activa: false, tipo: "porcentaje", valor: 10, minimo: 0, hasta: "" }, cupones: [] },
   };
 })(window.EU_CATALOGOS);

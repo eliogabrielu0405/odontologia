@@ -148,6 +148,151 @@
     } catch (_) { /* las estadísticas nunca deben estorbar un pedido */ }
   };
 
+  /* ---------- Promociones y cupones ----------
+     El dueño las pone en su panel (c.promos): un descuento para todos, sin código, y cupones con
+     código. Al cliente se le aplica el que más le convenga (no se suman). Cada plantilla pide el
+     descuento con EU.promos.calcular(subtotal), lo resta del total, lo muestra en el pedido y lo
+     agrega al mensaje con EU.promos.lineas(subtotal). La casilla del cupón la arma EU.promos.caja. */
+  const hoyVE = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Caracas" }).format(new Date());
+  const vigente = (x) => x && (!/^\d{4}-\d{2}-\d{2}$/.test(String(x.hasta || "")) || String(x.hasta) >= hoyVE());
+  const normCodigo = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 20);
+  const redondo = (n) => Math.round(n * 100) / 100;
+  const claveCupon = () => "eu:cupon:" + ((EU.sitio && EU.sitio.slug) || "demo-" + PLANTILLA);
+  const cuponLeer = () => { try { return normCodigo(sessionStorage.getItem(claveCupon())); } catch (_) { return ""; } };
+  const cuponPoner = (v) => { try { if (v) sessionStorage.setItem(claveCupon(), v); else sessionStorage.removeItem(claveCupon()); } catch (_) { /* nada */ } };
+  EU.promos = {
+    auto() {
+      const a = ((EU.sitio && EU.sitio.c.promos) || {}).auto || {};
+      return a.activa && Number(a.valor) > 0 && vigente(a) ? a : null;
+    },
+    cupones() {
+      return (((EU.sitio && EU.sitio.c.promos) || {}).cupones || []).filter((x) => x && x.activo !== false && normCodigo(x.codigo) && Number(x.valor) > 0 && vigente(x));
+    },
+    hayCupones() { return EU.promos.cupones().length > 0; },
+    buscar(codigo) { const k = normCodigo(codigo); return k ? EU.promos.cupones().find((x) => normCodigo(x.codigo) === k) || null : null; },
+    cuanto(r) { return r.tipo === "monto" ? EU.usd(Number(r.valor)) : Math.min(100, Number(r.valor)) + "%"; },
+    monto(r, subtotal) {
+      const v = Math.max(0, Number(r.valor) || 0);
+      return redondo(Math.min(subtotal, r.tipo === "monto" ? v : (subtotal * Math.min(v, 100)) / 100));
+    },
+    codigo() { return cuponLeer(); },
+    /* { monto, texto } del descuento que toca con este subtotal (monto 0 si ninguno) */
+    calcular(subtotal) {
+      subtotal = Math.max(0, Number(subtotal) || 0);
+      let mejor = { monto: 0, texto: "" };
+      if (!subtotal) return mejor;
+      const a = EU.promos.auto();
+      if (a && subtotal >= (Number(a.minimo) || 0)) mejor = { monto: EU.promos.monto(a, subtotal), texto: "Descuento " + EU.promos.cuanto(a) };
+      const c = EU.promos.buscar(cuponLeer());
+      if (c && subtotal >= (Number(c.minimo) || 0)) {
+        const m = EU.promos.monto(c, subtotal);
+        if (m > mejor.monto) mejor = { monto: m, texto: "Cupón " + normCodigo(c.codigo) + " (" + EU.promos.cuanto(c) + ")", codigo: normCodigo(c.codigo) };
+      }
+      return mejor;
+    },
+    lineas(subtotal) {
+      const d = EU.promos.calcular(subtotal);
+      return d.monto > 0 ? [`*${d.texto}:* -${EU.usd(d.monto)}`] : [];
+    },
+    /* Texto para anunciar el descuento para todos (tira de arriba) */
+    anuncio() {
+      const a = EU.promos.auto();
+      if (!a) return "";
+      const min = Number(a.minimo) || 0;
+      let t = EU.promos.cuanto(a) + " de descuento en tu pedido" + (min > 0 ? " desde " + EU.usd(min) : "");
+      if (/^\d{4}-\d{2}-\d{2}$/.test(String(a.hasta || ""))) t += ", hasta el " + new Date(a.hasta + "T12:00:00").toLocaleDateString("es-VE", { day: "numeric", month: "long" });
+      return t;
+    },
+    /* La casilla "¿Tienes un cupón?". subtotal: función que da el subtotal de ahora; alCambiar: la
+       plantilla vuelve a pintar sus totales. Devuelve el elemento (vacío si el negocio no tiene
+       cupones); la plantilla llama a caja.actualizar() cada vez que cambia su pedido. */
+    caja({ subtotal, alCambiar } = {}) {
+      const caja = document.createElement("div");
+      caja.className = "eu-cupon";
+      caja.actualizar = () => {};
+      if (!EU.promos.hayCupones()) { caja.hidden = true; return caja; }
+      const sub = () => Math.max(0, Number(typeof subtotal === "function" ? subtotal() : 0) || 0);
+      let abierto = false, error = "";
+      function pintar() {
+        const cod = cuponLeer(), c = EU.promos.buscar(cod);
+        caja.replaceChildren();
+        if (c) {
+          const min = Number(c.minimo) || 0, s = sub(), d = EU.promos.calcular(s);
+          const p = document.createElement("p");
+          p.className = "eu-cupon-ok";
+          p.setAttribute("role", "status");
+          const b = document.createElement("b");
+          b.textContent = "Cupón " + normCodigo(c.codigo);
+          p.append(b, " ", s < min ? `aplica en pedidos desde ${EU.usd(min)}. Te faltan ${EU.usd(min - s)}.`
+            : d.codigo === normCodigo(c.codigo) ? `aplicado: -${EU.usd(d.monto)}`
+            : "aplicado, pero el descuento para todos te conviene más y es el que se usa.");
+          const quitar = document.createElement("button");
+          quitar.type = "button"; quitar.className = "eu-cupon-quitar"; quitar.textContent = "Quitar";
+          quitar.addEventListener("click", () => { cuponPoner(""); abierto = true; error = ""; pintar(); if (alCambiar) alCambiar(); });
+          p.append(" ", quitar);
+          caja.append(p);
+          return;
+        }
+        if (cod) cuponPoner(""); // un cupón que ya no existe o venció
+        if (!abierto) {
+          const b = document.createElement("button");
+          b.type = "button"; b.className = "eu-cupon-abrir"; b.textContent = "¿Tienes un cupón de descuento?";
+          b.addEventListener("click", () => { abierto = true; pintar(); const i = caja.querySelector("input"); if (i) i.focus(); });
+          caja.append(b);
+          return;
+        }
+        const f = document.createElement("div");
+        f.className = "eu-cupon-fila";
+        const id = "eu-cupon-" + Math.random().toString(36).slice(2, 8);
+        const lab = document.createElement("label");
+        lab.htmlFor = id; lab.textContent = "Cupón de descuento";
+        const inp = document.createElement("input");
+        inp.id = id; inp.type = "text"; inp.maxLength = 24; inp.autocomplete = "off"; inp.autocapitalize = "characters"; inp.spellcheck = false;
+        inp.placeholder = "Escribe el código"; inp.setAttribute("enterkeyhint", "done");
+        const ok = document.createElement("button");
+        ok.type = "button"; ok.textContent = "Aplicar";
+        const aplicar = () => {
+          const c2 = EU.promos.buscar(inp.value);
+          if (!c2) { error = inp.value.trim() ? "Ese cupón no existe o ya venció." : "Escribe el código del cupón."; pintar(); const i = caja.querySelector("input"); if (i) { i.value = inp.value; i.focus(); } return; }
+          cuponPoner(normCodigo(c2.codigo)); error = ""; pintar(); if (alCambiar) alCambiar();
+        };
+        ok.addEventListener("click", aplicar);
+        inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); aplicar(); } });
+        f.append(inp, ok);
+        caja.append(lab, f);
+        if (error) {
+          const e = document.createElement("p");
+          e.className = "eu-cupon-error"; e.setAttribute("role", "alert"); e.textContent = error;
+          inp.setAttribute("aria-invalid", "true");
+          caja.append(e);
+        }
+      }
+      caja.actualizar = () => { if (cuponLeer()) pintar(); };
+      pintar();
+      return caja;
+    },
+  };
+
+  /* ---------- Visitas ----------
+     Cada teléfono cuenta una visita por página y por día (lo recuerda en el teléfono). No se envía
+     nada de la persona. El teléfono donde el dueño tiene abierto su panel no cuenta, para que sus
+     propias visitas no inflen el número. */
+  function contarVisita(s) {
+    try {
+      if (!s || s.demo || !s.id || enPanel) return;
+      if (localStorage.getItem("eu:panel")) return;
+      const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Caracas" }).format(new Date());
+      const clave = "eu:visita:" + s.id;
+      if (localStorage.getItem(clave) === hoy) return;
+      localStorage.setItem(clave, hoy);
+      fetch(BASE + "/rest/v1/rpc/eu_registrar_visita", {
+        method: "POST", keepalive: true,
+        headers: { apikey: C.supabaseKey, Authorization: "Bearer " + C.supabaseKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ p_sitio: s.id }),
+      }).catch(() => { /* sin conexión: no pasa nada */ });
+    } catch (_) { /* las visitas nunca deben estorbar la página */ }
+  }
+
   /* ---------- Quien compra: sus datos y su último pedido ----------
      Se guardan solo en el teléfono de quien compra (localStorage), uno por negocio. Nunca viajan a la
      base de datos. Así, la próxima vez su nombre y su dirección ya están escritos y le ofrecemos
@@ -434,7 +579,7 @@
     if (!est.abierto) html += `<div class="eu-tira eu-tira-cerrado" role="status"><b>${EU.esc(est.texto)}.</b> Puedes dejar tu pedido y te respondemos apenas abramos.</div>`;
     if (c.hoy.aviso) html += `<div class="eu-tira eu-tira-aviso" role="status">${EU.esc(c.hoy.aviso)}</div>`;
     const temp = K.temporada.find((t) => t.id === c.animaciones.temporada);
-    const textoBanner = c.banner.texto || (temp && temp.saludo) || "";
+    const textoBanner = c.banner.texto || EU.promos.anuncio() || (temp && temp.saludo) || "";
     if (textoBanner) {
       const estilo = ["fijo", "desliza", "parpadea"].includes(c.banner.estilo) ? c.banner.estilo : "fijo";
       const t = EU.esc(textoBanner);
@@ -605,6 +750,8 @@
     document.title = sitio.nombre + (sitio.c.negocio.eslogan ? " · " + sitio.c.negocio.eslogan : "");
     EU.aplicarTema(sitio.c.tema || {});
     tiras(sitio.c);
+    contarVisita(sitio);
+    if (params.get("cupon") && EU.promos.buscar(params.get("cupon"))) cuponPoner(normCodigo(params.get("cupon")));
     EU._listo = true;
     for (const fn of pendientes.splice(0)) {
       try { fn(sitio); } catch (err) { console.error(err); }

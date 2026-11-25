@@ -85,6 +85,24 @@ En las cinco plantillas, cuando alguien envía un pedido, su teléfono recuerda 
 - En la vista previa del panel no aparece nada de esto.
 - Código: `EU.cliente` en `core/sitio.js` (guardar, rellenar y el aviso) y, en cada `t/<plantilla>/app.js`, cómo se guarda y se vuelve a armar su carrito. La pizzería recalcula el precio de las pizzas armadas por el cliente con los ingredientes de hoy.
 
+## Visitas
+
+Cada página cuenta cuántas personas la abren: una visita por teléfono y por día (el teléfono lo recuerda). No se guarda nada de la persona, solo el número de visitas de cada día. El teléfono donde el dueño tiene abierto su panel no cuenta.
+
+- En el panel del cliente, **Hoy** muestra "Visitas hoy" junto a los pedidos, y **Mis pedidos** tiene "Visitas a tu página" (hoy, 7 días, este mes), "Visitas por día" y, con 10 visitas o más, "de cada 100 personas que entraron, N te hicieron un pedido".
+- Base de datos: tabla `eu_visitas` (cada dueño solo ve las suyas), función `eu_registrar_visita` (solo suma en páginas activas, con tope por día) y `eu_resumen_pedidos` trae `visitas`. Se borran solas después de 13 meses. Ver `sql/2026-11-25_visitas.sql`.
+- Se cuentan desde el 25 de noviembre de 2026.
+
+## Promociones y cupones
+
+En el panel del cliente, **Promociones**:
+
+- **Descuento para todos**: porcentaje o monto fijo, con compra mínima y último día opcionales. Se aplica solo y sale anunciado arriba de la página (si el dueño no puso su propio texto de promoción en Apariencia).
+- **Cupones**: código, porcentaje o monto fijo, compra mínima, fecha de vencimiento y activo/inactivo. El cliente lo escribe en "¿Tienes un cupón de descuento?" dentro de su pedido. También se puede mandar el enlace con el cupón ya puesto: `…?n=negocio&cupon=CODIGO`.
+- Si hay descuento para todos y cupón, se usa el que más le conviene al cliente (no se suman). El descuento sale en el pedido, en el total, en los datos de pago y en el mensaje de WhatsApp ("*Cupón AMIGO (20%):* -$2.00"), y el total que queda en "Mis pedidos" ya lo trae descontado.
+- Los códigos se guardan con el resto del contenido de la página, que es público. Alguien con conocimientos técnicos podría verlos: no uses cupones de mucho valor. El dueño siempre ve el cupón en el mensaje antes de confirmar el pedido.
+- Código: `EU.promos` en `core/sitio.js` (cálculo, casilla del cupón y anuncio) y la línea del descuento en cada `t/<plantilla>/app.js`. El campo de fecha nuevo está en `core/campos.js`.
+
 ## Compartir y código QR
 
 En el panel del cliente, **Compartir** tiene:

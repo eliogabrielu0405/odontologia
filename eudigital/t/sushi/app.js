@@ -19,7 +19,8 @@ EU.alListo(function (sitio) {
   const tipoActual = () => (document.querySelector('input[name="tipo"]:checked') || {}).value || (TIPOS[0] && TIPOS[0].id) || "llevar";
   const subtotal = () => [...carrito].reduce((s, [id, n]) => s + (Number(buscar(id).precio) || 0) * n, 0);
   const delivery = () => (tipoActual() === "delivery" && carrito.size ? EU.costoDelivery() : 0);
-  const total = () => subtotal() + delivery();
+  const descuento = () => EU.promos.calcular(subtotal());
+  const total = () => subtotal() - descuento().monto + delivery();
   const unidades = () => [...carrito.values()].reduce((a, b) => a + b, 0);
 
   /* ---------- Portada ---------- */
@@ -78,7 +79,8 @@ EU.alListo(function (sitio) {
       return `<div class="item">
         <div><h4>${esc(p.nombre)}</h4><div class="sub">${n} × ${usd(p.precio)} = ${usd(n * p.precio)}</div></div>
         <div class="der">${stepperHTML(id, n)}<button class="quitar" type="button" data-borrar="${esc(id)}">Eliminar</button></div></div>`;
-    }).join("") + (delivery() ? `<div class="item"><div><h4>Delivery</h4></div><div class="der"><b>${usd(delivery())}</b></div></div>` : "");
+    }).join("") + (delivery() ? `<div class="item"><div><h4>Delivery</h4></div><div class="der"><b>${usd(delivery())}</b></div></div>` : "")
+      + (descuento().monto ? `<div class="item descuento"><div><h4>${esc(descuento().texto)}</h4></div><div class="der"><b>-${usd(descuento().monto)}</b></div></div>` : "");
   }
   function renderPago() {
     const tipo = tipoActual();
@@ -95,6 +97,7 @@ EU.alListo(function (sitio) {
     if (tipoActual() === "delivery") m += `*Dirección:* ${$("#direccion").value.trim()}\n`;
     m += `\n*Detalle:*\n${lineas.join("\n")}\n`;
     if (delivery()) m += `• Delivery — ${usd(delivery())}\n`;
+    EU.promos.lineas(subtotal()).forEach((l) => { m += `• ${l}\n`; });
     const notas = $("#notas").value.trim();
     if (notas) m += `\n*Notas:* ${notas}\n`;
     m += `\n*Total: ${usd(total())}*`;
@@ -115,6 +118,7 @@ EU.alListo(function (sitio) {
     $("#barra").classList.toggle("vacia", unidades() === 0);
     renderItems();
     renderPago();
+    cupon.actualizar();
     armarEnlace();
   }
   function validar() {
@@ -138,6 +142,10 @@ EU.alListo(function (sitio) {
     $("#error").hidden = true;
     actualizar();
   }
+
+  // Casilla "¿Tienes un cupón?" (solo sale si el negocio tiene cupones)
+  const cupon = EU.promos.caja({ subtotal, alCambiar: () => actualizar() });
+  $("#pago").before(cupon);
 
   /* Tipo de pedido según lo que ofrece el negocio */
   $("#tipos").innerHTML = TIPOS.map((t, i) => `<input type="radio" name="tipo" id="t-${t.id}" value="${t.id}"${i === 0 ? " checked" : ""}><label for="t-${t.id}">${t.nombre}</label>`).join("");

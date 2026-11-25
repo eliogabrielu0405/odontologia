@@ -1402,6 +1402,14 @@ function cambioCarrito() {
   if (!$('#carrito').hidden) renderCarrito();
 }
 
+// Promociones y cupones de la plataforma: el descuento sale del total de las prendas
+const descuentoB = () => (window.EU && window.EU.promos ? window.EU.promos.calcular(totalPrecio()) : { monto: 0, texto: '' });
+const totalFinal = () => totalPrecio() - descuentoB().monto;
+const cuponB = window.EU && window.EU.promos ? window.EU.promos.caja({ subtotal: totalPrecio, alCambiar: () => renderCarrito() }) : null;
+if (cuponB) { cuponB.classList.add('campo'); $('#f-pagos').closest('fieldset').before(cuponB); }
+const lineaDescuento = el('div', { class: 'total total-descuento', style: 'display:none' });
+$('#total').closest('.total').before(lineaDescuento);
+
 function renderCarrito() {
   const vacio = estado.carrito.length === 0;
   $('#carrito-vacio').hidden = !vacio;
@@ -1428,8 +1436,12 @@ function renderCarrito() {
         el('p', { class: 'precio' }, precio(p.precio * item.cantidad)),
         el('button', { class: 'enlace enlace-chico', type: 'button', onclick: () => { estado.carrito.splice(idx, 1); cambioCarrito(); $('#cerrar-carrito').focus(); } }, 'Quitar')));
   }));
-  $('#total').textContent = precio(totalPrecio());
-  $('#total-bs').textContent = AJUSTES.tasa > 0 ? `${bolivares(totalPrecio())} a tasa BCV de ${formatoBs.format(AJUSTES.tasa)}` : '';
+  const desc = descuentoB();
+  lineaDescuento.style.display = desc.monto ? '' : 'none';
+  lineaDescuento.replaceChildren(el('span', {}, desc.texto), el('span', { class: 'precio' }, '-' + precio(desc.monto)));
+  if (cuponB) cuponB.actualizar();
+  $('#total').textContent = precio(totalFinal());
+  $('#total-bs').textContent = AJUSTES.tasa > 0 ? `${bolivares(totalFinal())} a tasa BCV de ${formatoBs.format(AJUSTES.tasa)}` : '';
   $('#total-bs').hidden = !AJUSTES.tasa;
   renderDatos();
 }
@@ -1467,8 +1479,9 @@ function mensajePedido() {
     lineas.push(`   ${c.nombre}, talla ${item.talla}, cantidad ${item.cantidad}`);
     lineas.push(`   ${precio(p.precio * item.cantidad)}`);
   });
-  lineas.push('', `*Total: ${precio(totalPrecio())}*`);
-  if (AJUSTES.tasa > 0) lineas.push(`En bolívares: ${bolivares(totalPrecio())} (tasa BCV ${formatoBs.format(AJUSTES.tasa)}${AJUSTES.tasaFecha ? ` del ${fechaLarga(AJUSTES.tasaFecha)}` : ''})`);
+  if (window.EU && window.EU.promos) lineas.push(...window.EU.promos.lineas(totalPrecio()).map((l) => '   ' + l));
+  lineas.push('', `*Total: ${precio(totalFinal())}*`);
+  if (AJUSTES.tasa > 0) lineas.push(`En bolívares: ${bolivares(totalFinal())} (tasa BCV ${formatoBs.format(AJUSTES.tasa)}${AJUSTES.tasaFecha ? ` del ${fechaLarga(AJUSTES.tasaFecha)}` : ''})`);
   lineas.push('');
   lineas.push(`Nombre: ${d.nombre.trim()}`);
   lineas.push(`Entrega: ${entrega.nombre}`);
@@ -1481,7 +1494,7 @@ function mensajePedido() {
 
 function actualizarEnlace() {
   const cajaPago = $('#f-pago-detalle');
-  if (cajaPago && window.EU_BOUTIQUE) cajaPago.innerHTML = window.EU_BOUTIQUE.detallePago(estado.datos.pago, totalPrecio());
+  if (cajaPago && window.EU_BOUTIQUE) cajaPago.innerHTML = window.EU_BOUTIQUE.detallePago(estado.datos.pago, totalFinal());
   const entrega = CONFIG.entregas.find((o) => o.id === estado.datos.entrega) || CONFIG.entregas[0];
   $('#enviar').href = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(mensajePedido())}`;
   $('#nota-entrega').textContent = entrega.nota.replace('{direccion}', [CONFIG.direccion, CONFIG.ciudad].filter(Boolean).join(', ') || 'la tienda');
@@ -1506,7 +1519,7 @@ $('#enviar').addEventListener('click', (e) => {
   if (window.EU && window.EU.registrarPedido) {
     window.EU.registrarPedido({
       items: estado.carrito.map((item) => { const p = porId.get(item.id) || {}; return { nombre: p.nombre, cantidad: item.cantidad, precio: p.precio }; }),
-      total: totalPrecio(), tipo: entrega.nombre, pago: d.pago,
+      total: totalFinal(), tipo: entrega.nombre, pago: d.pago,
     });
   }
   if (window.EU && window.EU.cliente) {
@@ -1514,7 +1527,7 @@ $('#enviar').addEventListener('click', (e) => {
       nombre: d.nombre, direccion: d.direccion,
       pedido: {
         resumen: estado.carrito.map((item) => { const p = porId.get(item.id) || { colores: [] }; const col = p.colores[item.color]; return { nombre: `${p.nombre}${col ? ', ' + col.nombre.toLowerCase() : ''}, talla ${item.talla}`, cantidad: item.cantidad }; }),
-        total: totalPrecio(), datos: { carrito: estado.carrito.map((item) => ({ ...item })) },
+        total: totalFinal(), datos: { carrito: estado.carrito.map((item) => ({ ...item })) },
       },
     });
   }

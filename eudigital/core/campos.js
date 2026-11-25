@@ -171,6 +171,15 @@
         return caja(def, ctl);
       },
 
+      // Fecha (AAAA-MM-DD). Vacía = sin fecha
+      fecha(def, obj) {
+        const b = enlace(def, obj);
+        const v = String(b.get() || "");
+        const inp = h("input", { class: "entrada", type: "date", id: idDe(def), value: /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "" });
+        inp.addEventListener("change", () => { b.set(/^\d{4}-\d{2}-\d{2}$/.test(inp.value) ? inp.value : ""); cambio(def); });
+        return caja(def, inp);
+      },
+
       interruptor(def, obj) {
         const b = enlace(def, obj);
         const inp = h("input", { type: "checkbox", role: "switch", checked: !!b.get() });

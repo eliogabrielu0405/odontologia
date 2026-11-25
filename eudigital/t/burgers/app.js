@@ -41,7 +41,11 @@ EU.alListo(function (sitio) {
   const cuenta = () => lineas().reduce((s, l) => s + l.cant, 0);
   const subtotal = () => lineas().reduce((s, l) => s + l.cant * l.precio, 0);
   const delivery = () => (tipo === "delivery" && cuenta() ? EU.costoDelivery() : 0);
-  const total = () => subtotal() + delivery();
+  const descuento = () => EU.promos.calcular(subtotal());
+  const total = () => subtotal() - descuento().monto + delivery();
+  // Casilla "¿Tienes un cupón?" (solo sale si el negocio tiene cupones)
+  const cupon = EU.promos.caja({ subtotal, alCambiar: () => renderPedido() });
+  document.getElementById("pago").before(cupon);
 
   /* ---------- Encabezado ---------- */
   $("nombre").textContent = sitio.nombre;
@@ -259,7 +263,7 @@ EU.alListo(function (sitio) {
     const ls = lineas();
     $("cuenta").textContent = cuenta();
     $("lineas").innerHTML = ls.length
-      ? `<ul>${ls.map((l) => `<li><div class="txt"><b>${esc(l.nombre)}</b><span>${usd(l.cant * l.precio)}</span></div>${cantidadHTML(l.id, l.cant)}<button class="borrar" type="button" data-borrar="${esc(l.id)}" aria-label="Eliminar ${esc(l.nombre)}"><svg class="ic"><use href="#i-basura"/></svg></button></li>`).join("")}${delivery() ? `<li><div class="txt"><b>Delivery</b><span>${usd(delivery())}</span></div></li>` : ""}</ul>`
+      ? `<ul>${ls.map((l) => `<li><div class="txt"><b>${esc(l.nombre)}</b><span>${usd(l.cant * l.precio)}</span></div>${cantidadHTML(l.id, l.cant)}<button class="borrar" type="button" data-borrar="${esc(l.id)}" aria-label="Eliminar ${esc(l.nombre)}"><svg class="ic"><use href="#i-basura"/></svg></button></li>`).join("")}${delivery() ? `<li><div class="txt"><b>Delivery</b><span>${usd(delivery())}</span></div></li>` : ""}${descuento().monto ? `<li class="descuento"><div class="txt"><b>${esc(descuento().texto)}</b><span>-${usd(descuento().monto)}</span></div></li>` : ""}</ul>`
       : `<p class="ped-vacio">Aún no hay productos. Elige algo del menú para empezar.</p>`;
     $("total").textContent = usd(total());
     $("totalBs").textContent = EU.bs(total());
@@ -267,6 +271,7 @@ EU.alListo(function (sitio) {
     document.querySelectorAll("[data-tipo]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tipo === tipo)));
     renderPago();
     renderEstadoEnvio();
+    cupon.actualizar();
     const n = cuenta();
     $("bolsaN").hidden = !n; $("bolsaN").textContent = n;
     $("bolsa").setAttribute("aria-label", `Ver pedido, ${n} productos`);
@@ -303,6 +308,7 @@ EU.alListo(function (sitio) {
       "*Detalle del pedido:*",
       ...lineas().map((l) => `- ${l.cant}x ${l.nombre} - ${usd(l.cant * l.precio)}`),
       ...(delivery() ? [`- Delivery - ${usd(delivery())}`] : []),
+      ...EU.promos.lineas(subtotal()),
       LINEA,
       `*Total a pagar:* ${usd(total())} USD`,
       ...EU.pagos.lineas(pago, total()),
