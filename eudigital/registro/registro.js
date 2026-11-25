@@ -13,7 +13,9 @@
   const WA = EU.soloNumeros(C.whatsappMarca);
   const waEU = (texto) => "https://wa.me/" + WA + "?text=" + encodeURIComponent(texto);
   let planes = EU.planes.leer();
-  const d = { plantilla: ORDEN.includes(params.get("plantilla")) ? params.get("plantilla") : "", nombre: "", usuario: "", whatsapp: "", contacto: "", clave: "" };
+  // Si viene de "Mira tu negocio aquí" en la portada, el nombre llega ya escrito
+  const nombreTraido = String(params.get("nombre") || "").replace(/[\u0000-\u001f\u007f]/g, "").replace(/\s+/g, " ").trim().slice(0, 80);
+  const d = { plantilla: ORDEN.includes(params.get("plantilla")) ? params.get("plantilla") : "", nombre: nombreTraido, usuario: EU.slug(nombreTraido), whatsapp: "", contacto: "", clave: "" };
   let usuarioTocado = false;
 
   const telefono = (t) => { let n = EU.soloNumeros(t); if (/^0[24]\d{9}$/.test(n)) n = "58" + n.slice(1); return n; };
@@ -66,7 +68,7 @@
         h("h3", {}, p.nombre),
         h("p", {}, p.descripcion),
         h("ul", {}, (p.puntos || []).map((x) => h("li", {}, x))),
-        h("div", {}, h("a", { class: "btn btn-sec btn-chico", href: "/t/" + p.id + "/", target: "_blank", rel: "noopener" }, "Abrir la demo")));
+        h("div", {}, h("a", { class: "btn btn-sec btn-chico", href: "/t/" + p.id + "/" + (d.nombre.trim() ? "?prueba=" + encodeURIComponent(d.nombre.trim()) : ""), target: "_blank", rel: "noopener" }, d.nombre.trim() ? "Verla con tu nombre" : "Abrir la demo")));
     }
 
     /* Paso 2: el negocio */
@@ -81,6 +83,7 @@
     };
     const nombre = h("input", { class: "entrada", type: "text", maxlength: 80, autocomplete: "organization", placeholder: "Ej: Arepera Doña Rosa" });
     const usuario = h("input", { class: "entrada", type: "text", maxlength: 40, autocomplete: "username", autocapitalize: "none", spellcheck: false, placeholder: "Ej: arepera-rosa" });
+    nombre.value = d.nombre; usuario.value = d.usuario;
     const whatsapp = h("input", { class: "entrada", type: "tel", inputmode: "tel", autocomplete: "tel", maxlength: 22, placeholder: "Ej: 0414 123 4567" });
     const contacto = h("input", { class: "entrada", type: "text", maxlength: 80, autocomplete: "name" });
     const clave = h("input", { class: "entrada", type: "password", autocomplete: "new-password", minlength: 8, maxlength: 60 });
@@ -210,6 +213,7 @@
       sub.textContent = "Eliges una plantilla, pones los datos de tu negocio y tu página queda en línea de una vez, con su menú de muestra listo para que lo cambies. Sin tarjeta.";
     };
     pintarTitulo(); pintarLetra(); pintarEnlace(); pintarVista();
+    if (d.usuario) revisarUsuario();
     app.replaceChildren(h("div", { class: "rg" }, cabecera(),
       h("main", {},
         h("div", { class: "rg-titulo" }, titulo, sub),

@@ -47,6 +47,15 @@ Cualquiera puede crear su página desde la portada o desde `/registro/`: elige l
 - Para que no abusen: una prueba por número de WhatsApp, hasta 6 registros al día desde una misma conexión y hasta 40 por hora en total.
 - Si un día prefieres crear tú las cuentas, apaga **Registro abierto** en Ajustes. La portada cambia sola: los botones pasan a escribirte por WhatsApp.
 
+## "Mira cómo queda con tu negocio" (portada)
+
+Justo debajo de la presentación, la portada tiene un recuadro donde la persona escribe el nombre de su negocio, elige una plantilla y toca **Ver mi página**: la demo aparece dentro de un teléfono con su nombre (en el encabezado, en la pared de la hamburguesa, en el título). Debajo salen **Crear [su negocio] gratis**, que abre el registro con la plantilla elegida y el nombre ya escrito (y el usuario sugerido), y **Abrirla completa**. Si el registro está cerrado, el botón abre WhatsApp con el nombre del negocio en el mensaje.
+
+- Las demos aceptan `?prueba=Nombre` (por ejemplo `/t/sushi/?prueba=Sushi%20Koi`). Solo cambia el nombre de la demo, nunca una página de un cliente, y la tira de arriba dice "Así se vería la página de …" con el enlace al registro.
+- Después de escribir el nombre, los botones "Ver demo" de las plantillas también lo llevan ("Ver con mi nombre").
+- La demo solo se carga cuando la persona toca el botón; antes se muestra la foto de la plantilla, para que la portada siga cargando rápido.
+- Archivos: la sección está en `index.html` (`#mira`) y su lógica en `core/portada.js` (`mira()`).
+
 ## Crear un cliente tú mismo
 
 1. En tu panel, **Nuevo cliente**: nombre del negocio, usuario (sale solo), plantilla, WhatsApp donde recibe pedidos, con qué plan empieza (prueba gratis, Básico o Premium) y hasta cuándo está pagado.

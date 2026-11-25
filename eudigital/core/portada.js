@@ -32,18 +32,27 @@
     return d.length === 11 ? d.slice(0, 4) + "-" + d.slice(4, 7) + "-" + d.slice(7) : d;
   };
   // Con el registro abierto, los botones llevan al registro; cerrado, a escribirnos por WhatsApp
-  const destino = (plantilla) => (pl.registroAbierto
-    ? { href: "/registro/" + (plantilla ? "?plantilla=" + plantilla : ""), target: null }
-    : { href: enlaceWa("Hola, quiero una página de pedidos para mi negocio" + (plantilla && P[plantilla] ? " con la plantilla " + P[plantilla].nombre : "") + "."), target: "_blank" });
+  const destino = (plantilla, nombre) => {
+    if (pl.registroAbierto) {
+      const q = new URLSearchParams();
+      if (plantilla) q.set("plantilla", plantilla);
+      if (nombre) q.set("nombre", nombre);
+      return { href: "/registro/" + (q.toString() ? "?" + q : ""), target: null };
+    }
+    return { href: enlaceWa("Hola, quiero una página de pedidos para " + (nombre ? "mi negocio " + nombre : "mi negocio") + (plantilla && P[plantilla] ? " con la plantilla " + P[plantilla].nombre : "") + "."), target: "_blank" };
+  };
+  // Nombre que la persona escribió en "Mira tu negocio aquí": las demos y los botones lo llevan
+  let nombreMira = "";
+  const demo = (k) => "/t/" + k + "/" + (nombreMira ? "?prueba=" + encodeURIComponent(nombreMira) : "");
 
   /* ---------- Plantillas ---------- */
   function pintarPlantillas() {
     const cont = document.getElementById("lista-plantillas");
     cont.replaceChildren(...ORDEN.filter((k) => P[k]).map((k) => {
       const t = P[k];
-      const d = destino(k);
+      const d = destino(k, nombreMira);
       return el("article", { class: "ld-pl" },
-        el("a", { class: "ld-pl-foto", href: "/t/" + k + "/", "aria-label": "Ver la demo de " + t.nombre },
+        el("a", { class: "ld-pl-foto", href: demo(k), "aria-label": "Ver la demo de " + t.nombre },
           el("img", { src: t.vistaPrevia, alt: "Vista de la plantilla " + t.nombre, loading: "lazy", width: "390", height: "640" })),
         el("div", { class: "ld-pl-txt" },
           el("h3", {}, t.nombre),
@@ -51,10 +60,49 @@
           t.ideal ? el("p", { class: "ld-pl-ideal" }, "Ideal para " + t.ideal.charAt(0).toLowerCase() + t.ideal.slice(1) + ".") : null,
           Array.isArray(t.puntos) && t.puntos.length ? el("ul", { class: "plan-puntos" }, t.puntos.map((x) => el("li", {}, x))) : null,
           el("div", { class: "acciones" },
-            el("a", { class: "btn btn-sec btn-chico", href: "/t/" + k + "/" }, "Ver demo"),
+            el("a", { class: "btn btn-sec btn-chico", href: demo(k) }, nombreMira ? "Ver con mi nombre" : "Ver demo"),
             el("a", { class: "btn btn-chico", href: d.href, target: d.target, rel: d.target ? "noopener" : null },
               pl.registroAbierto ? "Probar esta gratis" : "Pedir esta"))));
     }));
+  }
+
+  /* ---------- Mira tu negocio aquí ----------
+     La persona escribe el nombre de su negocio, elige una plantilla y la ve al instante dentro del
+     teléfono, con su nombre (la demo recibe ?prueba=Nombre). La demo de verdad solo se carga cuando
+     toca "Ver mi página"; antes se muestra la foto de la plantilla, que pesa poco. */
+  function mira() {
+    const form = document.getElementById("mira-form");
+    if (!form) return;
+    const entrada = document.getElementById("mira-nombre");
+    const img = document.getElementById("mira-img"), marco = document.getElementById("mira-frame");
+    const acciones = document.getElementById("mira-acciones"), crear = document.getElementById("mira-crear"), abrir = document.getElementById("mira-abrir");
+    const titulo = document.getElementById("mira-tel-titulo");
+    const tel = document.querySelector(".mira-tel");
+    let elegida = P.burgers ? "burgers" : ORDEN.find((k) => P[k]);
+    let viva = false;
+    document.getElementById("mira-plantillas").replaceChildren(...ORDEN.filter((k) => P[k]).map((k) =>
+      el("label", { class: "mira-chip" },
+        el("input", { type: "radio", name: "mira-pl", value: k, checked: k === elegida, onchange: () => { elegida = k; viva ? ver(false) : foto(); } }),
+        el("span", {}, P[k].nombre))));
+    function foto() { img.src = P[elegida].vistaPrevia; img.alt = "Vista de la plantilla " + P[elegida].nombre; titulo.textContent = "Plantilla " + P[elegida].nombre; }
+    function ver(desplazar) {
+      nombreMira = entrada.value.replace(/\s+/g, " ").trim().slice(0, 40);
+      viva = true;
+      const url = demo(elegida);
+      if (marco.getAttribute("src") !== url) marco.src = url;
+      marco.hidden = false; img.hidden = true; document.getElementById("mira-pista").hidden = true;
+      titulo.textContent = nombreMira ? "Así se vería " + nombreMira : "Plantilla " + P[elegida].nombre;
+      abrir.href = url;
+      const d = destino(elegida, nombreMira);
+      crear.href = d.href;
+      if (d.target) { crear.target = d.target; crear.rel = "noopener"; } else { crear.removeAttribute("target"); crear.removeAttribute("rel"); }
+      crear.textContent = pl.registroAbierto ? (nombreMira ? "Crear " + nombreMira + " gratis" : "Crear mi página gratis") : "Pedir mi página";
+      acciones.hidden = false;
+      pintarPlantillas();
+      if (desplazar && tel.getBoundingClientRect().top > innerHeight * 0.5) tel.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+    }
+    form.addEventListener("submit", (e) => { e.preventDefault(); ver(true); });
+    foto();
   }
 
   /* ---------- Planes ---------- */
@@ -139,6 +187,7 @@
     pintarMetodos();
   }
   pintarTodo(false);
+  mira();
 
   const base = String(C.supabaseUrl || "").replace(/\/+$/, "");
   if (base) {

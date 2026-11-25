@@ -11,6 +11,9 @@
   const P = (window.EU_PLANTILLAS || {})[PLANTILLA] || { defaults: K.contenidoBase };
   const params = new URLSearchParams(location.search);
   const enPanel = params.get("vista") === "borrador" && window.parent !== window;
+  // En las demos, ?prueba=Nombre muestra la plantilla con el nombre del negocio de quien la mira
+  // (lo usa "Mira tu negocio aquí" de la portada). Solo cambia el nombre, nunca una página real.
+  const nombrePrueba = String(params.get("prueba") || "").replace(/[\u0000-\u001f\u007f]/g, "").replace(/\s+/g, " ").trim().slice(0, 40);
   const reducido = matchMedia("(prefers-reduced-motion: reduce)").matches;
   EU.reducido = reducido;
   EU.enPanel = enPanel;
@@ -321,7 +324,9 @@
     const est = EU.estado();
     let html = "";
     if (EU.sitio.demo && !enPanel) {
-      html += `<div class="eu-tira eu-tira-demo">Esta es una página de muestra de ${EU.esc(C.marca || "EU Digital")}. <a href="/registro/?plantilla=${encodeURIComponent(PLANTILLA)}">Pruébala gratis con tu negocio</a></div>`;
+      html += EU.sitio.prueba
+        ? `<div class="eu-tira eu-tira-demo">Así se vería la página de ${EU.esc(EU.sitio.nombre)}. <a href="/registro/?plantilla=${encodeURIComponent(PLANTILLA)}&amp;nombre=${encodeURIComponent(EU.sitio.nombre)}" target="_top">Créala gratis con tu menú</a></div>`
+        : `<div class="eu-tira eu-tira-demo">Esta es una página de muestra de ${EU.esc(C.marca || "EU Digital")}. <a href="/registro/?plantilla=${encodeURIComponent(PLANTILLA)}">Pruébala gratis con tu negocio</a></div>`;
     }
     if (!est.abierto) html += `<div class="eu-tira eu-tira-cerrado" role="status"><b>${EU.esc(est.texto)}.</b> Puedes dejar tu pedido y te respondemos apenas abramos.</div>`;
     if (c.hoy.aviso) html += `<div class="eu-tira eu-tira-aviso" role="status">${EU.esc(c.hoy.aviso)}</div>`;
@@ -484,7 +489,7 @@
     catch (_) { pantalla("sin-red"); return; }
     if (datos === null) { pantalla("no-disponible"); return; }
     const sitio = datos.demo
-      ? { id: null, slug: null, nombre: P.nombreDemo || P.nombre || "Mi negocio", plantilla: PLANTILLA, demo: true, contenido: {} }
+      ? { id: null, slug: null, nombre: (!enPanel && nombrePrueba) || P.nombreDemo || P.nombre || "Mi negocio", plantilla: PLANTILLA, demo: true, prueba: !enPanel && !!nombrePrueba, contenido: {} }
       : datos;
     if (sitio.plantilla && PLANTILLA && sitio.plantilla !== PLANTILLA && !enPanel) {
       location.replace("/t/" + encodeURIComponent(sitio.plantilla) + "/" + location.search);

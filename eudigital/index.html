@@ -49,6 +49,35 @@ html { scroll-behavior: smooth; }
 .ld-sec > h2 { font-size: clamp(27px, 4.8vw, 40px); letter-spacing: -.015em; }
 .ld-sec > p { color: var(--suave); margin-top: 8px; max-width: 60ch; font-size: 17px; }
 
+/* Mira tu negocio aquí: escribe el nombre y la plantilla aparece con ese nombre dentro del teléfono */
+.ld-mira { display: grid; gap: 28px; align-items: center; }
+.mira-txt > h2 { font-size: clamp(27px, 4.8vw, 40px); letter-spacing: -.015em; }
+.mira-txt > p { color: var(--suave); margin-top: 8px; max-width: 46ch; font-size: 17px; }
+.mira-form { margin-top: 20px; display: flex; flex-direction: column; gap: 14px; padding: 18px; background: var(--papel); border: 1px solid var(--linea-2); border-radius: var(--radio); box-shadow: var(--sombra); }
+.mira-form label[for] { font-weight: 700; }
+.mira-fila { display: flex; gap: 8px; flex-wrap: wrap; }
+.mira-fila .entrada { flex: 1 1 220px; min-width: 0; font-size: 17px; min-height: 48px; }
+.mira-fila .btn { min-height: 48px; flex: 0 0 auto; }
+.mira-pl { border: 0; margin: 0; padding: 0; min-width: 0; }
+.mira-pl legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
+#mira-plantillas { display: flex; flex-wrap: wrap; gap: 8px; }
+.mira-chip { position: relative; }
+.mira-chip input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.mira-chip span { display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--linea); background: var(--papel); font-weight: 700; font-size: 15px; }
+.mira-chip input:checked + span { background: var(--carbon); border-color: var(--carbon); color: #fff; }
+.mira-chip input:focus-visible + span { outline: 3px solid var(--carbon); outline-offset: 2px; }
+.mira-acciones { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.mira-tel { justify-self: center; display: flex; flex-direction: column; align-items: center; gap: 12px; scroll-margin: 16px; }
+.mira-tel-titulo { font-weight: 700; color: var(--suave); text-align: center; max-width: 30ch; overflow-wrap: anywhere; }
+.mira-marco { width: 300px; height: 600px; border-radius: 42px; border: 11px solid #141821; background: #141821; overflow: hidden; box-shadow: 0 36px 70px -34px rgba(25, 32, 43, .6); }
+.mira-pantalla { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 31px; background: var(--papel-2); }
+.mira-pantalla img { display: block; width: 100%; height: auto; }
+.mira-pista { position: absolute; left: 0; right: 0; bottom: 0; padding: 70px 18px 22px; text-align: center; font-weight: 700; color: var(--tinta); background: linear-gradient(to bottom, rgba(246, 248, 251, 0), var(--papel-2) 55%); }
+/* La demo se dibuja como en un teléfono de 390 px y se achica para que quepa en el marco */
+.mira-pantalla iframe { position: absolute; left: 0; top: 0; width: 390px; height: 811px; border: 0; transform: scale(.71282); transform-origin: 0 0; background: #fff; }
+@media (max-width: 360px) { .mira-marco { width: 270px; height: 540px; } .mira-pantalla iframe { transform: scale(.6359); height: 815px; } }
+@media (min-width: 900px) { .ld-mira { grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); } }
+
 /* Plantillas */
 .ld-plantillas { margin-top: 24px; display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 680px) { .ld-plantillas { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -201,6 +230,38 @@ html { scroll-behavior: smooth; }
   </div>
 
   <div class="ld">
+    <section class="ld-sec ld-mira" id="mira" aria-labelledby="mira-titulo">
+      <div class="mira-txt">
+        <h2 id="mira-titulo">Mira cómo queda con tu negocio</h2>
+        <p>Escribe el nombre de tu negocio y elige una plantilla. Así la verían tus clientes, ahora mismo.</p>
+        <form class="mira-form" id="mira-form" autocomplete="off">
+          <label for="mira-nombre">El nombre de tu negocio</label>
+          <div class="mira-fila">
+            <input class="entrada" id="mira-nombre" type="text" maxlength="40" placeholder="Ej: Arepera Doña Rosa" enterkeyhint="go" autocapitalize="words">
+            <button class="btn" type="submit">Ver mi página</button>
+          </div>
+          <fieldset class="mira-pl">
+            <legend>Plantilla</legend>
+            <div id="mira-plantillas"></div>
+          </fieldset>
+        </form>
+      </div>
+      <div class="mira-tel">
+        <p class="mira-tel-titulo" id="mira-tel-titulo" aria-live="polite"></p>
+        <div class="mira-marco">
+          <div class="mira-pantalla">
+            <img id="mira-img" alt="" width="390" height="600">
+            <p class="mira-pista" id="mira-pista">Escribe tu nombre y toca «Ver mi página»</p>
+            <iframe id="mira-frame" title="Vista de tu página" hidden></iframe>
+          </div>
+        </div>
+        <div class="mira-acciones" id="mira-acciones" hidden>
+          <a class="btn btn-wa btn-grande" id="mira-crear" href="/registro/">Crear mi página gratis</a>
+          <a class="btn btn-sec btn-grande" id="mira-abrir" href="/t/burgers/" target="_blank" rel="noopener">Abrirla completa</a>
+        </div>
+      </div>
+    </section>
+
     <section class="ld-sec" id="plantillas">
       <h2>Cinco plantillas, una para cada negocio</h2>
       <p>Ábrelas y haz un pedido de prueba: así lo vería tu cliente. En la prueba gratis usas la que elijas.</p>
