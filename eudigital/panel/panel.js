@@ -208,10 +208,25 @@
         ...(P.agotados || []).map((a) => ({ titulo: null, campos: [{ tipo: "agotados", ruta: a.ruta, titulo: a.titulo + " agotados hoy", ayuda: a.ayuda }] })),
       ],
     };
+    /* Cada lista de la plantilla con "nombre" (productos, categorías, ingredientes…) suma una parte
+       plegable "En otros idiomas": nombre y descripción en inglés, portugués e italiano (i18n). */
+    const IDIOMAS_MENU = [["en", "inglés"], ["pt", "portugués"], ["it", "italiano"]];
+    const conIdiomas = (c) => {
+      if (c.tipo !== "lista" || !Array.isArray(c.campos)) return c;
+      const nombre = c.campos.find((x) => x.clave === "nombre" && x.tipo === "texto");
+      if (!nombre) return c;
+      const desc = c.campos.find((x) => ["desc", "descripcion"].includes(x.clave) && ["area", "texto"].includes(x.tipo));
+      const campos = [];
+      IDIOMAS_MENU.forEach(([l, n]) => {
+        campos.push({ tipo: "texto", clave: "i18n." + l + ".nombre", etiqueta: "Nombre en " + n, max: nombre.max || 60 });
+        if (desc) campos.push({ tipo: desc.tipo, clave: "i18n." + l + "." + desc.clave, etiqueta: (desc.etiqueta || "Descripción") + " en " + n, max: desc.max || 200 });
+      });
+      return Object.assign({}, c, { campos: [...c.campos, { tipo: "plegable", etiqueta: "En otros idiomas (opcional)", ayuda: "Si alguien ve tu página en inglés, portugués o italiano, sale esto. Lo que dejes vacío sale en español.", campos }] });
+    };
     const propias = (P.secciones || []).map((s) => {
       const hojas = [];
       let suelta = null;
-      (s.campos || []).forEach((c) => {
+      (s.campos || []).map(conIdiomas).forEach((c) => {
         if (c.tipo === "lista") { suelta = null; hojas.push({ titulo: null, campos: [c] }); }
         else { if (!suelta) { suelta = { titulo: null, campos: [] }; hojas.push(suelta); } suelta.campos.push(c); }
       });
@@ -335,6 +350,10 @@
         { titulo: "Cinta de promoción", campos: [
           { tipo: "texto", ruta: "banner.texto", etiqueta: "Texto", max: 90, placeholder: "Ej: Martes de 2x1 en hamburguesas", ayuda: "Sale en una cinta de color arriba de tu página. Déjalo vacío para quitarla." },
           { tipo: "selector", ruta: "banner.estilo", etiqueta: "Movimiento", opciones: K.banner },
+        ] },
+        { titulo: "Idiomas", campos: [
+          { tipo: "interruptor", ruta: "idiomas.mostrar", etiqueta: "Selector de idioma arriba de tu página",
+            ayuda: "Tus clientes pueden ver la página en español, inglés, portugués o italiano. Aunque lo ocultes, la página sale en el idioma del teléfono de quien la abre. Los botones y avisos se traducen solos; los nombres de tus productos, si los escribes en \"En otros idiomas\" dentro de cada producto. Los pedidos te llegan en español." },
         ] },
         ...((P.apariencia || []).length ? [{ titulo: "Detalles de tu plantilla", campos: P.apariencia }] : []),
       ],

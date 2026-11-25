@@ -515,6 +515,14 @@
         return caja({ etiqueta: def.titulo, ayuda: def.ayuda || "Enciende lo que se acabó hoy. En la página sale como agotado.", tipo: "agotados" }, h("div", { class: "campos" }, buscar, cont), { legend: true });
       },
 
+      // Como grupo, pero cerrado hasta que lo abren (para lo opcional, como las traducciones)
+      plegable(def, obj) {
+        return h("details", { class: "campo plegable", "data-tipo": "plegable" },
+          h("summary", {}, def.etiqueta || "Más"),
+          def.ayuda ? h("p", { class: "ayuda" }, def.ayuda) : null,
+          campos(def.campos || [], obj));
+      },
+
       grupo(def, obj) {
         return h("div", { class: "campo", "data-tipo": "grupo" },
           def.etiqueta ? h("h3", { style: "font-size:17px" }, def.etiqueta) : null,

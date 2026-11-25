@@ -21,6 +21,11 @@
 .eu-tira-promo { background: var(--eu-principal, #c62828); color: var(--eu-sobre-principal, #fff); font-weight: 800; }
 .eu-tira-demo { background: #19202b; color: #fff; font-weight: 600; }
 .eu-tira-demo a { color: #9fb4ff; font-weight: 800; white-space: nowrap; }
+/* Selector de idioma: delgado, para no quitarle espacio a la comida */
+.eu-tira-idioma { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px 4px; padding-block: 2px; background: #f1f3f6; color: #2b3340; font-weight: 600; font-size: 13px; }
+.eu-tira-idioma button { min-height: 32px; padding: 0 9px; border: 0; border-radius: 999px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.eu-tira-idioma button[aria-current="true"] { background: #fff; font-weight: 800; box-shadow: 0 0 0 1px #d3dae4; }
+.eu-tira-idioma button:focus-visible { outline: 3px solid #2a44c8; outline-offset: 1px; }
 /* "¿Lo mismo de la otra vez?" y la nota de los datos guardados */
 .eu-tira-repetir { background: #e9f7ef; color: #123d27; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 12px; }
 .eu-repetir-txt { min-width: 0; overflow-wrap: anywhere; }

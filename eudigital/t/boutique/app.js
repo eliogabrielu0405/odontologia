@@ -1489,6 +1489,8 @@ function mensajePedido() {
   lineas.push(`Pago: ${d.pago}`);
   if (d.nota.trim()) lineas.push(`Nota: ${d.nota.trim()}`);
   if (window.EU_BOUTIQUE) lineas.push(...window.EU_BOUTIQUE.lineasPago(d.pago));
+  const idioma = window.EU && window.EU.idiomaInfo;
+  if (idioma && idioma.id !== 'es') lineas.push('', `🌐 El cliente vio la página en ${idioma.enEspanol}.`);
   return lineas.join('\n');
 }
 

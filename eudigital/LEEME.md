@@ -93,6 +93,17 @@ Cada página cuenta cuántas personas la abren: una visita por teléfono y por d
 - Base de datos: tabla `eu_visitas` (cada dueño solo ve las suyas), función `eu_registrar_visita` (solo suma en páginas activas, con tope por día) y `eu_resumen_pedidos` trae `visitas`. Se borran solas después de 13 meses. Ver `sql/2026-11-25_visitas.sql`.
 - Se cuentan desde el 25 de noviembre de 2026.
 
+## Idiomas: español, inglés, portugués e italiano
+
+Las páginas de los negocios se ven en el idioma del teléfono de quien las abre (si su teléfono tiene español entre sus idiomas, en español), y arriba hay una barra delgada **🌐 Español · English · Português · Italiano** para cambiarlo. La elección queda guardada en ese teléfono, y también se puede mandar un enlace con `?lang=en`, `pt` o `it`.
+
+- **Se traducen solos** los botones, avisos, horario, formas de pago, delivery, cupones, "Repetir pedido", el mapa, etc. El diccionario está en `core/idiomas.js`: cada texto en español con sus tres traducciones, más unos patrones para textos con números o nombres ("Cerrado, abre mañana a las 5 pm"). Traduce también lo que aparece después (carrito, avisos), sin tocar el código de cada plantilla.
+- **Lo que escribe el dueño** (productos, categorías, ingredientes) sale traducido si lo llenó en su panel: cada elemento tiene una parte plegable **"En otros idiomas (opcional)"** con nombre y descripción en inglés, portugués e italiano (se guarda en `i18n`). Lo que deje vacío sale en español.
+- **El pedido le llega al negocio en español**, con una línea al final: "🌐 El cliente vio la página en inglés." Los productos que el dueño tradujo salen con el nombre que vio el cliente.
+- En el panel, **Apariencia > Idiomas** permite ocultar la barra; la página igual sale en el idioma del teléfono. La vista previa del panel siempre está en español.
+- Para agregar un texto nuevo a una plantilla: escríbelo en español como siempre y agrégalo al diccionario de `core/idiomas.js` con sus tres traducciones. Un texto que no esté en el diccionario sale en español.
+- Los productos de las demos no están traducidos (son de ejemplo): en otro idioma, sus nombres salen en español.
+
 ## Delivery por distancia y ubicación del cliente
 
 En el panel del cliente, **Entregas y pagos > Cómo cobras el delivery**:

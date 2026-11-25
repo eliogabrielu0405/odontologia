@@ -41,7 +41,12 @@
 
   /* ---------- WhatsApp ---------- */
   EU.whatsapp = () => EU.soloNumeros(EU.sitio && EU.sitio.c.negocio.whatsapp);
-  EU.wa = (texto) => "https://wa.me/" + EU.whatsapp() + "?text=" + encodeURIComponent(texto);
+  // Si el cliente vio la página en otro idioma, el mensaje (que queda en español) lo dice al final
+  EU.wa = (texto) => {
+    const i = EU.idiomaInfo;
+    const nota = i && i.id !== "es" ? "\n\n🌐 El cliente vio la página en " + i.enEspanol + "." : "";
+    return "https://wa.me/" + EU.whatsapp() + "?text=" + encodeURIComponent(texto + nota);
+  };
   EU.telefonoVisible = () => {
     const n = EU.sitio.c.negocio;
     if (n.telefono) return n.telefono;
@@ -300,7 +305,7 @@
       if (!a) return "";
       const min = Number(a.minimo) || 0;
       let t = EU.promos.cuanto(a) + " de descuento en tu pedido" + (min > 0 ? " desde " + EU.usd(min) : "");
-      if (/^\d{4}-\d{2}-\d{2}$/.test(String(a.hasta || ""))) t += ", hasta el " + new Date(a.hasta + "T12:00:00").toLocaleDateString("es-VE", { day: "numeric", month: "long" });
+      if (/^\d{4}-\d{2}-\d{2}$/.test(String(a.hasta || ""))) t += ", hasta el " + new Date(a.hasta + "T12:00:00").toLocaleDateString((EU.idiomaInfo && EU.idiomaInfo.locale) || "es-VE", { day: "numeric", month: "long" });
       return t;
     },
     /* La casilla "¿Tienes un cupón?". subtotal: función que da el subtotal de ahora; alCambiar: la
@@ -687,10 +692,39 @@
         ? `<div class="eu-tira eu-tira-promo eu-desliza" aria-label="${t}"><div class="eu-desliza-pista" aria-hidden="true">${("<span>" + t + "</span>").repeat(6)}</div></div>`
         : `<div class="eu-tira eu-tira-promo eu-${estilo}">${t}</div>`;
     }
-    if (!html) return;
+    const idiomas = selectorIdiomas(c);
+    if (!html && !idiomas) return;
     caja.innerHTML = html;
+    if (idiomas) caja.prepend(idiomas);
     if (lugar) lugar.appendChild(caja);
     else document.body.prepend(caja);
+  }
+
+  /* Barra delgada para cambiar de idioma (core/idiomas.js). El dueño la puede ocultar en Apariencia;
+     igual la página sale en el idioma del teléfono de quien la abre. */
+  function selectorIdiomas(c) {
+    if (enPanel || !EU.idiomas || (c.idiomas && c.idiomas.mostrar === false)) return null;
+    const barra = document.createElement("nav");
+    barra.className = "eu-tira eu-tira-idioma";
+    barra.setAttribute("aria-label", "Idioma · Language");
+    barra.setAttribute("data-no-traducir", "");
+    const globo = document.createElement("span");
+    globo.textContent = "🌐"; globo.setAttribute("aria-hidden", "true");
+    barra.append(globo);
+    EU.idiomas.forEach((l) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.lang = l.id; b.textContent = l.nombre;
+      if (l.id === EU.idioma) b.setAttribute("aria-current", "true");
+      b.addEventListener("click", () => {
+        if (l.id === EU.idioma) return;
+        try { localStorage.setItem("eu:idioma", l.id); } catch (_) { /* sin almacenamiento */ }
+        const u = new URL(location.href);
+        u.searchParams.set("lang", l.id);
+        location.replace(u.toString());
+      });
+      barra.append(b);
+    });
+    return barra;
   }
 
   /* ---------- Animaciones ---------- */
@@ -844,6 +878,7 @@
       return;
     }
     sitio.c = K.combinar(P.defaults || K.contenidoBase, sitio.contenido || {});
+    if (EU.traducirContenido) EU.traducirContenido(sitio.c); // nombres y descripciones que el dueño tradujo
     // En la muestra, los pedidos de prueba llegan al WhatsApp de EU Digital
     if (sitio.demo && !EU.soloNumeros(sitio.c.negocio.whatsapp)) sitio.c.negocio.whatsapp = C.whatsappMarca || "";
     EU.sitio = sitio;
