@@ -4,7 +4,7 @@
   "use strict";
   const EU = window.EU;
   const K = window.EU_CATALOGOS;
-  const EMOJI = { pizzeria: "🍕", arepera: "🫓", burgers: "🍔", sushi: "🍣", boutique: "👗" };
+  const EMOJI = { pizzeria: "🍕", arepera: "🫓", burgers: "🍔", delicias: "🍔", sushi: "🍣", boutique: "👗" };
   const TITULOS = '"Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif';
   const CUERPO = '"Atkinson Hyperlegible", system-ui, sans-serif';
 

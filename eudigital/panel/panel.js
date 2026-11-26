@@ -18,7 +18,7 @@
     editor: null, vistaPendiente: false, guardando: false,
     resumen: null, resumenT: 0, resumenError: "", pago: null,
   };
-  const ORDEN = ["pizzeria", "arepera", "burgers", "sushi", "boutique"];
+  const ORDEN = ["pizzeria", "arepera", "burgers", "delicias", "sushi", "boutique"];
   const PLANTILLAS = () => ORDEN.map((id) => (window.EU_PLANTILLAS || {})[id]).filter(Boolean);
   const LLAVE_PAGINA = "eu:panel:pagina";
 
@@ -28,6 +28,10 @@
   const llaveBorrador = () => "eu:borrador:" + S.sitio.id;
   const enlacePagina = (s) => location.origin + "/?n=" + encodeURIComponent((s || S.sitio).slug);
   const plan = () => (S.cuenta && S.cuenta.plan) || "basico";
+  // Plantilla del plan Premium en la página principal (con ella no se puede pagar el Básico)
+  const premiumEnUso = () => [S.principal].map((s) => s && (window.EU_PLANTILLAS || {})[s.plantilla]).filter((P) => P && P.premium); // con el Básico solo queda en línea la principal
+  const nombresPremium = () => premiumEnUso().map((P) => P.nombre).join(", ");
+  const pildoraPremium = (P) => (P && P.premium ? h("span", { class: "premium-pill" }, "★ Premium") : null);
   const ciclo = () => (S.cuenta && S.cuenta.ciclo) || "mensual";
   const estadoCuenta = () => EU.estadoCuenta(S.principal || S.sitio, S.cuenta, S.ajustes.diasGracia);
   // Una página adicional queda en pausa cuando la cuenta baja a un plan de una sola página
@@ -828,6 +832,7 @@
         const precio = EU.planes.precio(pl, x.id, ver);
         const ahorro = EU.planes.ahorro(pl, x.id);
         const esActual = actual === x.id && cicloActual === ver;
+        const bloqueado = x.id === "basico" && premiumEnUso().length > 0;
         return h("article", { class: "plan" + (x.id === "premium" ? " plan-premium" : "") + (actual === x.id ? " plan-actual" : "") },
           h("div", { class: "plan-cab" }, h("h3", {}, x.nombre), actual === x.id ? h("span", { class: "sello azul" }, "Tu plan") : null),
           h("p", { class: "plan-precio" }, EU.planes.dinero(precio), h("small", {}, ver === "anual" ? " al año" : " al mes")),
@@ -835,7 +840,8 @@
             ? (ahorro > 0 ? "Ahorras " + EU.planes.dinero(ahorro) + " frente a pagar mes a mes." : "Un solo pago por los 12 meses.")
             : (ahorro > 0 ? "O " + EU.planes.dinero(EU.planes.precio(pl, x.id, "anual")) + " si pagas el año." : "Pagas cada mes.")),
           h("ul", { class: "plan-puntos" }, x.puntos.map((t) => h("li", {}, t))),
-          h("button", { class: "btn " + (x.id === "premium" ? "" : "btn-sec"), type: "button", onclick: () => elegirPlan(x.id, ver) },
+          bloqueado ? h("p", { class: "banda ambar" }, "Tu página usa la plantilla " + nombresPremium() + ", que es del plan Premium. Si prefieres el Básico, escríbenos y te la cambiamos por otra plantilla sin perder tus datos.") : null,
+          h("button", { class: "btn " + (x.id === "premium" ? "" : "btn-sec"), type: "button", disabled: bloqueado, onclick: () => elegirPlan(x.id, ver) },
             esActual ? "Renovar este plan" : actual === "prueba" ? "Quiero el " + x.nombre : "Pagar el " + x.nombre));
       }));
     }
@@ -869,6 +875,7 @@
         h("span", { class: "sello grande " + est.tono }, est.sello)),
       h("p", {}, est.texto),
       vence ? h("p", { class: "suave" }, (actual === "prueba" ? "La prueba termina el " : "Fecha de corte: ") + EU.fecha(vence, true) + ".") : null,
+      actual === "prueba" && premiumEnUso().length ? h("p", { class: "banda azul" }, "Estás probando la plantilla " + nombresPremium() + ", del plan Premium. Al terminar la prueba, elige el Premium para seguir con ella.") : null,
       pendientes.length ? h("p", { class: "banda ambar" }, pendientes.length === 1 ? "Tienes un pago en revisión. Cuando lo aprobemos, tu plan se actualiza solo." : "Tienes " + pendientes.length + " pagos en revisión.") : null,
       h("p", { class: "suave chico" }, S.sitios.length > 1 ? "Tu cuenta tiene " + S.sitios.length + " páginas. " : "Tu página: ",
         S.sitios.length > 1 ? h("button", { class: "btn btn-plano btn-chico", type: "button", onclick: () => irA("paginas") }, "Ver mis páginas")
@@ -932,7 +939,7 @@
     const metodos = (S.ajustes.pagos || []).filter((m) => m && m.metodo).map((m) => m.metodo);
     const pre = S.pago || {};
     const d = {
-      plan: pre.plan || (actual === "premium" ? "premium" : "basico"), ciclo: pre.ciclo || (actual === "prueba" ? "mensual" : ciclo()),
+      plan: premiumEnUso().length ? "premium" : pre.plan || (actual === "premium" ? "premium" : "basico"), ciclo: pre.ciclo || (actual === "prueba" ? "mensual" : ciclo()),
       meses: "1", monto: 0, moneda: "USD", metodo: metodos[0] || "", referencia: "", nota: "",
     };
     const total = () => Math.round((d.ciclo === "anual" ? EU.planes.precio(pl, d.plan, "anual") : EU.planes.precio(pl, d.plan, "mensual") * (Number(d.meses) || 1)) * 100) / 100;
@@ -964,7 +971,8 @@
       h("div", { class: "hoja-cab" }, h("h2", {}, "Reportar un pago"), h("p", {}, marca() + " lo revisa y tu fecha de corte se corre sola.")),
       pendientes >= 5 ? h("p", { class: "banda ambar" }, "Tienes 5 pagos esperando revisión. Espera a que los revisemos para reportar otro.") : null,
       h("div", { class: "campos" },
-        ed.campo({ tipo: "selector", ruta: "plan", etiqueta: "Plan que pagas", opciones: [{ id: "basico", nombre: "Básico" }, { id: "premium", nombre: "Premium" }] }),
+        ed.campo({ tipo: "selector", ruta: "plan", etiqueta: "Plan que pagas", opciones: premiumEnUso().length ? [{ id: "premium", nombre: "Premium" }] : [{ id: "basico", nombre: "Básico" }, { id: "premium", nombre: "Premium" }],
+          ayuda: premiumEnUso().length ? "Tu página usa la plantilla " + nombresPremium() + ", que es del plan Premium." : "" }),
         ed.campo({ tipo: "selector", ruta: "ciclo", etiqueta: "Cada cuánto pagas", opciones: [{ id: "mensual", nombre: "Mes a mes" }, { id: "anual", nombre: "Un año" }] }),
         ed.campo({ tipo: "selector", ruta: "meses", etiqueta: "Meses que pagas", lista: true, si: { ruta: "ciclo", igual: "mensual" }, opciones: Array.from({ length: 11 }, (_, i) => ({ id: String(i + 1), nombre: i + 1 + (i ? " meses" : " mes") })) }),
         resumen, baja,
@@ -1036,7 +1044,7 @@
     PLANTILLAS().forEach((P) => {
       const b = h("button", { class: "plantilla-op", type: "button", "aria-pressed": String(P.id === elegida) },
         h("img", { src: P.vistaPrevia, alt: "", loading: "lazy" }),
-        h("span", {}, h("b", {}, P.nombre), h("small", {}, P.ideal || P.rubro)));
+        h("span", {}, h("b", {}, P.nombre, pildoraPremium(P)), h("small", {}, P.ideal || P.rubro)));
       b.addEventListener("click", () => {
         caja.querySelectorAll(".plantilla-op").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
         alElegir(P);
@@ -1066,7 +1074,7 @@
         h("img", { src: P.vistaPrevia, alt: "", loading: "lazy" }),
         h("div", { class: "pagina-txt" },
           h("h3", {}, esta ? S.nombre : s.nombre),
-          h("p", { class: "suave" }, "Plantilla " + P.nombre + (s.principal ? "" : ". Página principal")),
+          h("p", { class: "suave" }, "Plantilla " + P.nombre + (s.principal ? "" : ". Página principal"), pildoraPremium(P)),
           h("a", { class: "pagina-enlace", href: enlace, target: "_blank", rel: "noopener" }, enlace.replace(/^https?:\/\//, "")),
           s.estado !== "activo" ? h("p", {}, h("span", { class: "sello ambar" }, "En pausa")) : null),
         h("div", { class: "acciones" },
@@ -1087,7 +1095,7 @@
           h("p", {}, "Para una segunda sucursal, otro negocio o una línea de productos aparte.")),
         h("ul", { class: "plan-puntos" },
           h("li", {}, "Hasta " + max + " páginas en la misma cuenta, cada una con su enlace y su código QR"),
-          h("li", {}, "Cada página con la plantilla que quieras"),
+          h("li", {}, "Cada página con la plantilla que quieras, también las Premium como Delicias"),
           h("li", {}, "Cambias de plantilla cuando quieras y tu menú anterior queda guardado")),
         h("div", { class: "acciones" },
           h("button", { class: "btn", type: "button", onclick: () => elegirPlanDesdePaginas() }, "Ver el plan Premium"),

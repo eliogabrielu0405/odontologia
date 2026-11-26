@@ -4,12 +4,12 @@ Una sola web con todo adentro:
 
 | Dirección | Qué es |
 |---|---|
-| `/` | Tu portada para vender: las 5 plantillas con su descripción, los planes y precios, cómo pagar, instalar la app y el botón de prueba gratis |
+| `/` | Tu portada para vender: las 6 plantillas con su descripción, los planes y precios, cómo pagar, instalar la app y el botón de prueba gratis |
 | `/registro/` | Donde un negocio crea su cuenta solo y prueba su página gratis |
 | `/?n=usuario` | La página de un cliente (por ejemplo `/?n=pizzeria-luigi`) |
 | `/panel/` | El panel de tus clientes: precios, fotos, tasa, agotados, colores, sus pedidos, su código QR, sus páginas y el pago de su plan. Se puede instalar como app |
 | `/admin/` | Tu panel: clientes, pagos, planes, suspensiones y tus ajustes |
-| `/t/pizzeria/`, `/t/arepera/`, `/t/burgers/`, `/t/sushi/`, `/t/boutique/` | Las demos de cada plantilla (los pedidos de prueba llegan a tu WhatsApp) |
+| `/t/pizzeria/`, `/t/arepera/`, `/t/burgers/`, `/t/delicias/`, `/t/sushi/`, `/t/boutique/` | Las demos de cada plantilla (los pedidos de prueba llegan a tu WhatsApp) |
 
 Los datos viven en Supabase (proyecto **eudigital**).
 
@@ -29,15 +29,16 @@ La sesión del panel de administración se cierra sola al cerrar la pestaña.
 
 | Plan | Precio | Qué incluye |
 |---|---|---|
-| Prueba gratis | 15 días, sin tarjeta | Una página con la plantilla que elija |
-| Básico | $10 al mes o $110 al año | Una página con la plantilla que elija |
-| Premium | $20 al mes o $200 al año | Hasta 5 páginas, cada una con su enlace y su plantilla, y cambia de plantilla cuando quiera |
+| Prueba gratis | 15 días, sin tarjeta | Una página con la plantilla que elija (también las Premium) |
+| Básico | $10 al mes o $110 al año | Una página con la plantilla que elija, menos las Premium |
+| Premium | $20 al mes o $200 al año | Hasta 5 páginas, cada una con su enlace y su plantilla (también las Premium), y cambia de plantilla cuando quiera |
 
 - Los precios, los días de prueba, el tope de páginas de Premium y si el registro está abierto se cambian en **Ajustes > Planes y precios**. La portada, el registro y el panel de cada cliente toman esos valores solos.
 - Cuando termina la prueba, esa noche la página se suspende sola si no ha pagado (las pruebas no tienen días de gracia). Todo lo que cargó queda guardado.
 - El cliente elige plan y periodo en su panel (**Mi suscripción**), ve tus datos de cobro y reporta el pago. Tú lo apruebas en **Pagos**: el recibo dice el plan que dice pagar y lo puedes corregir antes de aprobar. Al aprobar, se le pone ese plan y se corre su fecha de corte (12 meses si pagó el año).
 - Con Premium cada página nueva arranca con el contacto, la tasa y las formas de pago de la principal. Si cambia de plantilla, el menú de la anterior queda guardado: si vuelve a ella, lo recupera.
 - Si una cuenta Premium pasa a Básico, sus páginas adicionales quedan en pausa (no se borran) y vuelven solas si paga Premium otra vez.
+- **Plantillas Premium** (por ahora, Delicias): se pueden probar gratis, pero su página principal no puede quedar en Básico. En el panel del cliente el Básico sale bloqueado con la explicación y el reporte de pago solo ofrece Premium. La base de datos también lo frena: si apruebas un pago Básico, creas un cliente Básico o le pones Delicias a una cuenta Básico, sale el aviso y no se guarda. Para pasarlo a Básico, primero cámbiale la plantilla (tú, desde su ficha). La lista de plantillas Premium está en `eu_priv.plantilla_premium` (Supabase) y en `premium: true` del `datos.js` de cada plantilla. Ver `sql/2026-11-26_plantilla_delicias.sql`.
 
 ## Registro propio
 
@@ -77,7 +78,7 @@ Cuando un cliente final toca **Enviar por WhatsApp** en una página, el pedido q
 
 ## Quien compra: sus datos y "Repetir pedido"
 
-En las cinco plantillas, cuando alguien envía un pedido, su teléfono recuerda su nombre, su dirección, el tipo de entrega, la forma de pago y lo que pidió. La próxima vez que entra a esa página:
+En todas las plantillas, cuando alguien envía un pedido, su teléfono recuerda su nombre, su dirección, el tipo de entrega, la forma de pago y lo que pidió. La próxima vez que entra a esa página:
 
 - El nombre y la dirección ya están escritos, con el aviso "Pusimos los datos de tu último pedido. **Borrarlos**" (por si el teléfono es compartido).
 - Si su carrito está vacío, arriba le sale **"¿Lo mismo de la otra vez?"** con lo que pidió y el botón **Repetir pedido**. Al tocarlo, el pedido vuelve al carrito con los **precios de hoy**, sin lo que se haya agotado o ya no exista, y se abre para que lo revise y lo envíe.
@@ -160,6 +161,14 @@ En el panel del cliente, **Apariencia > Mascota bailarina**: elige entre 19 pers
 
 - En la arepera y la pizzería viene encendida (arepa y pizza). En burgers, sushi y boutique viene apagada; cada cliente la enciende si quiere.
 - Los personajes están en `core/mascotas.js` y los bailes en `core/mascotas.css`. Para verlos todos juntos: `tools/mascotas.html`.
+
+## Plantilla Delicias (plan Premium)
+
+Menú moderno de comida rápida, hecho a partir de la página de Son D'licias pero sin su marca (nombre, logo, fotos con su logo, ciudad, teléfono e Instagram). Está en el área de comida rápida, junto a Burgers.
+
+- **Lo que ve quien compra:** cabecera con el estado del horario, portada con foto, logo, eslogan, horario de la semana, WhatsApp, su red social y la mascota (con un globito al tocarla), buscador, categorías fijas arriba, «Lo más pedido» en carrusel, una franja con foto por categoría, y una hoja para elegir la opción obligatoria (carne, pollo…), los adicionales (hasta triple porción) y la cantidad. El pedido va en dos pasos en el teléfono (productos y entrega) o en una columna fija en la computadora, con «Te puede gustar», cupones, delivery por distancia, formas de pago con sus datos, «¿Lo mismo de la última vez?» y el código del pedido en el mensaje de WhatsApp.
+- **Lo que edita el dueño (panel, Menú):** categorías con nombre, nombre corto para el botón, emoji, foto de la franja, nota y el interruptor **Son adicionales** (sus productos se ofrecen al elegir cualquier otro); productos con foto, precio, descripción, **Opciones para elegir**, **Sale en «Lo más pedido»**, **Sugerirlo dentro del pedido** y agotado. En **Apariencia**: foto de la portada, buscador, títulos del carrusel y de las sugerencias, lo que dice la mascota, y los 4 temas (Brasa, Noche, Huerta y Cielo) o sus propios colores.
+- Archivos: `t/delicias/` (`index.html`, `app.js`, `datos.js`, fotos en `img/`, letra Poppins en `vendor/`). Los textos fijos en inglés, portugués e italiano están al final de `t/delicias/app.js`.
 
 ## Portada de la plantilla Burgers: nombre en la pared y foto propia
 

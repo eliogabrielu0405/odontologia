@@ -13,6 +13,7 @@ const PLANTILLAS = {
   pizzeria: { nombre: "Pizzería", texto: "Página de pedidos para pizzerías: el cliente arma su pizza y te llega el pedido por WhatsApp." },
   arepera: { nombre: "Arepera", texto: "Página de pedidos para areperas: el cliente arma su arepa y te llega el pedido por WhatsApp." },
   burgers: { nombre: "Burgers y perros", texto: "Página de pedidos para hamburguesas y perros calientes, con pedidos directo a tu WhatsApp." },
+  delicias: { nombre: "Delicias", texto: "Menú moderno de comida rápida con buscador, opciones y adicionales, y pedidos directo a tu WhatsApp." },
   sushi: { nombre: "Sushi", texto: "Página de pedidos para sushi, con carrito y pedidos directo a tu WhatsApp." },
   boutique: { nombre: "Boutique", texto: "Catálogo de ropa con tallas y colores, y pedidos directo a tu WhatsApp." },
 };

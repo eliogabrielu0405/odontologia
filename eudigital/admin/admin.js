@@ -6,7 +6,7 @@
   const h = EU.h;
   const api = EU.crearApi({ llave: "eu:admin", almacen: "sesion" });
   const app = document.getElementById("app");
-  const ORDEN = ["pizzeria", "arepera", "burgers", "sushi", "boutique"];
+  const ORDEN = ["pizzeria", "arepera", "burgers", "delicias", "sushi", "boutique"];
   const plantillas = () => ORDEN.map((id) => (window.EU_PLANTILLAS || {})[id]).filter(Boolean);
   const nombrePlantilla = (id) => ((window.EU_PLANTILLAS || {})[id] || { nombre: id }).nombre;
   const D = { sitios: [], cuentas: {}, pagos: [], notas: {}, ajustes: {}, seccion: "resumen", filtro: "todos", buscar: "" };
@@ -36,7 +36,7 @@
   const montoTxt = (p) => (p.moneda === "VES" ? "Bs " + EU.fmtBs.format(p.monto) : EU.usd(p.monto));
   const pendientes = () => D.pagos.filter((p) => p.estado === "pendiente");
   const RESERVADOS = ["admin", "panel", "registro", "planes", "www", "app", "api", "core", "img", "sql", "tools", "eudigital", "eu-digital",
-    "soporte", "ayuda", "demo", "prueba", "test", "login", "entrar", "pizzeria", "arepera", "burgers", "sushi", "boutique", "t"];
+    "soporte", "ayuda", "demo", "prueba", "test", "login", "entrar", "pizzeria", "arepera", "burgers", "delicias", "sushi", "boutique", "t"];
   const sumarDias = (iso, n) => new Date(Date.parse(iso + "T12:00:00Z") + n * 864e5).toISOString().slice(0, 10);
   const OP_PLAN = [{ id: "basico", nombre: "Básico" }, { id: "premium", nombre: "Premium" }];
   const OP_CICLO = [{ id: "mensual", nombre: "Por mes" }, { id: "anual", nombre: "Por año" }];
@@ -597,7 +597,7 @@
       titulo: "Cambiar plantilla de " + s.nombre, ancho: true,
       construir: (m) => {
         const tarjetas = plantillas().map((P) => h("button", { class: "plantilla", type: "button", "aria-pressed": String(P.id === elegida), onclick: (e) => { elegida = P.id; m.cuerpo.querySelectorAll(".plantilla").forEach((b) => b.setAttribute("aria-pressed", String(b === e.currentTarget))); } },
-          h("img", { src: P.vistaPrevia, alt: "", loading: "lazy" }), h("b", {}, P.nombre), h("p", {}, P.rubro)));
+          h("img", { src: P.vistaPrevia, alt: "", loading: "lazy" }), h("b", {}, P.nombre, P.premium ? h("span", { class: "premium-pill" }, "★ Premium") : null), h("p", {}, P.rubro)));
         m.cuerpo.append(h("p", { class: "banda ambar" }, "La página pasa a la plantilla nueva. Se conservan el nombre, el contacto, la dirección, el horario, las formas de pago y la tasa. El menú de la plantilla de ahora queda guardado: si vuelve a ella, lo recupera."),
           h("div", { class: "plantillas" }, tarjetas));
         const ok = h("button", { class: "btn", type: "button" }, "Cambiar plantilla");
@@ -685,7 +685,7 @@
     const tarjetas = h("div", { class: "plantillas", role: "group", "aria-label": "Plantilla" }, plantillas().map((P) => h("button", {
       class: "plantilla", type: "button", "aria-pressed": "false",
       onclick: (e) => { d.plantilla = P.id; tarjetas.querySelectorAll(".plantilla").forEach((b) => b.setAttribute("aria-pressed", String(b === e.currentTarget))); },
-    }, h("img", { src: P.vistaPrevia, alt: "", loading: "lazy" }), h("b", {}, P.nombre), h("p", {}, P.rubro))));
+    }, h("img", { src: P.vistaPrevia, alt: "", loading: "lazy" }), h("b", {}, P.nombre, P.premium ? h("span", { class: "premium-pill" }, "★ Premium") : null), h("p", {}, P.rubro))));
     const error = h("p", { class: "banda rojo", role: "alert", hidden: true });
     const boton = h("button", { class: "btn", type: "submit" }, "Crear página");
     const form = h("form", { class: "campos", novalidate: true },
@@ -750,7 +750,8 @@
         copiar.addEventListener("click", () => EU.copiar(enlace, copiar));
         return h("article", { class: "plantilla" },
           h("img", { src: P.vistaPrevia, alt: "Vista de la plantilla " + P.nombre, loading: "lazy" }),
-          h("b", {}, P.nombre), h("p", {}, P.descripcion),
+          h("b", {}, P.nombre, P.premium ? h("span", { class: "premium-pill" }, "★ Premium") : null), h("p", {}, P.descripcion),
+          P.premium ? h("p", { class: "suave chico" }, "Solo para el plan Premium (y en la prueba gratis).") : null,
           P.ideal ? h("p", { class: "suave chico" }, "Ideal para: " + P.ideal + ".") : null,
           h("p", { class: "suave chico" }, ((n) => n + (n === 1 ? " página la usa." : " páginas la usan."))(D.sitios.filter((s) => s.plantilla === P.id).length)),
           h("div", { class: "acciones" }, h("a", { class: "btn btn-chico", href: enlace, target: "_blank", rel: "noopener" }, "Ver demo"), copiar));

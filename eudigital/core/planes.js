@@ -48,9 +48,9 @@
       pl = pl || EU.planes.leer();
       return [
         { id: "basico", nombre: "Básico", para: "Para un negocio con una sola página.",
-          puntos: ["Una página con la plantilla que elijas", "Pedidos directo a tu WhatsApp, sin comisión", "Panel para cambiar precios, fotos y la tasa del día", "Código QR, tarjeta para compartir y tus pedidos en cifras"] },
+          puntos: ["Una página con la plantilla que elijas (menos las Premium)", "Pedidos directo a tu WhatsApp, sin comisión", "Panel para cambiar precios, fotos y la tasa del día", "Código QR, tarjeta para compartir y tus pedidos en cifras"] },
         { id: "premium", nombre: "Premium", para: "Para varios negocios, sucursales o líneas de productos.",
-          puntos: ["Todo lo del plan Básico", "Hasta " + pl.maxPaginas + " páginas, cada una con su enlace", "Usa todas las plantillas que quieras", "Cambia de plantilla sin perder tu menú"] },
+          puntos: ["Todo lo del plan Básico", "Hasta " + pl.maxPaginas + " páginas, cada una con su enlace", "Todas las plantillas, también las Premium como Delicias", "Cambia de plantilla sin perder tu menú"] },
       ];
     },
   };

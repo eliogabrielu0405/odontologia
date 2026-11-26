@@ -82,6 +82,9 @@ a { color: var(--carbon); }
   background: radial-gradient(circle at 0 13px, var(--mesa) 0 9px, transparent 10px), radial-gradient(circle at 100% 13px, var(--mesa) 0 9px, transparent 10px);
 }
 
+/* ---------- Plantillas del plan Premium ---------- */
+.premium-pill { display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: linear-gradient(135deg, #F8DA7A, #E2A52A); color: #3B2600; font: 800 12px/1.5 var(--cuerpo); letter-spacing: .02em; vertical-align: 2px; white-space: nowrap; }
+
 /* ---------- Sellos de goma ---------- */
 .sello {
   --c: var(--verde);

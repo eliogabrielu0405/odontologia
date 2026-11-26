@@ -7,7 +7,7 @@
   const h = EU.h;
   const api = EU.crearApi({ llave: "eu:panel", almacen: "local" });
   const app = document.getElementById("app");
-  const ORDEN = ["pizzeria", "arepera", "burgers", "sushi", "boutique"];
+  const ORDEN = ["pizzeria", "arepera", "burgers", "delicias", "sushi", "boutique"];
   const PL = window.EU_PLANTILLAS || {};
   const params = new URLSearchParams(location.search);
   const WA = EU.soloNumeros(C.whatsappMarca);
@@ -67,7 +67,7 @@
         const radio = h("input", { type: "radio", name: "plantilla", value: id, checked: d.plantilla === id });
         const fila = h("label", { class: "rg-pl" + (d.plantilla === id ? " elegida" : "") },
           radio, h("img", { src: p.vistaPrevia, alt: "", loading: "lazy" }),
-          h("div", {}, h("b", {}, p.nombre), h("span", {}, p.ideal || p.rubro)));
+          h("div", {}, h("b", {}, p.nombre, p.premium ? h("span", { class: "premium-pill" }, "★ Premium") : null), h("span", {}, p.ideal || p.rubro)));
         radio.addEventListener("change", () => {
           d.plantilla = id;
           lista.querySelectorAll(".rg-pl").forEach((x) => x.classList.toggle("elegida", x === fila));
@@ -82,7 +82,8 @@
       if (!p) return;
       vista.replaceChildren(
         h("img", { class: "tel", src: p.vistaPrevia, alt: "Así se ve la plantilla " + p.nombre }),
-        h("h3", {}, p.nombre),
+        h("h3", {}, p.nombre, p.premium ? h("span", { class: "premium-pill" }, "★ Premium") : null),
+        p.premium ? h("p", { class: "banda ambar" }, "Es una plantilla del plan Premium. La pruebas gratis igual que las demás; al terminar la prueba, para seguir con ella eliges el plan Premium.") : null,
         h("p", {}, p.descripcion),
         h("ul", {}, (p.puntos || []).map((x) => h("li", {}, x))),
         h("div", {}, h("a", { class: "btn btn-sec btn-chico", href: "/t/" + p.id + "/" + (d.nombre.trim() ? "?prueba=" + encodeURIComponent(d.nombre.trim()) : ""), target: "_blank", rel: "noopener" }, d.nombre.trim() ? "Verla con tu nombre" : "Abrir la demo")));

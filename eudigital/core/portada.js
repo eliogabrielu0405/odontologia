@@ -6,7 +6,7 @@
   const C = window.EU_CONFIG;
   const EU = window.EU;
   const P = window.EU_PLANTILLAS || {};
-  const ORDEN = ["pizzeria", "arepera", "burgers", "sushi", "boutique"];
+  const ORDEN = ["pizzeria", "arepera", "burgers", "delicias", "sushi", "boutique"];
   const METODOS_BASE = ["Pago Móvil", "Zelle", "Binance", "Efectivo"];
   let pl = EU.planes.leer();
   let ciclo = "mensual";
@@ -55,8 +55,9 @@
         el("a", { class: "ld-pl-foto", href: demo(k), "aria-label": "Ver la demo de " + t.nombre },
           el("img", { src: t.vistaPrevia, alt: "Vista de la plantilla " + t.nombre, loading: "lazy", width: "390", height: "640" })),
         el("div", { class: "ld-pl-txt" },
-          el("h3", {}, t.nombre),
+          el("h3", {}, t.nombre, t.premium ? el("span", { class: "premium-pill" }, "★ Premium") : null),
           el("p", { class: "ld-pl-desc" }, t.descripcion),
+          t.premium ? el("p", { class: "ld-pl-ideal" }, "Incluida en el plan Premium. Puedes probarla gratis.") : null,
           t.ideal ? el("p", { class: "ld-pl-ideal" }, "Ideal para " + t.ideal.charAt(0).toLowerCase() + t.ideal.slice(1) + ".") : null,
           Array.isArray(t.puntos) && t.puntos.length ? el("ul", { class: "plan-puntos" }, t.puntos.map((x) => el("li", {}, x))) : null,
           el("div", { class: "acciones" },
@@ -83,7 +84,7 @@
     document.getElementById("mira-plantillas").replaceChildren(...ORDEN.filter((k) => P[k]).map((k) =>
       el("label", { class: "mira-chip" },
         el("input", { type: "radio", name: "mira-pl", value: k, checked: k === elegida, onchange: () => { elegida = k; viva ? ver(false) : foto(); } }),
-        el("span", {}, P[k].nombre))));
+        el("span", {}, P[k].nombre + (P[k].premium ? " ★" : "")))));
     function foto() { img.src = P[elegida].vistaPrevia; img.alt = "Vista de la plantilla " + P[elegida].nombre; titulo.textContent = "Plantilla " + P[elegida].nombre; }
     function ver(desplazar) {
       nombreMira = entrada.value.replace(/\s+/g, " ").trim().slice(0, 40);
