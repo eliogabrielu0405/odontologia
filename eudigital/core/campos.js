@@ -308,7 +308,7 @@
         const btnQuitar = h("button", { class: "btn btn-plano btn-chico", type: "button", onclick: () => { b.set(""); pintar(); cambio(def); } }, "Quitar");
         const el = caja(def, h("div", { class: "foto-fila" }, mini, h("div", { class: "acciones" }, btnSubir, btnGaleria, btnQuitar), archivo), { legend: true });
         function pintar(cargando) {
-          const u = EU.url(b.get());
+          const u = (EU.miniatura || EU.url)(b.get());
           mini.replaceChildren(u ? h("img", { src: u, alt: "" }) : h("span", {}, "Sin foto"));
           if (cargando) mini.append(h("span", { class: "cargando" }, "Subiendo"));
           btnQuitar.hidden = !u;
@@ -543,7 +543,7 @@
           cont);
         const tituloDe = (it) => String(typeof def.tituloDe === "function" ? def.tituloDe(it) : it[def.titulo || "nombre"] || "").trim() || "Sin nombre";
         function miniDe(it) {
-          const foto = EU.url(def.foto ? it[def.foto] : def.fotoDe ? EU.obtener(it, def.fotoDe) : "");
+          const foto = (EU.miniatura || EU.url)(def.foto ? it[def.foto] : def.fotoDe ? EU.obtener(it, def.fotoDe) : "");
           if (foto) return h("span", { class: "fila-mini" + (def.foto ? " contiene" : "") }, h("img", { src: foto, alt: "", loading: "lazy" }));
           if (def.muestra && EU.color(it[def.muestra])) return h("span", { class: "fila-mini", style: "background:" + EU.color(it[def.muestra]) });
           const letra = def.icono || it.emoji || it.kanji || tituloDe(it).slice(0, 1).toUpperCase();

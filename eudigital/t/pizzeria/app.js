@@ -64,7 +64,7 @@ EU.alListo(function (sitio) {
   $("#titulo").textContent = (c.portada && c.portada.titulo) || sitio.nombre;
   $("#descripcion").textContent = c.negocio.descripcion || "";
   $("#descripcion").hidden = !c.negocio.descripcion;
-  const logo = EU.url(c.negocio.logo);
+  const logo = (EU.miniatura || EU.url)(c.negocio.logo); // el logo sale pequeño: versión chica
   if (logo) { $("#logo").src = logo; $("#logo").alt = "Logo de " + sitio.nombre; $("#logo").hidden = false; }
   $("#tamanosTxt").textContent = "Precios en dólares" + (SIZES.length > 1 ? " · " + SIZES.map((s) => s.name + (s.cm ? " " + s.cm : "")).join(" · ") : "");
   const conDosTam = DRINKS.some((d) => d.precios["1l"] > 0 && d.precios["2l"] > 0);
@@ -166,6 +166,9 @@ EU.alListo(function (sitio) {
   /* Las pizzas sin foto se dibujan con sus ingredientes */
   const DIBUJOS = {};
   const fotoPizza = (p) => p.foto || DIBUJOS[p.id] || VACIA;
+  // En las tarjetas, los sabores y el carrito la foto es pequeña: versión chica de la del dueño
+  const chica = (u) => (EU.miniatura ? EU.miniatura(u) : u);
+  const fotoPizzaChica = (p) => (p.foto ? chica(p.foto) : fotoPizza(p));
   function dibujarMenu() {
     MENU.forEach((p) => {
       if (p.foto || DIBUJOS[p.id]) return;
@@ -190,7 +193,7 @@ EU.alListo(function (sitio) {
       if (!SIZES.some((s) => s.id === menuState[p.id])) menuState[p.id] = sizeMedia;
       const falta = pizzaFalta(p);
       const el = document.createElement("article"); el.className = "card" + (falta ? " soldout" : ""); el.setAttribute("data-eu-producto", "");
-      el.innerHTML = `<div class="pic">${falta ? `<span class="tag sold">${falta === "Agotada" ? "Agotada" : "No disponible"}</span>` : p.tag ? `<span class="tag">${esc(p.tag)}</span>` : ""}<img class="${p.foto ? "" : "dibujo"}" data-pz="${esc(p.id)}" src="${esc(fotoPizza(p))}" alt="Pizza ${esc(p.name)}" width="400" height="400" loading="lazy"></div>
+      el.innerHTML = `<div class="pic">${falta ? `<span class="tag sold">${falta === "Agotada" ? "Agotada" : "No disponible"}</span>` : p.tag ? `<span class="tag">${esc(p.tag)}</span>` : ""}<img class="${p.foto ? "" : "dibujo"}" data-pz="${esc(p.id)}" src="${esc(fotoPizzaChica(p))}" alt="Pizza ${esc(p.name)}" width="400" height="400" loading="lazy"></div>
         <h3>${esc(p.name)}</h3><p class="desc">${esc(p.desc)}${falta && falta !== "Agotada" ? `<b class="falta">${esc(falta)}</b>` : ""}</p>
         <div class="sizes"${SIZES.length < 2 ? " hidden" : ""}>${SIZES.map((s) => `<button class="size" type="button" data-s="${esc(s.id)}" aria-pressed="${menuState[p.id] === s.id}">${esc(s.name)}<small>${esc(s.cm)}</small></button>`).join("")}</div>
         <div class="card-foot"><span class="price-wrap"><span class="price"></span><span class="bs"></span></span><button class="icon-btn" type="button" data-edit>Personalizar</button><button class="add" type="button" data-add>Agregar</button></div>`;
@@ -217,7 +220,7 @@ EU.alListo(function (sitio) {
   /* ===== Bebidas ===== */
   const drinkSel = {};
   const drinkAvail = (dr, z) => !dr.agotado && dr.precios[z] > 0;
-  const drinkImg = (dr) => dr.foto || VACIA;
+  const drinkImg = (dr) => (dr.foto ? chica(dr.foto) : VACIA);
   function renderDrinks() {
     const el = $("#drinks"); el.innerHTML = "";
     $("#drinksHead").hidden = !DRINKS.length; $("#saltos").hidden = !DRINKS.length;
@@ -286,7 +289,7 @@ EU.alListo(function (sitio) {
     const groups = [...new Set(TOPS.map((t) => t.g))];
     $("#optTops").innerHTML = TOPS.length ? `<div class="tops">` + groups.map((g) => `<div class="group-label">${esc(g)}</div>${TOPS.filter((t) => t.g === g).map((t) => `<button class="top" type="button" data-t="${esc(t.id)}" aria-pressed="false"><canvas width="40" height="40" aria-hidden="true"></canvas>${esc(t.name)}<small></small></button>`).join("")}`).join("") + `</div>` : `<p class="vacio">Pronto agregaremos ingredientes.</p>`;
     document.querySelectorAll(".top").forEach((b) => { drawIcon(b.querySelector("canvas"), b.dataset.t); b.onclick = () => toggleTop(b.dataset.t); });
-    $("#flavors").innerHTML = MENU.map((p) => `<button class="flavor" type="button" data-f="${esc(p.id)}" aria-pressed="false" ${pizzaFalta(p) ? "disabled" : ""}><img src="${esc(fotoPizza(p))}" alt="">${esc(p.name)}</button>`).join("");
+    $("#flavors").innerHTML = MENU.map((p) => `<button class="flavor" type="button" data-f="${esc(p.id)}" aria-pressed="false" ${pizzaFalta(p) ? "disabled" : ""}><img src="${esc(fotoPizzaChica(p))}" alt="">${esc(p.name)}</button>`).join("");
     $(".flavor-wrap").hidden = !MENU.length;
     document.querySelectorAll(".flavor").forEach((b) => { b.onclick = () => setFlavor(b.dataset.f); });
     syncTopButtons();
@@ -441,9 +444,9 @@ EU.alListo(function (sitio) {
   const cupon = ofertas.caja({ subtotal, alCambiar: () => renderCart() });
   $(".pago-wrap").before(cupon);
   const fotoLinea = (x) => {
-    if (x.kind === "drink") { const d = DRINKS.find((y) => y.id === x.drink); return d && d.foto ? `<img class="dthumb" src="${esc(d.foto)}" alt="">` : `<canvas aria-hidden="true"></canvas>`; }
+    if (x.kind === "drink") { const d = DRINKS.find((y) => y.id === x.drink); return d && d.foto ? `<img class="dthumb" src="${esc(chica(d.foto))}" alt="">` : `<canvas aria-hidden="true"></canvas>`; }
     const p = x.photo && MENU.find((y) => y.id === x.photo);
-    return p ? `<img src="${esc(fotoPizza(p))}" alt="">` : `<canvas data-i="${cart.indexOf(x)}"></canvas>`;
+    return p ? `<img src="${esc(fotoPizzaChica(p))}" alt="">` : `<canvas data-i="${cart.indexOf(x)}"></canvas>`;
   };
   function renderCart() {
     const n = cart.reduce((a, x) => a + x.qty, 0);
@@ -637,7 +640,7 @@ EU.alListo(function (sitio) {
   renderMenu(); renderDrinks(); renderModo();
   IMG_READY.then(() => {
     dibujarMenu();
-    document.querySelectorAll("img[data-pz]").forEach((im) => { const p = MENU.find((x) => x.id === im.dataset.pz); if (p) im.src = fotoPizza(p); });
+    document.querySelectorAll("img[data-pz]").forEach((im) => { const p = MENU.find((x) => x.id === im.dataset.pz); if (p) im.src = fotoPizzaChica(p); });
     if (MENU[0]) { $("#mbA").src = fotoPizza(MENU[0]); $("#mbB").src = fotoPizza(MENU[1] || MENU[0]); }
     buildUI(); refreshBuilder(); baseKey = ""; renderCart();
   });

@@ -217,6 +217,20 @@ Al publicar, nadie debe quedar con una mezcla de código nuevo y viejo (eso deja
 
 Si un cliente compra su propio dominio, agrégalo también en **Settings > Domains** y escríbelo en su ficha (**Datos de la cuenta > Dominio propio**).
 
+## Capacidad: cuántos clientes aguanta
+
+Revisado para 100 negocios (26 nov 2026). La velocidad no es problema: cargar una página tarda 0,013 ms en la base de datos y 100 negocios con mucho movimiento son 1 o 2 visitas por segundo en la hora pico. Lo que se acaba son las cuotas de los planes gratis:
+
+- **Supabase gratis:** 5 GB + 5 GB de transferencia al mes, 500 MB de base de datos, 1 GB de archivos y sin copias de seguridad. Si se pasa, Supabase puede bloquear todas las consultas y **se caen todas las páginas a la vez**. **Supabase Pro** (US$25 al mes): 250 + 250 GB, 8 GB de base, 100 GB de archivos y copias diarias. Conviene pasarse antes de unos 20 o 30 clientes.
+- **Vercel gratis (Hobby):** pocas solicitudes y transferencia al mes y es para uso personal, no comercial. **Vercel Pro** (US$20 al mes) para cobrar suscripciones.
+- Cada visita nueva baja de 0,5 a 1,6 MB (Burgers es la más pesada por la animación); quien vuelve casi no baja nada. Cada pedido ocupa unos 470 bytes y se borra a los 400 días.
+
+Lo que ya hace la plataforma para gastar menos:
+
+- **Fotos en dos tamaños:** cada foto que sube un dueño se guarda grande (`…-g.webp`) y en una versión de 400 px (`…-p.webp`). Las tarjetas del menú, los íconos, el carrito y el logo usan la chica (unas 4 o 5 veces menos transferencia); la grande solo sale donde la foto se ve grande. Si la chica faltara, la página pide la grande sola. Las fotos subidas antes de este cambio no tienen versión chica y se siguen usando grandes. Al limpiar fotos sin usar, el panel no borra una chica mientras su grande esté en uso.
+- **Comprobantes de pago:** al abrir tu panel (una vez al día) se borran las capturas de los pagos ya revisados con más de 6 meses. El pago queda en el historial, sin la captura.
+- **Topes del registro:** en **Ajustes > Planes y precios** cambias cuántas cuentas se pueden crear por hora (100), por día (500) y desde una misma conexión al día (6). Si haces una campaña grande o una charla con muchos en el mismo wifi, súbelos ese día. Ver `sql/2026-11-26_capacidad.sql`.
+
 ## Supabase
 
 El plan gratis pausa el proyecto si pasa una semana sin visitas y no guarda copias de seguridad. Con clientes usando sus páginas no se pausa, pero si un día ves todo caído, entra a Supabase y toca **Restore**. Cuando tengas varios clientes pagando, conviene el plan Pro.

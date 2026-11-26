@@ -12,6 +12,10 @@
     if (/^\/(?!\/)/.test(u)) return u;
     try { const x = new URL(u); return x.protocol === "https:" || x.protocol === "http:" ? x.href : ""; } catch (_) { return ""; }
   };
+  // Versión chica (400 px) de las fotos que suben los dueños: "foto-g.webp" viene con "foto-p.webp".
+  // Las listas del menú usan la chica (se descarga 4 o 5 veces menos); las vistas grandes, la original.
+  const RE_GRANDE = /-g\.(webp|jpe?g|png)$/i;
+  EU.miniatura = (u) => { const x = EU.url(u); return RE_GRANDE.test(x) ? x.replace(RE_GRANDE, "-p.$1") : x; };
   EU.color = (h) => (K && K.color.valido(h)) || "";
   EU.soloNumeros = (s) => String(s || "").replace(/\D+/g, "");
   EU.fmtBs = new Intl.NumberFormat("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });

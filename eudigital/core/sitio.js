@@ -28,6 +28,19 @@
     if (/^\/(?!\/)/.test(u)) return u;
     try { const x = new URL(u); return x.protocol === "https:" || x.protocol === "http:" ? x.href : ""; } catch (_) { return ""; }
   };
+  // Versión chica (400 px) de las fotos que suben los dueños: "foto-g.webp" viene con "foto-p.webp".
+  // Las listas del menú usan la chica (se descarga 4 o 5 veces menos); las vistas grandes, la original.
+  const RE_GRANDE = /-g\.(webp|jpe?g|png)$/i;
+  EU.miniatura = (u) => { const x = EU.url(u); return RE_GRANDE.test(x) ? x.replace(RE_GRANDE, "-p.$1") : x; };
+  // Si la chica no carga (no debería pasar), se pide la grande
+  document.addEventListener("error", (e) => {
+    const im = e.target;
+    if (!im || im.tagName !== "IMG" || im.dataset.euGrande || !/-p\.(webp|jpe?g|png)$/i.test(im.currentSrc || im.src)) return;
+    im.dataset.euGrande = "1";
+    e.stopPropagation();
+    im.removeAttribute("srcset");
+    im.src = (im.currentSrc || im.src).replace(/-p\.(webp|jpe?g|png)$/i, "-g.$1");
+  }, true);
   EU.color = (h) => K.color.valido(h) || "";
   EU.soloNumeros = (s) => String(s || "").replace(/\D+/g, "");
 

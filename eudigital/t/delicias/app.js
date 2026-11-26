@@ -352,9 +352,11 @@ EU.alListo(function (sitio) {
     });
     return img;
   }
-  function mediaProducto(p, clase, sizes) {
+  // Versión chica (400 px) de las fotos del dueño para todo lo que sale pequeño; la grande, solo en la hoja del producto
+  const chica = (u) => (EU.miniatura ? EU.miniatura(u) : u);
+  function mediaProducto(p, clase, sizes, grande) {
     clase = clase || "foto-producto";
-    if (p.foto) return imagen(p.foto, { clase, sizes: sizes || "(max-width: 360px) 88px, 104px", emoji: emojiDe(p) });
+    if (p.foto) return imagen(grande ? p.foto : chica(p.foto), { clase, sizes: sizes || "(max-width: 360px) 88px, 104px", emoji: emojiDe(p) });
     return h("span", { class: clase + " foto-vacia", "aria-hidden": "true" }, emojiDe(p));
   }
   const precioHTML = (p) => (p.precio > 0
@@ -369,9 +371,9 @@ EU.alListo(function (sitio) {
   const primeraCat = CATS.find((k) => k.foto) || null;
   $("insignia-emoji").textContent = (CATS[0] || {}).emoji || "🍔";
   if (logo) {
-    const enCabecera = h("img", { src: logo, alt: "", onerror: function () { this.remove(); } });
+    const enCabecera = h("img", { src: chica(logo), alt: "", onerror: function () { this.remove(); } });
     $("insignia").appendChild(enCabecera);
-    const grande = h("img", { src: logo, alt: "", onerror: () => { $("portada-logo").hidden = true; $("portada-contenido").classList.add("sin-logo"); } });
+    const grande = h("img", { src: chica(logo), alt: "", onerror: () => { $("portada-logo").hidden = true; $("portada-contenido").classList.add("sin-logo"); } });
     $("portada-logo").appendChild(grande);
     $("portada-logo").hidden = false;
     $("portada-contenido").classList.remove("sin-logo");
@@ -608,7 +610,7 @@ EU.alListo(function (sitio) {
     let opcion = p.opciones.length === 1 ? p.opciones[0] : "";
     let cant = 1;
     abrirHoja(p.nombre, (cuerpo, cerrar, hoja) => {
-      const media = mediaProducto(p, "foto-producto", "(min-width: 720px) 560px, 100vw");
+      const media = mediaProducto(p, "foto-producto", "(min-width: 720px) 560px, 100vw", true);
       // Mientras baja la foto grande se ve la chica que ya está en el teléfono (sin hueco en blanco)
       const vista = document.querySelector('[data-pid="' + CSS.escape(p.id) + '"] img');
       if (vista && vista.currentSrc && media.tagName === "IMG") media.style.background = 'var(--crema) url("' + vista.currentSrc + '") center / cover';
@@ -637,7 +639,7 @@ EU.alListo(function (sitio) {
         const menos = h("button", { class: "menos", type: "button", "aria-label": "Quitar " + a.nombre }, icono("menos", 18));
         const mas = h("button", { class: "mas", type: "button", "aria-label": "Agregar " + a.nombre }, icono("mas", 18));
         const fila = h("div", { class: "extra", dataset: { extra: a.id } },
-          a.foto ? imagen(a.foto, { clase: "extra-foto", sizes: "44px", ancho: 44, alto: 44, emoji: emojiDe(a) }) : h("span", { class: "extra-foto", "aria-hidden": "true" }, emojiDe(a)),
+          a.foto ? imagen(chica(a.foto), { clase: "extra-foto", sizes: "44px", ancho: 44, alto: 44, emoji: emojiDe(a) }) : h("span", { class: "extra-foto", "aria-hidden": "true" }, emojiDe(a)),
           h("span", { class: "extra-textos" }, h("span", { class: "extra-nombre" }, a.nombre), h("span", { class: "extra-precio num" }, "+" + usd(a.precio))),
           h("span", { class: "paso" }, menos, salida, mas));
         const sumar = (d) => {
@@ -833,7 +835,7 @@ EU.alListo(function (sitio) {
       }
       return h("ul", { class: "pedido-lineas" }, lineas().map((l) =>
         h("li", null,
-          l.producto.foto ? imagen(l.producto.foto, { clase: "linea-foto", sizes: "52px", ancho: 52, alto: 52, emoji: emojiDe(l.producto) }) : h("span", { class: "linea-foto", "aria-hidden": "true" }, emojiDe(l.producto)),
+          l.producto.foto ? imagen(chica(l.producto.foto), { clase: "linea-foto", sizes: "52px", ancho: 52, alto: 52, emoji: emojiDe(l.producto) }) : h("span", { class: "linea-foto", "aria-hidden": "true" }, emojiDe(l.producto)),
           h("div", { class: "linea-texto" }, h("b", null, nombreLinea(l)),
             textoExtras(l) ? h("span", { class: "linea-extras" }, textoExtras(l)) : null,
             h("span", { class: "num" }, usd(l.cant * l.unitario))),
@@ -854,7 +856,7 @@ EU.alListo(function (sitio) {
             const foto = e.currentTarget.querySelector("img");
             vibrar(); cambiar(p.id, "", 1); volarAlPedido(foto); avisar("Agregaste " + p.nombre);
           } },
-            p.foto ? imagen(p.foto, { sizes: "36px", ancho: 36, alto: 36, emoji: emojiDe(p) }) : h("span", { class: "sug-emoji" }, emojiDe(p)),
+            p.foto ? imagen(chica(p.foto), { sizes: "36px", ancho: 36, alto: 36, emoji: emojiDe(p) }) : h("span", { class: "sug-emoji" }, emojiDe(p)),
             h("span", null, p.nombre), h("span", { class: "num" }, "+" + usd(p.precio))))));
     }
 

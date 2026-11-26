@@ -71,6 +71,24 @@
   async function salir() { await api.salir(); pantallaEntrada(); }
 
   /* ---------- Datos ---------- */
+  /* Los comprobantes de pago (capturas y PDF) ocupan espacio en Supabase y no se vuelven a mirar.
+     Una vez al día, al abrir el panel, se borran los de pagos ya revisados con más de 6 meses.
+     El pago queda en el historial, solo sin la captura. */
+  async function limpiarComprobantes() {
+    try {
+      const hoy = new Date().toISOString().slice(0, 10);
+      if (localStorage.getItem("eu:limpieza-comprobantes") === hoy) return;
+      const limite = new Date(Date.now() - 183 * 86400000).toISOString();
+      const viejos = (await api.select("eu_pagos", "select=id,comprobante&comprobante=not.is.null&estado=neq.pendiente&creado=lt." + encodeURIComponent(limite) + "&limit=200")) || [];
+      if (viejos.length) {
+        await api.borrarArchivos("eu-pagos", viejos.map((p) => p.comprobante));
+        await api.actualizar("eu_pagos", "id=in.(" + viejos.map((p) => p.id).join(",") + ")", { comprobante: null });
+        viejos.forEach((v) => { const p = D.pagos.find((x) => x.id === v.id); if (p) p.comprobante = null; });
+      }
+      localStorage.setItem("eu:limpieza-comprobantes", hoy);
+    } catch (_) { /* no es grave: se intenta la próxima vez */ }
+  }
+
   async function cargar() {
     cargando("Abriendo el panel");
     try {
@@ -92,6 +110,7 @@
       if (location.hash === "#pagos") { D.seccion = "pagos"; history.replaceState(null, "", location.pathname + location.search); }
       if (location.hash === "#clientes") { D.seccion = "clientes"; D.filtro = "prueba"; history.replaceState(null, "", location.pathname + location.search); }
       pintar();
+      limpiarComprobantes();
     } catch (err) {
       if (err.status === 401) { await api.salir(); return pantallaEntrada("Tu sesión venció. Vuelve a entrar."); }
       app.replaceChildren(h("main", { class: "entrada-pantalla" }, h("div", { class: "hoja entrada-hoja" },
@@ -769,6 +788,10 @@
     if (d.diasPrueba == null) d.diasPrueba = pl.diasPrueba;
     if (d.maxPaginasPremium == null) d.maxPaginasPremium = pl.maxPaginas;
     if (d.registroAbierto == null) d.registroAbierto = true;
+    // Frenos del registro (la base de datos usa estos mismos valores por defecto)
+    if (d.topeRegistrosHora == null) d.topeRegistrosHora = 100;
+    if (d.topeRegistrosDia == null) d.topeRegistrosDia = 500;
+    if (d.topeRegistrosConexion == null) d.topeRegistrosConexion = 6;
     const ed = EU.crearEditor({ raiz: () => d });
     const enlaceRegistro = location.origin + "/registro/";
     const copiarRegistro = h("button", { class: "btn btn-sec btn-chico", type: "button" }, "Copiar enlace");
@@ -805,6 +828,11 @@
             ed.campo({ tipo: "numero", ruta: "diasPrueba", etiqueta: "Días de prueba gratis", min: 1, max: 90, sufijo: "días" }),
             ed.campo({ tipo: "numero", ruta: "maxPaginasPremium", etiqueta: "Páginas con Premium", min: 1, max: 20, sufijo: "páginas", ayuda: "Contando la principal." })),
           ed.campo({ tipo: "interruptor", ruta: "registroAbierto", etiqueta: "Registro abierto", ayuda: "Cualquiera puede crear su página desde la portada y probarla gratis. Si lo apagas, solo tú creas clientes." }),
+          h("div", { class: "dos-col" },
+            ed.campo({ tipo: "numero", ruta: "topeRegistrosHora", etiqueta: "Registros por hora, como máximo", min: 10, max: 1000, sufijo: "por hora", si: { ruta: "registroAbierto" } }),
+            ed.campo({ tipo: "numero", ruta: "topeRegistrosDia", etiqueta: "Registros por día, como máximo", min: 20, max: 5000, sufijo: "por día", si: { ruta: "registroAbierto" } })),
+          ed.campo({ tipo: "numero", ruta: "topeRegistrosConexion", etiqueta: "Registros desde una misma conexión al día", min: 1, max: 50, sufijo: "cuentas", si: { ruta: "registroAbierto" },
+            ayuda: "Frena a quien crea cuentas en masa. Si haces una charla o un evento donde varios se registran con el mismo wifi, súbelo ese día. Cuando se pasa un tope, el registro dice «Estamos recibiendo muchos registros» y se puede intentar más tarde." }),
           h("div", { class: "dato" }, h("div", { style: "flex:1;min-width:0" }, h("b", {}, "Enlace de registro"), h("p", { class: "suave chico", style: "overflow-wrap:anywhere" }, enlaceRegistro)), copiarRegistro))),
       h("section", { class: "hoja" }, h("div", { class: "hoja-cab" }, h("h2", {}, "Cobros")),
         ed.campos([

@@ -46,7 +46,7 @@ EU.alListo(function (sitio) {
   const palabras = sitio.nombre.trim().split(/\s+/);
   $("titulo").innerHTML = palabras.length > 1 ? `${esc(palabras.slice(0, -1).join(" "))} <span>${esc(palabras[palabras.length - 1])}</span>` : esc(palabras[0]);
   $("precioBase").textContent = `${NOMBRE} ${money(BASE)}` + (EU.tasa() > 0 ? ` · ${EU.bs(BASE)}` : "");
-  const logo = EU.url(c.negocio.logo);
+  const logo = (EU.miniatura || EU.url)(c.negocio.logo); // el logo sale pequeño: versión chica
   if (logo) { $("logo").src = logo; $("logo").alt = "Logo de " + sitio.nombre; $("logo").hidden = false; }
   $("ctaTxt").textContent = "Agregar " + NOMBRE.toLowerCase();
   $("stage").setAttribute("aria-label", "Tu " + NOMBRE.toLowerCase());
@@ -128,7 +128,7 @@ EU.alListo(function (sitio) {
     return base;
   }
   const thumb = (id) => { const f = miniDe(id); return f ? `<img src="${esc(f)}" alt="" loading="lazy">` : `<span class="sin-foto" aria-hidden="true">🫓</span>`; };
-  const drinkThumb = (d) => { const f = EU.url(d.foto); return f ? `<img class="dimg${d.chico ? " sm" : ""}" src="${esc(f)}" alt="" loading="lazy">` : `<span class="demoji" aria-hidden="true">🥤</span>`; };
+  const drinkThumb = (d) => { const f = (EU.miniatura || EU.url)(d.foto); return f ? `<img class="dimg${d.chico ? " sm" : ""}" src="${esc(f)}" alt="" loading="lazy">` : `<span class="demoji" aria-hidden="true">🥤</span>`; };
 
   function computeStack(ids, W) {
     const seq = ["tapa-abajo", ...ids.filter((id) => fotoDe(id)), "tapa-arriba"];

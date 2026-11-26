@@ -890,7 +890,7 @@ function hornear() {
     const t = cola.shift();
     if (!t) { horneando = false; return; }
     const c = t.p.colores[t.color];
-    let url = c.fotos360?.length ? c.fotos360[0] : null;
+    let url = c.fotos360?.length ? (EU.miniatura ? EU.miniatura(c.fotos360[0]) : c.fotos360[0]) : null; // tarjeta: versión chica
     if (!url && !motor) { esperanMotor.push(t); setTimeout(siguiente, 0); return; }
     if (!url) { try { url = motor.foto(t.p, t.color); } catch (e) { console.error(e); } }
     if (url) {

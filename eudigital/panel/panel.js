@@ -182,7 +182,21 @@
     try {
       const blob = await EU.comprimirImagen(archivo, { max, calidad: 0.84 });
       if (blob.size > 3 * 1024 * 1024) throw new Error("La foto sigue muy pesada. Prueba con otra más pequeña.");
-      const ruta = S.sitio.id + "/" + EU.idNuevo() + "." + EU.extension(blob);
+      const id = EU.idNuevo(), ext = EU.extension(blob);
+      let ruta = S.sitio.id + "/" + id + "." + ext;
+      // Versión chica (400 px) para las listas del menú: "id-g" es la grande y "id-p" la chica.
+      // Las páginas usan la chica donde la foto sale pequeña y así gastan mucha menos transferencia.
+      if (max > 480) {
+        try {
+          const chica = await EU.comprimirImagen(archivo, { max: 400, calidad: 0.8 });
+          if (EU.extension(chica) === ext && chica.size < blob.size) {
+            const rutaChica = S.sitio.id + "/" + id + "-p." + ext;
+            await api.subir("eu-media", rutaChica, chica);
+            S.subidas.add(rutaChica);
+            ruta = S.sitio.id + "/" + id + "-g." + ext;
+          }
+        } catch (_) { /* sin versión chica: las páginas usan la grande */ }
+      }
       await api.subir("eu-media", ruta, blob);
       S.subidas.add(ruta);
       return api.urlPublica("eu-media", ruta);
@@ -196,8 +210,11 @@
       const archivos = await api.listar("eu-media", S.sitio.id);
       const texto = JSON.stringify(S.borrador);
       const viejo = Date.now() - 30 * 60000;
+      const usada = (r) => texto.includes(r) || guardadas.has(r);
+      // La versión chica ("-p") sigue mientras se use su grande ("-g")
+      const enUso = (r) => usada(r) || (/-p\.\w+$/.test(r) && usada(r.replace(/-p\.(\w+)$/, "-g.$1")));
       const borrar = (archivos || []).filter((a) => a && a.name && a.id !== null).map((a) => ({ ruta: S.sitio.id + "/" + a.name, creado: Date.parse(a.created_at || "") || 0 }))
-        .filter((a) => !texto.includes(a.ruta) && !guardadas.has(a.ruta) && (S.subidas.has(a.ruta) || a.creado < viejo)).map((a) => a.ruta);
+        .filter((a) => !enUso(a.ruta) && (S.subidas.has(a.ruta) || a.creado < viejo)).map((a) => a.ruta);
       if (borrar.length) await api.borrarArchivos("eu-media", borrar);
       borrar.forEach((r) => S.subidas.delete(r));
     } catch (_) { /* no es grave: se intenta en el próximo guardado */ }

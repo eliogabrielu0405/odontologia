@@ -38,7 +38,7 @@ EU.alListo(function (sitio) {
   $("#eslogan").hidden = !c.negocio.eslogan;
   $("#descripcion").textContent = c.negocio.descripcion || "";
   $("#vert").textContent = (c.portada && c.portada.kanji) || "";
-  const logo = EU.url(c.negocio.logo);
+  const logo = (EU.miniatura || EU.url)(c.negocio.logo); // el logo sale pequeño: versión chica
   if (logo) $("#hanko").outerHTML = `<img class="logo" id="hanko" src="${esc(logo)}" alt="Logo de ${esc(sitio.nombre)}" data-eu-logo>`;
   else $("#hanko").innerHTML = esc((c.portada && c.portada.sello) || "").split("").join("<br>");
   $("#pie").innerHTML = `<b>桜</b> ${esc((c.portada && c.portada.pie) || "")}`;
@@ -47,7 +47,7 @@ EU.alListo(function (sitio) {
 
   /* ---------- Menú ---------- */
   function iconoHTML(p, cat) {
-    const foto = EU.url(p.foto);
+    const foto = (EU.miniatura || EU.url)(p.foto); // versión chica: el ícono es pequeño
     if (foto) return `<div class="plato-ico"><img src="${esc(foto)}" alt="" loading="lazy"></div>`;
     const color = COLORES[cat.color] || COLORES.rojo;
     const txt = cat.color === "sakura" ? "var(--negro)" : "#fff";

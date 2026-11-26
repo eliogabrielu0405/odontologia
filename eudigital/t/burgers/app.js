@@ -59,7 +59,7 @@ EU.alListo(function (sitio) {
   $("nombre").textContent = sitio.nombre;
   $("lema").textContent = c.negocio.eslogan || "";
   $("lema").hidden = !c.negocio.eslogan;
-  const logo = EU.url(c.negocio.logo);
+  const logo = (EU.miniatura || EU.url)(c.negocio.logo); // el logo sale pequeño: versión chica
   const fotoLogo = (caja) => {
     if (!logo) return;
     const im = document.createElement("img");
@@ -230,7 +230,7 @@ EU.alListo(function (sitio) {
     const items = PRODS.filter((p) => p.cat === cat);
     if (!items.length) { $("grid").innerHTML = `<p class="vacio">Pronto publicaremos el menú.</p>`; return; }
     $("grid").innerHTML = items.map((p) => {
-      const foto = EU.url(p.foto);
+      const foto = (EU.miniatura || EU.url)(p.foto); // versión chica: la tarjeta es pequeña
       return `<article class="prod sticker${p.agotado ? " agotado" : ""}" data-eu-producto>
         <div class="foto" aria-hidden="true">${esc(emojiDe(p.cat))}${foto ? `<img src="${esc(foto)}" alt="" loading="lazy" onerror="this.remove()">` : ""}</div>
         <div class="prod-txt"><h3>${esc(p.nombre)}</h3>${p.desc ? `<p class="desc">${esc(p.desc)}</p>` : ""}
