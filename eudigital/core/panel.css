@@ -326,3 +326,10 @@ dialog.modal::backdrop { background: rgba(25, 32, 43, .5); }
 .plegable > summary { cursor: pointer; font-weight: 700; min-height: 32px; display: flex; align-items: center; }
 .plegable[open] > summary { margin-bottom: 6px; }
 .plegable > .campos { margin-top: 8px; }
+
+/* Selector de idioma de la plataforma (portada, registro y panel) */
+.eu-idioma-sel { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 10px; border: 1px solid var(--linea); border-radius: 10px; background: var(--papel); color: var(--tinta); font-weight: 700; font-size: 14px; }
+.eu-idioma-sel select { border: 0; background: transparent; color: inherit; font: inherit; min-height: 38px; cursor: pointer; }
+.eu-idioma-sel:focus-within { outline: 3px solid var(--carbon); outline-offset: 2px; }
+.eu-idioma-sel select:focus { outline: none; }
+.campo > .eu-idioma-sel { align-self: flex-start; }

@@ -17,6 +17,21 @@
   const nombreTraido = String(params.get("nombre") || "").replace(/[\u0000-\u001f\u007f]/g, "").replace(/\s+/g, " ").trim().slice(0, 80);
   const d = { plantilla: ORDEN.includes(params.get("plantilla")) ? params.get("plantilla") : "", nombre: nombreTraido, usuario: EU.slug(nombreTraido), whatsapp: "", contacto: "", clave: "" };
   let usuarioTocado = false;
+  // Al cambiar de idioma la página se vuelve a abrir: lo que ya escribió se guarda un momento
+  // en esta pestaña (sin la contraseña) y se recupera.
+  const BORRADOR = "eu:registro-borrador";
+  try {
+    const b = JSON.parse(sessionStorage.getItem(BORRADOR) || "null");
+    sessionStorage.removeItem(BORRADOR);
+    if (b) {
+      ["plantilla", "nombre", "usuario", "whatsapp", "contacto"].forEach((k) => { if (typeof b[k] === "string" && b[k]) d[k] = b[k]; });
+      if (b.usuarioTocado) usuarioTocado = true;
+    }
+  } catch (_) { /* sin almacenamiento */ }
+  const cambiarIdioma = (nuevo) => {
+    try { sessionStorage.setItem(BORRADOR, JSON.stringify({ plantilla: d.plantilla, nombre: d.nombre, usuario: d.usuario, whatsapp: d.whatsapp, contacto: d.contacto, usuarioTocado })); } catch (_) { /* sin almacenamiento */ }
+    EU.idiomaCambiar(nuevo);
+  };
 
   const telefono = (t) => { let n = EU.soloNumeros(t); if (/^0[24]\d{9}$/.test(n)) n = "58" + n.slice(1); return n; };
   const usuarioValido = (u) => /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/.test(u);
@@ -25,7 +40,9 @@
   function cabecera() {
     return h("header", { class: "rg-cab" },
       h("a", { class: "marca-eu", href: "/" }, h("img", { src: "/img/favicon.svg", alt: "" }), C.marca || "EU Digital"),
-      h("a", { class: "btn btn-sec btn-chico", href: "/panel/" }, "Ya tengo cuenta"));
+      h("div", { class: "acciones" },
+        EU.selectorIdiomas ? EU.selectorIdiomas({ alCambiar: cambiarIdioma }) : null,
+        h("a", { class: "btn btn-sec btn-chico", href: "/panel/" }, "Ya tengo cuenta")));
   }
 
   function cerrado() {
@@ -86,6 +103,7 @@
     nombre.value = d.nombre; usuario.value = d.usuario;
     const whatsapp = h("input", { class: "entrada", type: "tel", inputmode: "tel", autocomplete: "tel", maxlength: 22, placeholder: "Ej: 0414 123 4567" });
     const contacto = h("input", { class: "entrada", type: "text", maxlength: 80, autocomplete: "name" });
+    whatsapp.value = d.whatsapp; contacto.value = d.contacto;
     const clave = h("input", { class: "entrada", type: "password", autocomplete: "new-password", minlength: 8, maxlength: 60 });
     const ver = h("button", { class: "btn btn-sec", type: "button", "aria-pressed": "false" }, "Mostrar");
     ver.addEventListener("click", () => { const oculta = clave.type === "password"; clave.type = oculta ? "text" : "password"; ver.textContent = oculta ? "Ocultar" : "Mostrar"; ver.setAttribute("aria-pressed", String(oculta)); });
@@ -146,6 +164,9 @@
       h("section", { class: "hoja rg-datos" },
         h("div", { class: "rg-paso" }, h("i", { "aria-hidden": "true" }, "2"), h("h2", {}, "Los datos de tu negocio")),
         h("div", { class: "campos" },
+          EU.selectorIdiomas ? h("div", { class: "campo" }, h("span", { class: "etq", style: "font-weight:700" }, "El idioma de tu panel"),
+            EU.selectorIdiomas({ alCambiar: cambiarIdioma }),
+            h("p", { class: "ayuda" }, "Tu panel y los avisos te salen en este idioma. Lo puedes cambiar después.")) : null,
           campo("nombre", "Nombre del negocio", nombre),
           campo("usuario", "Usuario", usuario, h("div", { style: "display:flex;flex-direction:column;gap:6px" }, estado, enlace, h("p", { class: "ayuda", id: "a-usuario" }, "Con este usuario entras a tu panel y es el final del enlace de tu página."))),
           campo("whatsapp", "WhatsApp donde recibes los pedidos", whatsapp, "Ahí te llega cada pedido. Lo puedes cambiar después."),

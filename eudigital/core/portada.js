@@ -188,6 +188,9 @@
   }
   pintarTodo(false);
   mira();
+  // Selector de idioma de la plataforma (core/idiomas.js) en el encabezado
+  const nav = document.querySelector(".ld-cab nav");
+  if (nav && EU.selectorIdiomas) nav.prepend(EU.selectorIdiomas());
 
   const base = String(C.supabaseUrl || "").replace(/\/+$/, "");
   if (base) {

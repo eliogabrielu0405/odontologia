@@ -204,6 +204,7 @@
       h("span", {}, h("b", {}, s.nombre), h("br"), h("span", { class: "suave" }, s.slug + ", " + nombrePlantilla(s.plantilla) + (extra ? " y " + extra + (extra === 1 ? " página más" : " páginas más") : ""))),
       h("span", { class: "sello " + est.tono }, est.sello),
       h("span", { class: "suave", style: "grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap" }, selloPlan(s),
+        c.idioma && c.idioma !== "es" ? h("span", { class: "sello azul", title: "Idioma que eligió al registrarse" }, "🌐 " + ({ en: "Inglés", pt: "Portugués", it: "Italiano" }[c.idioma] || c.idioma)) : null,
         (c.vence ? (prueba ? "Prueba hasta el " : "Fecha de corte: ") + EU.fecha(c.vence, true) : "Sin fecha de corte") + (prueba ? "." : ". " + EU.usd(precioDe(s)) + (cicloDe(s) === "anual" ? " al año." : " al mes."))));
   }
 
@@ -365,7 +366,8 @@
     const origen = c.origen === "registro" ? " Se registró solo el " + EU.fecha(String(c.creado || s.creado).slice(0, 10)) + "." : "";
     m.cuerpo.replaceChildren(
       h("div", { class: "hoja-fila" },
-        h("div", {}, h("p", { class: "suave" }, "Usuario " + s.slug + ". Plantilla " + nombrePlantilla(s.plantilla) + "." + origen),
+        h("div", {}, h("p", { class: "suave" }, "Usuario " + s.slug + ". Plantilla " + nombrePlantilla(s.plantilla) + "." + origen
+            + " Idioma: " + ({ es: "español", en: "inglés", pt: "portugués", it: "italiano" }[c.idioma || "es"] || c.idioma) + "."),
           h("p", { class: "linea-plan" }, selloPlan(s), planDe(s) === "prueba" ? "Todavía no ha pagado."
             : (cicloDe(s) === "anual" ? "Paga por año: " + EU.usd(precioDe(s)) + "." : "Paga por mes: " + EU.usd(precioDe(s)) + ".")),
           h("p", {}, est.texto)),

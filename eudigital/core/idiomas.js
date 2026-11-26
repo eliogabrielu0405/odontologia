@@ -496,6 +496,39 @@
   }
   EU.t = t;
 
+  /* Otros archivos suman sus textos (la portada, el registro y el panel: core/idiomas-plataforma.js).
+     Al sumarlos se vuelve a traducir lo que ya está en pantalla. */
+  EU.idiomaAgregar = function (dic, patrones) {
+    Object.assign(D, dic || {});
+    (patrones || []).forEach((x) => P.push(x));
+    if (id !== "es" && EU.traducirPagina && document.body) EU.traducirPagina(document.body);
+  };
+  // La columna del idioma actual en el diccionario (0 inglés, 1 portugués, 2 italiano)
+  EU.idiomaCol = COL[id];
+
+  // Cambiar de idioma: se guarda en el teléfono y se vuelve a abrir la página con ?lang=
+  EU.idiomaCambiar = function (nuevo) {
+    if (!valido(nuevo) || nuevo === id) return;
+    try { localStorage.setItem("eu:idioma", nuevo); } catch (_) { /* sin almacenamiento */ }
+    const u = new URL(location.href);
+    u.searchParams.set("lang", nuevo);
+    location.replace(u.toString());
+  };
+  // Selector compacto (🌐 + lista) para la portada, el registro y el panel
+  EU.selectorIdiomas = function ({ alCambiar } = {}) {
+    const caja = document.createElement("label");
+    caja.className = "eu-idioma-sel";
+    caja.setAttribute("data-no-traducir", "");
+    const globo = document.createElement("span");
+    globo.textContent = "🌐"; globo.setAttribute("aria-hidden", "true");
+    const sel = document.createElement("select");
+    sel.setAttribute("aria-label", "Idioma · Language · Idioma · Lingua");
+    LISTA.forEach((l) => { const o = document.createElement("option"); o.value = l.id; o.lang = l.id; o.textContent = l.nombre; if (l.id === id) o.selected = true; sel.append(o); });
+    sel.addEventListener("change", () => (alCambiar ? alCambiar(sel.value) : EU.idiomaCambiar(sel.value)));
+    caja.append(globo, sel);
+    return caja;
+  };
+
   /* ---------- Lo que escribió el dueño: nombres y descripciones en otros idiomas ---------- */
   EU.traducirContenido = function (c) {
     if (id === "es" || !c) return c;
@@ -515,7 +548,7 @@
   /* ---------- Traducir la página (y lo que aparezca después) ---------- */
   if (id === "es") return;
   const ATR = ["placeholder", "aria-label", "title", "alt"];
-  const SALTAR = new Set(["SCRIPT", "STYLE", "TEXTAREA", "CODE", "NOSCRIPT", "OPTION"]);
+  const SALTAR = new Set(["SCRIPT", "STYLE", "TEXTAREA", "CODE", "NOSCRIPT"]);
   const puesto = new WeakMap(); // lo que ya pusimos, para no traducir dos veces
   function texto(n) {
     const p = n.parentNode;

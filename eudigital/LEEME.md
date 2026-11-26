@@ -104,6 +104,18 @@ Las páginas de los negocios se ven en el idioma del teléfono de quien las abre
 - Para agregar un texto nuevo a una plantilla: escríbelo en español como siempre y agrégalo al diccionario de `core/idiomas.js` con sus tres traducciones. Un texto que no esté en el diccionario sale en español.
 - Los productos de las demos no están traducidos (son de ejemplo): en otro idioma, sus nombres salen en español.
 
+## La plataforma en cuatro idiomas (portada, registro y panel)
+
+La portada, el registro y el panel del dueño también se ven en español, inglés, portugués o italiano.
+
+- **Portada:** selector 🌐 en el encabezado. Abre sola en el idioma del teléfono (si tiene español, en español).
+- **Registro:** el campo **"El idioma de tu panel"** (y el selector de arriba). Al cambiarlo, la página se vuelve a abrir en ese idioma sin perder lo que ya escribió (menos la contraseña).
+- **Panel:** el idioma se guarda en la cuenta (`eu_cuentas.idioma`). Recién registrado se guarda el que eligió; después el panel se abre en el idioma de la cuenta en cualquier teléfono. Se cambia en **Mi suscripción > Idioma del panel**, y también hay selector en la pantalla de entrada.
+- **Tu panel de administración** queda en español y muestra el idioma de cada cliente: una etiqueta 🌐 en su ficha (si no es español) y "Idioma: …" al abrirlo.
+- Los textos están en `core/idiomas-plataforma.js` (usa el mismo traductor de `core/idiomas.js`). Para un texto nuevo del panel o la portada, súmalo ahí con sus tres traducciones; si falta, sale en español.
+- Base de datos: columna `idioma` en `eu_cuentas` y función `eu_poner_idioma` (cada dueño solo cambia el de su cuenta). Ver `sql/2026-11-26_idioma_cuenta.sql`.
+- El menú de muestra con el que arranca cada página sigue en español: el dueño lo cambia por el suyo.
+
 ## Delivery por distancia y ubicación del cliente
 
 En el panel del cliente, **Entregas y pagos > Cómo cobras el delivery**:

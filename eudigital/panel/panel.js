@@ -45,7 +45,8 @@
     const error = h("p", { class: "banda rojo", role: "alert", hidden: !mensaje }, mensaje || "");
     const boton = h("button", { class: "btn btn-ancho", type: "submit" }, "Entrar");
     const form = h("form", { class: "hoja entrada-hoja", novalidate: true },
-      h("div", { class: "marca-eu" }, h("img", { src: "/img/favicon.svg", alt: "" }), C.marca || "EU Digital"),
+      h("div", { class: "hoja-fila" }, h("div", { class: "marca-eu" }, h("img", { src: "/img/favicon.svg", alt: "" }), C.marca || "EU Digital"),
+        EU.selectorIdiomas ? EU.selectorIdiomas() : null),
       h("div", { class: "hoja-cab" }, h("h1", {}, "Entra a tu página"), h("p", {}, "Con tu usuario y tu contraseña.")),
       h("div", { class: "campos" },
         h("div", { class: "campo" }, h("label", { for: "usuario" }, "Usuario"), usuario),
@@ -104,6 +105,10 @@
       S.guardado = firma();
       S.resumen = null; S.resumenT = 0; S.subidas = new Set(); S.pago = null;
       recuperarBorrador();
+      // Idioma de la cuenta: recién registrado se guarda el que eligió; si no, el panel se abre en el de la cuenta
+      const idiomaCuenta = (S.cuenta && S.cuenta.idioma) || "es";
+      if (params.get("bienvenida")) { if (EU.idioma && EU.idioma !== idiomaCuenta) guardarIdioma(EU.idioma); }
+      else if (EU.idiomaCambiar && !params.get("lang") && EU.idioma && idiomaCuenta !== EU.idioma) { EU.idiomaCambiar(idiomaCuenta); return; }
       pintarPanel();
       avisarRegistro();
       if (params.get("bienvenida")) { quitarParametro("bienvenida"); bienvenida(); }
@@ -897,9 +902,29 @@
           p.estado === "rechazado" && p.respuesta ? h("p", { class: "respuesta" }, "Motivo: " + p.respuesta) : null);
       })) : h("p", { class: "suave" }, "Todavía no has reportado pagos.")));
 
+    out.push(hojaIdioma());
     out.push(formularioClave());
     out.push(hojaApp());
     return out;
+  }
+
+  /* ---------- Idioma del panel ----------
+     Se guarda en la cuenta (eu_cuentas.idioma) para abrir el panel en ese idioma desde cualquier
+     teléfono, y para que EU Digital vea en su panel qué idioma habla cada cliente. */
+  async function guardarIdioma(nuevo) {
+    try { await api.rpc("eu_poner_idioma", { p_sitio: S.principal.id, p_idioma: nuevo }); if (S.cuenta) S.cuenta.idioma = nuevo; return true; }
+    catch (_) { return false; }
+  }
+  function hojaIdioma() {
+    if (!EU.selectorIdiomas) return null;
+    return h("section", { class: "hoja" },
+      h("div", { class: "hoja-cab" }, h("h2", {}, "Idioma del panel"),
+        h("p", {}, "Tu panel sale en este idioma en cualquier teléfono donde entres. Tu página se ve en el idioma de cada cliente.")),
+      EU.selectorIdiomas({ alCambiar: async (nuevo) => {
+        if (sucio() && !confirm(EU.t ? EU.t("Tienes cambios sin guardar. ¿Salir de todas formas?") : "Tienes cambios sin guardar. ¿Salir de todas formas?")) return pintarPanel();
+        await guardarIdioma(nuevo);
+        EU.idiomaCambiar(nuevo);
+      } }));
   }
 
   function formularioPago(pendientes) {
