@@ -1,4 +1,4 @@
-/* Configuración de la plataforma EU Digital.
+/* Configuración de la plataforma Tiendo.
    Lo único que se cambia aquí es el dominio cuando lo compres. */
 window.EU_CONFIG = {
   // Base de datos (Supabase, proyecto "eudigital"). La clave "anon" es pública por diseño:
@@ -15,10 +15,10 @@ window.EU_CONFIG = {
   // cliente tendrá su dirección: pizzeria-luigi.eudigital.com
   dominioBase: "",
 
-  marca: "EU Digital Solutions",
+  marca: "Tiendo",
   whatsappMarca: "584144741237",
 
-  // Avisos al teléfono de EU Digital cuando un cliente reporta un pago o alguien se registra.
+  // Avisos al teléfono de Tiendo cuando un cliente reporta un pago o alguien se registra.
   // Usan la tabla eu_avisos y la función eu-avisos (ver sql/2026-11-13_avisos.sql y supabase/functions/).
   avisos: true
 };

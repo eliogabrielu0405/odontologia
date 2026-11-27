@@ -21,7 +21,7 @@ const PLANTILLAS = {
 const RESPALDO = {
   supabaseUrl: "https://rbssbogagijomskbzezv.supabase.co",
   supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJic3Nib2dhZ2lqb21za2J6ZXp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzNzEwMDQsImV4cCI6MjEwOTk0NzAwNH0.RXKETjReiRIfCdTiwPDEBgWCfXW-X7S8vXIA4Thq6w4",
-  dominioBase: "", marca: "EU Digital Solutions",
+  dominioBase: "", marca: "Tiendo",
 };
 
 const seguir = () => new Response(null, { headers: { "x-middleware-next": "1" } });

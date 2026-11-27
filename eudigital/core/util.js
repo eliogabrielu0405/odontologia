@@ -1,4 +1,4 @@
-/* Utilidades de los paneles (el del cliente y el de EU Digital). */
+/* Utilidades de los paneles (el del cliente y el de Tiendo). */
 (function () {
   "use strict";
   const EU = (window.EU = window.EU || {});

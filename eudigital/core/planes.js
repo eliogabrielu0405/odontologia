@@ -1,4 +1,4 @@
-/* Planes de EU Digital: prueba gratis, Básico y Premium, por mes o por año.
+/* Planes de Tiendo: prueba gratis, Básico y Premium, por mes o por año.
    Los precios, los días de prueba y el tope de páginas se cambian en el panel de administración
    (Ajustes > Planes y precios); los de aquí son los que se usan si todavía no hay ajustes. */
 (function () {

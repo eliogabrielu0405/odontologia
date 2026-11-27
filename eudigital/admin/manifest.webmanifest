@@ -1,6 +1,6 @@
 {
-  "name": "EU Digital: administración",
-  "short_name": "EU Digital",
+  "name": "Tiendo: administración",
+  "short_name": "Tiendo",
   "description": "Panel para administrar las páginas de tus clientes.",
   "lang": "es",
   "start_url": "/admin/",

@@ -1,5 +1,5 @@
 /* Cliente mínimo de Supabase, sin librerías: sesión, tablas, funciones y archivos.
-   Lo usan el panel del cliente y el panel de EU Digital. */
+   Lo usan el panel del cliente y el panel de Tiendo. */
 (function () {
   "use strict";
   const C = window.EU_CONFIG;

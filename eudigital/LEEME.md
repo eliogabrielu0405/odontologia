@@ -1,4 +1,4 @@
-# EU Digital Solutions: plataforma de páginas de pedidos
+# Tiendo: plataforma de páginas de pedidos
 
 Una sola web con todo adentro:
 
@@ -242,7 +242,7 @@ El plan gratis pausa el proyecto si pasa una semana sin visitas y no guarda copi
 - `panel/`, `admin/`: los dos paneles, cada uno con lo necesario para instalarse como app.
 - `registro/`: la página de registro con prueba gratis.
 - `middleware.js`: arma la vista previa cuando se comparte un enlace.
-- `img/`: el ícono de EU Digital y la tarjeta de la portada.
+- `img/`: el ícono de Tiendo y la tarjeta de la portada.
 - `sql/`: los cambios de la base de datos (ya están aplicados).
 - `supabase/functions/`: las funciones que corren en Supabase (ya están instaladas allá); no se publican en Vercel.
 - `t/boutique/vendor/`: el motor de la vista 360 (three.js 0.169, licencia MIT), guardado en la propia página para no depender de otro servicio.

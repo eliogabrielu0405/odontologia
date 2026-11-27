@@ -1,4 +1,4 @@
-/* Panel de EU Digital: clientes, pagos, suspensiones y ajustes de la plataforma. */
+/* Panel de Tiendo: clientes, pagos, suspensiones y ajustes de la plataforma. */
 (function () {
   "use strict";
   const C = window.EU_CONFIG;
@@ -45,14 +45,14 @@
 
   /* ---------- Entrada ---------- */
   function pantallaEntrada(mensaje) {
-    document.title = "EU Digital: entrar";
+    document.title = "Tiendo: entrar";
     const usuario = h("input", { class: "entrada", id: "usuario", type: "text", autocomplete: "username", autocapitalize: "none", spellcheck: false, value: C.usuarioAdmin || "" });
     const clave = h("input", { class: "entrada", id: "clave", type: "password", autocomplete: "current-password" });
     const error = h("p", { class: "banda rojo", role: "alert", hidden: !mensaje }, mensaje || "");
     const boton = h("button", { class: "btn btn-ancho", type: "submit" }, "Entrar");
     const form = h("form", { class: "hoja entrada-hoja", novalidate: true },
-      h("div", { class: "marca-eu" }, h("img", { src: "/img/favicon.svg", alt: "" }), C.marca || "EU Digital"),
-      h("div", { class: "hoja-cab" }, h("h1", {}, "Panel de administración"), h("p", {}, "Solo para EU Digital. La sesión se cierra al cerrar esta pestaña.")),
+      h("div", { class: "marca-eu" }, h("img", { src: "/img/favicon.svg", alt: "" }), C.marca || "Tiendo"),
+      h("div", { class: "hoja-cab" }, h("h1", {}, "Panel de administración"), h("p", {}, "Solo para Tiendo. La sesión se cierra al cerrar esta pestaña.")),
       h("div", { class: "campos" },
         h("div", { class: "campo" }, h("label", { for: "usuario" }, "Usuario"), usuario),
         h("div", { class: "campo" }, h("label", { for: "clave" }, "Contraseña"), clave)),
@@ -93,7 +93,7 @@
     cargando("Abriendo el panel");
     try {
       const esAdmin = await api.rpc("eu_es_admin", {});
-      if (esAdmin !== true) { await api.salir(); return pantallaEntrada("Esta cuenta no es de EU Digital. Los clientes entran por /panel."); }
+      if (esAdmin !== true) { await api.salir(); return pantallaEntrada("Esta cuenta no es de Tiendo. Los clientes entran por /panel."); }
       const [sitios, cuentas, pagos, notas, ajustes] = await Promise.all([
         api.select("eu_sitios", SEL_SITIOS),
         api.select("eu_cuentas", "select=*"),
@@ -129,11 +129,11 @@
     { id: "ajustes", titulo: "Ajustes" },
   ];
   function pintar() {
-    document.title = "EU Digital: administración";
+    document.title = "Tiendo: administración";
     refs = { nav: h("div", { class: "adm-nav-in", role: "navigation", "aria-label": "Secciones" }), main: h("main", { class: "adm-main" }) };
     app.replaceChildren(
       h("div", { class: "adm-arriba" },
-        h("header", { class: "adm-cab" }, h("div", { class: "marca-eu" }, h("img", { src: "/img/favicon.svg", alt: "" }), D.ajustes.marca || C.marca || "EU Digital"),
+        h("header", { class: "adm-cab" }, h("div", { class: "marca-eu" }, h("img", { src: "/img/favicon.svg", alt: "" }), D.ajustes.marca || C.marca || "Tiendo"),
           h("div", { class: "acciones" }, h("button", { class: "btn btn-plano btn-chico", type: "button", onclick: cargar }, "Actualizar"), h("button", { class: "btn btn-plano btn-chico", type: "button", onclick: salir }, "Salir"))),
         h("nav", {}, refs.nav)),
       refs.main);
@@ -204,7 +204,7 @@
 
   function recordatorio(s) {
     const c = cuentaDe(s);
-    const saludo = "Hola" + (c.contacto ? " " + c.contacto : "") + ", te escribimos de " + (D.ajustes.marca || C.marca || "EU Digital") + ". ";
+    const saludo = "Hola" + (c.contacto ? " " + c.contacto : "") + ", te escribimos de " + (D.ajustes.marca || C.marca || "Tiendo") + ". ";
     if (planDe(s) === "prueba") {
       const pl = PL();
       return saludo + "La prueba gratis de tu página " + s.nombre + (c.vence ? (EU.diasHasta(c.vence) < 0 ? " terminó el " : " termina el ") + EU.fecha(c.vence) : " está por terminar") + ". " +

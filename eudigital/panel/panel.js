@@ -36,7 +36,7 @@
   const estadoCuenta = () => EU.estadoCuenta(S.principal || S.sitio, S.cuenta, S.ajustes.diasGracia);
   // Una página adicional queda en pausa cuando la cuenta baja a un plan de una sola página
   const enPausa = () => !!(S.sitio && S.sitio.principal && S.sitio.estado === "suspendido" && S.principal && S.principal.estado === "activo");
-  const marca = () => S.ajustes.marca || C.marca || "EU Digital";
+  const marca = () => S.ajustes.marca || C.marca || "Tiendo";
   const waEU = (texto) => "https://wa.me/" + WA_EU + "?text=" + encodeURIComponent(texto);
   function cargando(texto) { app.replaceChildren(h("div", { class: "cargando-pantalla" }, h("p", {}, h("span", { class: "punto-carga" }), texto || "Cargando"))); }
 
@@ -49,7 +49,7 @@
     const error = h("p", { class: "banda rojo", role: "alert", hidden: !mensaje }, mensaje || "");
     const boton = h("button", { class: "btn btn-ancho", type: "submit" }, "Entrar");
     const form = h("form", { class: "hoja entrada-hoja", novalidate: true },
-      h("div", { class: "hoja-fila" }, h("div", { class: "marca-eu" }, h("img", { src: "/img/favicon.svg", alt: "" }), C.marca || "EU Digital"),
+      h("div", { class: "hoja-fila" }, h("div", { class: "marca-eu" }, h("img", { src: "/img/favicon.svg", alt: "" }), C.marca || "Tiendo"),
         EU.selectorIdiomas ? EU.selectorIdiomas() : null),
       h("div", { class: "hoja-cab" }, h("h1", {}, "Entra a tu página"), h("p", {}, "Con tu usuario y tu contraseña.")),
       h("div", { class: "campos" },
@@ -102,7 +102,7 @@
       S.ajustes = (ajustes && ajustes[0] && ajustes[0].datos) || {};
       S.planes = EU.planes.leer(S.ajustes);
       S.P = (window.EU_PLANTILLAS || {})[S.sitio.plantilla];
-      if (!S.P) throw new Error("No encontramos la plantilla de tu página. Escríbele a EU Digital.");
+      if (!S.P) throw new Error("No encontramos la plantilla de tu página. Escríbele a Tiendo.");
       S.borrador = K.combinar(S.P.defaults, S.sitio.contenido || {});
       ponerMascota(S.borrador, S.P);
       S.nombre = S.sitio.nombre;
@@ -147,7 +147,7 @@
   function pantallaSinPagina() {
     app.replaceChildren(h("main", { class: "entrada-pantalla" }, h("div", { class: "hoja entrada-hoja" },
       h("h1", {}, "Esta cuenta no tiene página"),
-      h("p", { class: "suave" }, "Si eres de " + (C.marca || "EU Digital") + ", entra por el panel de administración. Si quieres una página para tu negocio, créala gratis."),
+      h("p", { class: "suave" }, "Si eres de " + (C.marca || "Tiendo") + ", entra por el panel de administración. Si quieres una página para tu negocio, créala gratis."),
       h("div", { class: "acciones" }, h("a", { class: "btn", href: "/registro/" }, "Crear mi página"), h("a", { class: "btn btn-sec", href: "/admin/" }, "Panel de administración"), h("button", { class: "btn btn-plano", type: "button", onclick: salir }, "Salir")))));
   }
 
@@ -934,7 +934,7 @@
 
   /* ---------- Idioma del panel ----------
      Se guarda en la cuenta (eu_cuentas.idioma) para abrir el panel en ese idioma desde cualquier
-     teléfono, y para que EU Digital vea en su panel qué idioma habla cada cliente. */
+     teléfono, y para que Tiendo vea en su panel qué idioma habla cada cliente. */
   async function guardarIdioma(nuevo) {
     try { await api.rpc("eu_poner_idioma", { p_sitio: S.principal.id, p_idioma: nuevo }); if (S.cuenta) S.cuenta.idioma = nuevo; return true; }
     catch (_) { return false; }
@@ -1024,7 +1024,7 @@
         const nuevo = (r && r[0]) || Object.assign({ estado: "pendiente", creado: new Date().toISOString() }, fila);
         S.pagos.unshift(nuevo);
         S.pago = null;
-        // Aviso al teléfono de EU Digital. Si no sale, el pago igual queda en su lista de pendientes.
+        // Aviso al teléfono de Tiendo. Si no sale, el pago igual queda en su lista de pendientes.
         if (C.avisos && nuevo.id) api.funcion("eu-avisos", { accion: "pago", pago: nuevo.id }).catch(() => { /* sin aviso */ });
         pintarSeccion();
         pagoEnviado(nuevo);

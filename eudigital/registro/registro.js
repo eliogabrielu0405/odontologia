@@ -39,7 +39,7 @@
 
   function cabecera() {
     return h("header", { class: "rg-cab" },
-      h("a", { class: "marca-eu", href: "/" }, h("img", { src: "/img/favicon.svg", alt: "" }), C.marca || "EU Digital"),
+      h("a", { class: "marca-eu", href: "/" }, h("img", { src: "/img/favicon.svg", alt: "" }), C.marca || "Tiendo"),
       h("div", { class: "acciones" },
         EU.selectorIdiomas ? EU.selectorIdiomas({ alCambiar: cambiarIdioma }) : null,
         h("a", { class: "btn btn-sec btn-chico", href: "/panel/" }, "Ya tengo cuenta")));
@@ -244,7 +244,7 @@
     return () => { pintarTitulo(); pintarLetra(); };
   }
 
-  document.title = "Crea tu página gratis · " + (C.marca || "EU Digital");
+  document.title = "Crea tu página gratis · " + (C.marca || "Tiendo");
   const repintar = pintar();
   api.rpc("eu_planes_publicos", {}).then((r) => {
     planes = EU.planes.leer(r);

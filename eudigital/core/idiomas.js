@@ -190,7 +190,7 @@
     "Abierto": ["Open", "Aberto", "Aperto"],
     "Puedes dejar tu pedido y te respondemos apenas abramos.": ["You can leave your order and we'll reply as soon as we open.", "Você pode deixar seu pedido e responderemos assim que abrirmos.", "Puoi lasciare il tuo ordine e ti risponderemo appena apriamo."],
     "Puedes enviar tu pedido y te respondemos apenas abramos.": ["You can send your order and we'll reply as soon as we open.", "Você pode enviar seu pedido e responderemos assim que abrirmos.", "Puoi inviare il tuo ordine e ti risponderemo appena apriamo."],
-    "Esta es una página de muestra de EU Digital Solutions.": ["This is a sample page by EU Digital Solutions.", "Esta é uma página de exemplo da EU Digital Solutions.", "Questa è una pagina di esempio di EU Digital Solutions."],
+    "Esta es una página de muestra de Tiendo.": ["This is a sample page by Tiendo.", "Esta é uma página de exemplo da Tiendo.", "Questa è una pagina di esempio di Tiendo."],
     "Pruébala gratis con tu negocio": ["Try it free with your business", "Experimente grátis com o seu negócio", "Provala gratis con la tua attività"],
     "Créala gratis con tu menú": ["Create it free with your menu", "Crie grátis com o seu cardápio", "Creala gratis con il tuo menù"],
     "Mascota bailarina, tócala para que salte": ["Dancing mascot, tap it to make it jump", "Mascote dançante, toque para ela pular", "Mascotte ballerina, toccala per farla saltare"],

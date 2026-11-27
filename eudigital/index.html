@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#E9EDF3">
-<title>EU Digital Solutions: tu página de pedidos por WhatsApp</title>
+<title>Tiendo: tu página de pedidos por WhatsApp</title>
 <meta name="description" content="Páginas de pedidos para restaurantes y tiendas en Venezuela. Pruébala 15 días gratis: precios en dólares y bolívares, pedidos directo a tu WhatsApp y un panel para cambiar todo desde el teléfono.">
 <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="/panel/manifest.webmanifest">
@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap">
 <link rel="stylesheet" href="/core/panel.css">
 <style>
-/* Portada de EU Digital. La idea es la de los paneles: un talonario. Arriba, el ticket del pedido tal
+/* Portada de Tiendo. La idea es la de los paneles: un talonario. Arriba, el ticket del pedido tal
    como llega al WhatsApp; en los planes, boletos con borde troquelado y el sello de lo que te ahorras.
    El resto va callado para que lo que se recuerde sean esos dos papeles. */
 html { scroll-behavior: smooth; }
@@ -190,7 +190,7 @@ html { scroll-behavior: smooth; }
 <div id="portada" hidden>
   <div class="ld">
     <header class="ld-cab">
-      <div class="marca-eu"><img src="/img/favicon.svg" alt="">EU Digital Solutions</div>
+      <div class="marca-eu"><img src="/img/favicon.svg" alt="">Tiendo</div>
       <nav aria-label="Secciones">
         <a href="#plantillas">Plantillas</a>
         <a href="#planes">Planes</a>
@@ -358,7 +358,7 @@ html { scroll-behavior: smooth; }
     </section>
 
     <footer class="ld-pie">
-      <span>EU Digital Solutions</span>
+      <span>Tiendo</span>
       <span>WhatsApp <a data-wa href="#" target="_blank" rel="noopener"><span data-wa-visible>0414-474-1237</span></a></span>
       <span><a href="/panel/">Entrar a mi panel</a></span>
     </footer>
@@ -378,7 +378,7 @@ html { scroll-behavior: smooth; }
 <script src="/t/boutique/datos.js"></script>
 <script>
 /* Si la dirección trae un negocio (?n=usuario, un subdominio o un dominio propio), se abre su página.
-   Si no, se muestra la portada de EU Digital. */
+   Si no, se muestra la portada de Tiendo. */
 (function () {
   "use strict";
   var C = window.EU_CONFIG;
@@ -422,7 +422,7 @@ html { scroll-behavior: smooth; }
     headers: { apikey: C.supabaseKey, Authorization: "Bearer " + C.supabaseKey }, cache: "no-store",
   }).then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); }).then(function (filas) {
     var s = filas && filas[0];
-    if (!s) { noDisponible("Esta página no está disponible", "Si eres el dueño del negocio, escríbele a EU Digital."); return; }
+    if (!s) { noDisponible("Esta página no está disponible", "Si eres el dueño del negocio, escríbele a Tiendo."); return; }
     try { sessionStorage.setItem("eu:sitio:" + s.slug, JSON.stringify({ t: Date.now(), sitio: s })); } catch (_) { /* sin almacenamiento */ }
     var extra = new URLSearchParams(location.search);
     extra.delete("negocio");

@@ -1,4 +1,4 @@
-/* Avisos de EU Digital: muestra la notificación cuando un cliente reporta un pago,
+/* Avisos de Tiendo: muestra la notificación cuando un cliente reporta un pago,
    aunque el panel esté cerrado. No guarda páginas ni datos. */
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));

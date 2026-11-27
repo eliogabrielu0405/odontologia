@@ -76,7 +76,7 @@
           ok.addEventListener("click", async () => {
             ok.disabled = true;
             const r = await app.instalar();
-            if (r === "ok") { cuerpo.replaceChildren(el("p", { class: "banda verde" }, "Listo. Busca el ícono de EU Digital en tu pantalla de inicio.")); pie.replaceChildren(el("button", { class: "btn", type: "button", onclick: () => d.close() }, "Cerrar")); }
+            if (r === "ok") { cuerpo.replaceChildren(el("p", { class: "banda verde" }, "Listo. Busca el ícono de Tiendo en tu pantalla de inicio.")); pie.replaceChildren(el("button", { class: "btn", type: "button", onclick: () => d.close() }, "Cerrar")); }
             else pintar();
           });
           cuerpo.replaceChildren(intro);

@@ -1,7 +1,7 @@
 /* Textos de la plataforma (portada, registro y panel del dueño) en inglés, portugués e italiano.
    Usa el traductor de core/idiomas.js: cada texto en español con sus tres traducciones
    [inglés, portugués, italiano], y patrones para textos con números, fechas o nombres.
-   El panel de administración de EU Digital queda en español.
+   El panel de administración de Tiendo queda en español.
    Para agregar un texto nuevo del panel o la portada, súmalo aquí. */
 (function () {
   "use strict";
@@ -196,7 +196,7 @@
     "Escribir por WhatsApp": ["Write on WhatsApp", "Escrever pelo WhatsApp", "Scrivi su WhatsApp"],
     "Abriendo la página": ["Opening the page", "Abrindo a página", "Apertura della pagina"],
     "Esta página no está disponible": ["This page isn't available", "Esta página não está disponível", "Questa pagina non è disponibile"],
-    "Si eres el dueño del negocio, escríbele a EU Digital.": ["If you're the business owner, write to EU Digital.", "Se você é o dono do negócio, escreva para a EU Digital.", "Se sei il titolare, scrivi a EU Digital."],
+    "Si eres el dueño del negocio, escríbele a Tiendo.": ["If you're the business owner, write to Tiendo.", "Se você é o dono do negócio, escreva para a Tiendo.", "Se sei il titolare, scrivi a Tiendo."],
     "No pudimos cargar la página": ["We couldn't load the page", "Não conseguimos carregar a página", "Non siamo riusciti a caricare la pagina"],
     "Revisa tu conexión a internet y vuelve a intentar.": ["Check your internet connection and try again.", "Verifique sua conexão com a internet e tente de novo.", "Controlla la connessione a internet e riprova."],
     "Instalar ahora": ["Install now", "Instalar agora", "Installa ora"],
@@ -206,7 +206,7 @@
     "Instálalo como app en tu teléfono: abre directo en tu página, sin buscar el enlace.": ["Install it as an app on your phone: it opens straight to your page, no need to look for the link.", "Instale como app no seu telefone: abre direto na sua página, sem procurar o link.", "Installalo come app sul telefono: si apre direttamente sulla tua pagina, senza cercare il link."],
     "Instala tu panel en el teléfono o en la computadora para entrar con un toque.": ["Install your panel on your phone or computer to get in with one tap.", "Instale seu painel no telefone ou no computador para entrar com um toque.", "Installa il pannello sul telefono o sul computer per entrare con un tocco."],
     "La app de tu panel": ["Your panel app", "O app do seu painel", "L'app del tuo pannello"],
-    "Listo. Busca el ícono de EU Digital en tu pantalla de inicio.": ["Done. Look for the EU Digital icon on your home screen.", "Pronto. Procure o ícone da EU Digital na tela inicial.", "Fatto. Cerca l'icona di EU Digital nella schermata iniziale."],
+    "Listo. Busca el ícono de Tiendo en tu pantalla de inicio.": ["Done. Look for the Tiendo icon on your home screen.", "Pronto. Procure o ícone da Tiendo na tela inicial.", "Fatto. Cerca l'icona di Tiendo nella schermata iniziale."],
     "Ya estás usando la app instalada.": ["You're already using the installed app.", "Você já está usando o app instalado.", "Stai già usando l'app installata."],
     "En iPhone o iPad se instala así:": ["On iPhone or iPad, install it like this:", "No iPhone ou iPad, instale assim:", "Su iPhone o iPad si installa così:"],
     "Se instala así:": ["Install it like this:", "Instale assim:", "Si installa così:"],
@@ -283,7 +283,7 @@
     "No tienes permiso para hacer eso.": ["You don't have permission to do that.", "Você não tem permissão para fazer isso.", "Non hai il permesso di farlo."],
     "Esta cuenta no tiene página": ["This account has no page", "Esta conta não tem página", "Questo account non ha una pagina"],
     "Crear mi página": ["Create my page", "Criar minha página", "Crea la mia pagina"],
-    "No encontramos la plantilla de tu página. Escríbele a EU Digital.": ["We couldn't find your page's template. Write to EU Digital.", "Não encontramos o modelo da sua página. Escreva para a EU Digital.", "Non troviamo il modello della tua pagina. Scrivi a EU Digital."],
+    "No encontramos la plantilla de tu página. Escríbele a Tiendo.": ["We couldn't find your page's template. Write to Tiendo.", "Não encontramos o modelo da sua página. Escreva para a Tiendo.", "Non troviamo il modello della tua pagina. Scrivi a Tiendo."],
 
     // Barra del panel y guardar
     "Ver página": ["View page", "Ver página", "Vedi pagina"],
@@ -735,7 +735,7 @@
     "Ver cómo pagar": ["See how to pay", "Ver como pagar", "Vedi come pagare"],
     "Paga por cualquiera de estas vías y luego repórtalo aquí abajo.": ["Pay by any of these methods and then report it below.", "Pague por qualquer uma destas formas e depois informe aqui embaixo.", "Paga con uno di questi metodi e poi segnalalo qui sotto."],
     "Escríbenos para saber cómo pagar.": ["Write to us to find out how to pay.", "Escreva para saber como pagar.", "Scrivici per sapere come pagare."],
-    "Escribir a EU Digital Solutions por WhatsApp": ["Write to EU Digital Solutions on WhatsApp", "Escrever para a EU Digital Solutions pelo WhatsApp", "Scrivi a EU Digital Solutions su WhatsApp"],
+    "Escribir a Tiendo por WhatsApp": ["Write to Tiendo on WhatsApp", "Escrever para a Tiendo pelo WhatsApp", "Scrivi a Tiendo su WhatsApp"],
     "Reportar un pago": ["Report a payment", "Informar um pagamento", "Segnala un pagamento"],
     "Plan que pagas": ["Plan you're paying for", "Plano que você paga", "Piano che paghi"],
     "Meses que pagas": ["Months you're paying for", "Meses que você paga", "Mesi che paghi"],

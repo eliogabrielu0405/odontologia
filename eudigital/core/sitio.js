@@ -642,7 +642,7 @@
   function pantalla(tipo) {
     document.documentElement.classList.add("eu-sin-pagina");
     const txt = {
-      "no-disponible": ["Esta página no está disponible", "Si eres el dueño del negocio, escríbele a EU Digital."],
+      "no-disponible": ["Esta página no está disponible", "Si eres el dueño del negocio, escríbele a Tiendo."],
       "sin-red": ["No pudimos cargar la página", "Revisa tu conexión a internet y vuelve a intentar."],
     }[tipo];
     document.body.innerHTML = `<main class="eu-pantalla"><h1>${txt[0]}</h1><p>${txt[1]}</p>${tipo === "sin-red" ? '<button type="button" onclick="location.reload()">Intentar de nuevo</button>' : ""}</main>`;
@@ -692,7 +692,7 @@
     if (EU.sitio.demo && !enPanel) {
       html += EU.sitio.prueba
         ? `<div class="eu-tira eu-tira-demo">Así se vería la página de ${EU.esc(EU.sitio.nombre)}. <a href="/registro/?plantilla=${encodeURIComponent(PLANTILLA)}&amp;nombre=${encodeURIComponent(EU.sitio.nombre)}" target="_top">Créala gratis con tu menú</a></div>`
-        : `<div class="eu-tira eu-tira-demo">Esta es una página de muestra de ${EU.esc(C.marca || "EU Digital")}. <a href="/registro/?plantilla=${encodeURIComponent(PLANTILLA)}">Pruébala gratis con tu negocio</a></div>`;
+        : `<div class="eu-tira eu-tira-demo">Esta es una página de muestra de ${EU.esc(C.marca || "Tiendo")}. <a href="/registro/?plantilla=${encodeURIComponent(PLANTILLA)}">Pruébala gratis con tu negocio</a></div>`;
     }
     if (!est.abierto) html += `<div class="eu-tira eu-tira-cerrado" role="status"><b>${EU.esc(est.texto)}.</b> Puedes dejar tu pedido y te respondemos apenas abramos.</div>`;
     if (c.hoy.aviso) html += `<div class="eu-tira eu-tira-aviso" role="status">${EU.esc(c.hoy.aviso)}</div>`;
@@ -892,7 +892,7 @@
     }
     sitio.c = K.combinar(P.defaults || K.contenidoBase, sitio.contenido || {});
     if (EU.traducirContenido) EU.traducirContenido(sitio.c); // nombres y descripciones que el dueño tradujo
-    // En la muestra, los pedidos de prueba llegan al WhatsApp de EU Digital
+    // En la muestra, los pedidos de prueba llegan al WhatsApp de Tiendo
     if (sitio.demo && !EU.soloNumeros(sitio.c.negocio.whatsapp)) sitio.c.negocio.whatsapp = C.whatsappMarca || "";
     EU.sitio = sitio;
     document.title = sitio.nombre + (sitio.c.negocio.eslogan ? " · " + sitio.c.negocio.eslogan : "");

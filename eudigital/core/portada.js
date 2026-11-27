@@ -1,4 +1,4 @@
-/* Portada de EU Digital: plantillas con su descripción, planes con sus precios, formas de pago e instalar la app.
+/* Portada de Tiendo: plantillas con su descripción, planes con sus precios, formas de pago e instalar la app.
    Primero se pinta con los valores de siempre y después con los de verdad (precios, días de prueba,
    formas de pago y si el registro está abierto), que se cambian en el panel de administración. */
 (function () {
