@@ -16,7 +16,7 @@ Están escritos para hacerlos con Claude en una sesión que tenga conectada la c
 
 ## 2. Crear la base de datos
 
-Aplicar en orden las migraciones de `supabase/migrations/` (`20261108000000_sonrisas.sql`, `20261108010000_endurecer_funciones.sql`, `20261109000000_fotos_pacientes.sql`, `20261109010000_sugerencias.sql`, `20261112000000_plan_anual.sql`, `20261113000000_precios_publicos.sql`, `20261124000000_metodos_pago_y_play.sql`). Crean:
+Aplicar en orden las migraciones de `supabase/migrations/` (`20261108000000_sonrisas.sql`, `20261108010000_endurecer_funciones.sql`, `20261109000000_fotos_pacientes.sql`, `20261109010000_sugerencias.sql`, `20261112000000_plan_anual.sql`, `20261113000000_precios_publicos.sql`, `20261124000000_metodos_pago_y_play.sql`, `20261128000000_sync_numeracion_auditoria.sql`). Crean:
 
 | Tabla | Para qué sirve |
 |-------|----------------|
@@ -28,6 +28,9 @@ Aplicar en orden las migraciones de `supabase/migrations/` (`20261108000000_sonr
 | `clinic_invites` | Códigos para que la recepción u otros odontólogos se unan |
 | `records` | Datos clínicos de cada consultorio (pacientes, citas, presupuestos, cobros, odontogramas…) |
 | `payment_reports` | Pagos reportados con foto del comprobante y su método (meses que cubren; 12 = plan anual). Los pagos de Google Play aparecen aquí ya aprobados |
+| `records_deleted` | Marcas de lo que se borró, para que los demás equipos lo quiten al instante y la app descargue solo lo que cambió |
+| `clinic_counters` | Último número de recibo, presupuesto e historia clínica de cada clínica (función `next_number`), para que no se repitan entre equipos |
+| `signup_attempts` | Intentos de registro por conexión (hash) y correo, para limitar cuentas falsas y alias |
 | `play_purchases` | Compras de Google Play verificadas por la función del servidor (a qué clínica pertenece cada una y hasta cuándo vale) |
 | `suggestions` | Sugerencias de las clínicas para mejorar la app y las respuestas del administrador |
 

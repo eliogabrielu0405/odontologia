@@ -97,6 +97,54 @@ const findInvite = async (raw: unknown) => {
   return { ...data, clinicName: clinic.name as string };
 };
 
+// ---------- Protección del registro ----------
+// Límite de registros por dirección de internet (guardada como hash) y por correo, contando los alias:
+// en Gmail, "ana.perez+1@gmail.com" es la misma persona que "anaperez@gmail.com". Bloquea correos desechables.
+const DISPOSABLE = new Set(['mailinator.com', 'guerrillamail.com', 'guerrillamail.net', 'sharklasers.com', '10minutemail.com', 'tempmail.com', 'temp-mail.org',
+  'yopmail.com', 'trashmail.com', 'getnada.com', 'maildrop.cc', 'dispostable.com', 'fakeinbox.com', 'throwawaymail.com', 'mohmal.com', 'emailondeck.com',
+  'mintemail.com', 'tempmailo.com', 'tempail.com', 'mail.tm', 'moakt.com', 'burnermail.io', 'spamgourmet.com', 'mailnesia.com', 'mytemp.email']);
+const emailKey = (email: string) => {
+  const [local, domain = ''] = email.toLowerCase().split('@');
+  const base = local.split('+')[0];
+  const d = domain === 'googlemail.com' ? 'gmail.com' : domain;
+  return `${d === 'gmail.com' ? base.replace(/\./g, '') : base}@${d}`;
+};
+const clientIpHash = async (req: Request) => {
+  const ip = (req.headers.get('cf-connecting-ip') || req.headers.get('x-real-ip') || (req.headers.get('x-forwarded-for') || '').split(',')[0] || 'desconocida').trim();
+  return sha256Hex(`${SERVICE_KEY.slice(-16)}|${ip}`);
+};
+const LIMITS = { attemptsPerHour: 12, signupsPerDay: 3 };
+/** Revisa los límites antes de crear una cuenta. Devuelve lo necesario para anotar el intento después. */
+const guardSignup = async (req: Request, email: string, creatingClinic: boolean) => {
+  const domain = email.split('@')[1] || '';
+  if (DISPOSABLE.has(domain)) throw new Fail(400, 'Usa un correo personal o del consultorio (no se aceptan correos temporales).');
+  const ipHash = await clientIpHash(req);
+  const key = emailKey(email);
+  const hourAgo = new Date(Date.now() - 3600 * 1000).toISOString();
+  const dayAgo = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+  const [{ count: attempts }, { count: signups }, { count: sameEmail }] = await Promise.all([
+    db.from('signup_attempts').select('id', { count: 'exact', head: true }).eq('ip_hash', ipHash).gte('created_at', hourAgo),
+    db.from('signup_attempts').select('id', { count: 'exact', head: true }).eq('ip_hash', ipHash).eq('ok', true).gte('created_at', dayAgo),
+    db.from('signup_attempts').select('id', { count: 'exact', head: true }).eq('email_key', key).eq('ok', true),
+  ]);
+  if ((attempts ?? 0) >= LIMITS.attemptsPerHour) throw new Fail(429, 'Demasiados intentos desde esta conexión. Espera una hora y vuelve a intentar.');
+  if (creatingClinic && (signups ?? 0) >= LIMITS.signupsPerDay) throw new Fail(429, 'Ya se crearon varias cuentas desde esta conexión hoy. Intenta mañana o escríbenos por WhatsApp.');
+  if ((sameEmail ?? 0) > 0) throw new Fail(409, 'Ya existe una cuenta con ese correo. Inicia sesión o usa otro correo.');
+  return { ipHash, key };
+};
+/** Para acciones que se podrían probar a ciegas (códigos): 12 intentos por hora por conexión. */
+const throttle = async (req: Request) => {
+  const ipHash = await clientIpHash(req);
+  const { count } = await db.from('signup_attempts').select('id', { count: 'exact', head: true }).eq('ip_hash', ipHash).gte('created_at', new Date(Date.now() - 3600 * 1000).toISOString());
+  if ((count ?? 0) >= LIMITS.attemptsPerHour) throw new Fail(429, 'Demasiados intentos desde esta conexión. Espera una hora y vuelve a intentar.');
+  await db.from('signup_attempts').insert({ ip_hash: ipHash, email_key: 'codigo', ok: false });
+};
+const noteSignup = async (guard: { ipHash: string; key: string }, ok: boolean) => {
+  await db.from('signup_attempts').insert({ ip_hash: guard.ipHash, email_key: guard.key, ok });
+  // Limpieza: los intentos de hace más de 30 días ya no sirven.
+  if (Math.random() < 0.05) await db.from('signup_attempts').delete().lt('created_at', new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString());
+};
+
 // ---------- Google Play (app de Play Store) ----------
 // Secretos de la función: PLAY_PACKAGE_NAME (ej. app.sonrisas.twa) y PLAY_SERVICE_ACCOUNT (el JSON completo de una
 // cuenta de servicio de Google Cloud con acceso a la app en Play Console: "Ver datos financieros" y "Administrar pedidos").
@@ -155,13 +203,20 @@ const dateVE = (iso: string) => new Date(new Date(iso).getTime() - 4 * 3600 * 10
 
 const actions: Record<string, (body: Body, req: Request) => Promise<unknown>> = {
   /** Un odontólogo crea su cuenta y su clínica (con días de prueba). */
-  async registrar(body) {
+  async registrar(body, req) {
     const { email, password } = credentials(body);
     const who = person(body);
     const clinicName = clean(body.clinicName, 120);
     if (clinicName.length < 2) throw new Fail(400, 'Escribe el nombre de tu consultorio o clínica.');
+    const guard = await guardSignup(req, email, true);
     const { data: settings } = await db.from('platform_settings').select('trial_days').eq('id', 1).single();
-    const user = await createUser(email, password, { first_name: who.firstName, last_name: who.lastName });
+    let user;
+    try {
+      user = await createUser(email, password, { first_name: who.firstName, last_name: who.lastName });
+    } catch (err) {
+      await noteSignup(guard, false);
+      throw err;
+    }
     try {
       const { data: clinic, error: clinicError } = await db.from('clinics').insert({
         name: clinicName, phone: who.phone, owner_id: user.id, status: 'activa', trial: true,
@@ -176,23 +231,33 @@ const actions: Record<string, (body: Body, req: Request) => Promise<unknown>> = 
     } catch (err) {
       console.error('registrar', err);
       await db.auth.admin.deleteUser(user.id);
+      await noteSignup(guard, false);
       throw new Fail(500, 'No se pudo crear la clínica. Intenta de nuevo.');
     }
+    await noteSignup(guard, true);
     return { ok: true };
   },
 
   /** Muestra a qué clínica y con qué rol lleva un código de invitación. */
-  async verificar_codigo(body) {
+  async verificar_codigo(body, req) {
+    await throttle(req);
     const invite = await findInvite(body.code);
     return { clinicName: invite.clinicName, role: invite.role };
   },
 
   /** Recepción u odontólogos se unen a una clínica con el código que les dio el titular. */
-  async unirse(body) {
+  async unirse(body, req) {
     const { email, password } = credentials(body);
     const who = person(body);
     const invite = await findInvite(body.code);
-    const user = await createUser(email, password, { first_name: who.firstName, last_name: who.lastName });
+    const guard = await guardSignup(req, email, false);
+    let user;
+    try {
+      user = await createUser(email, password, { first_name: who.firstName, last_name: who.lastName });
+    } catch (err) {
+      await noteSignup(guard, false);
+      throw err;
+    }
     try {
       const { data: claimed } = await db.from('clinic_invites')
         .update({ used_by: user.id, used_at: new Date().toISOString() })
@@ -208,14 +273,17 @@ const actions: Record<string, (body: Body, req: Request) => Promise<unknown>> = 
     } catch (err) {
       console.error('unirse', err);
       await db.auth.admin.deleteUser(user.id);
+      await noteSignup(guard, false);
       if (err instanceof Fail) throw err;
       throw new Fail(500, 'No se pudo completar el registro. Intenta de nuevo.');
     }
+    await noteSignup(guard, true);
     return { ok: true, clinicName: invite.clinicName };
   },
 
   /** Crea la cuenta de administrador con el código de un solo uso. */
-  async crear_admin(body) {
+  async crear_admin(body, req) {
+    await throttle(req);
     const { email, password } = credentials(body);
     const who = person(body);
     const code = clean(body.code, 100);

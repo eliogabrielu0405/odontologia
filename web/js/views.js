@@ -81,11 +81,13 @@
   const openPatientModal = (p, after) => openModal({
     title: p ? 'Editar paciente' : 'Nuevo paciente', size: 'lg', body: patientForm(p || {}),
     submitLabel: p ? 'Guardar cambios' : 'Registrar paciente',
-    onSubmit: (data) => {
+    onSubmit: async (data, form) => {
       const dni = data.dni.trim().toUpperCase();
       const dup = DB.all('patients').find((x) => String(x.dni).toUpperCase() === dni && (!p || x.id !== p.id));
       if (dup) { toast(`Ya existe un paciente con la cédula ${dni}: ${fullName(dup)}.`, 'err'); return false; }
-      const number = String(data.record || '').trim().slice(0, 20) || (p && p.record) || DB.nextRecordNumber();
+      let number = String(data.record || '').trim().slice(0, 20) || (p && p.record) || '';
+      // Paciente nuevo con el número sugerido (o vacío): el servidor da el siguiente, sin repetir entre equipos.
+      if (!p && (!number || number === form.record.defaultValue)) number = await DB.reserveRecordNumber();
       const sameNumber = DB.all('patients').find((x) => DB.sameRecord(x.record, number) && (!p || x.id !== p.id));
       if (sameNumber) { toast(`El N.º de historia ${number} ya es de ${fullName(sameNumber)}. Usa otro número.`, 'err'); return false; }
       const record = { ...data, dni, record: number };
@@ -95,7 +97,7 @@
         if (after) after(p.id);
       } else {
         const created = DB.insert('patients', { ...record, createdAt: isoDate() }, `Paciente ${record.lastName}, ${record.firstName} registrado`);
-        toast('Paciente registrado');
+        toast(`Paciente registrado · HC ${record.record}`);
         if (after) after(created.id);
       }
       return undefined;
@@ -159,11 +161,11 @@
         form.patientId.addEventListener('change', fill);
         fill();
       },
-      onSubmit: (data) => {
+      onSubmit: async (data) => {
         const amount = U.cents(data.amount);
         if (!(amount > 0)) { toast('Escribe un monto mayor a cero.', 'err'); return false; }
         const b = data.budgetId ? DB.get('budgets', data.budgetId) : null;
-        const record = { ...data, amount, concept: data.concept || (b ? `Pago presupuesto #${b.number}` : 'Abono a cuenta'), receipt: DB.nextReceipt() };
+        const record = { ...data, amount, concept: data.concept || (b ? `Pago presupuesto #${b.number}` : 'Abono a cuenta'), receipt: await DB.reserveReceipt() };
         const p = patientById(record.patientId);
         DB.insert('payments', record, `Cobro de ${money(amount)} a ${fullName(p)}`);
         toast(`Cobro registrado · recibo ${record.receipt}`);
@@ -236,13 +238,13 @@
         form.discount.addEventListener('input', paintTotal);
         paint();
       },
-      onSubmit: (data) => {
+      onSubmit: async (data) => {
         if (!b.items.length) { toast('Agrega al menos un tratamiento.', 'err'); return false; }
         const record = { ...data, discount: Math.min(100, Math.max(0, Number(data.discount) || 0)), items: b.items };
         const p = patientById(record.patientId);
         if (budget) { DB.update('budgets', budget.id, record, `Presupuesto #${budget.number} actualizado`); toast('Presupuesto actualizado'); }
         else {
-          const number = DB.nextBudgetNumber();
+          const number = await DB.reserveBudgetNumber();
           DB.insert('budgets', { ...record, number }, `Presupuesto #${number} para ${fullName(p)}`);
           toast(`Presupuesto #${number} creado`);
         }
