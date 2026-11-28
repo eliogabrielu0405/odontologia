@@ -77,9 +77,18 @@ web/js/app.js           Arranque, acceso, menú, permisos y avisos
 web/vendor/             supabase-js 2.118.0
 ```
 
+### Sincronización y capacidad
+
+- Al entrar, la app descarga los datos de su clínica una vez; después solo pide lo que cambió (la hora de cada cambio la pone el servidor) y recibe los cambios y borrados al instante por tiempo real. Cada 30 minutos vuelve a traer todo por seguridad.
+- Los cambios que no llegaron al servidor (sin conexión) quedan guardados en el equipo y se envían al volver a abrir la app.
+- Si dos personas editan el mismo registro a la vez, se combinan los campos que cambió cada una en vez de perderse uno.
+- Recibos, presupuestos y N.º de historia los numera el servidor (`next_number`): no se repiten aunque dos equipos registren a la vez.
+
 ### Seguridad
 
 - Cada clínica solo puede leer y escribir **sus** datos; lo garantiza la base de datos con reglas por filas, no la página.
+- La **actividad** no se puede editar ni borrar desde la app (el servidor guarda las últimas 500 por clínica), y si alguien cambia el monto o el método de un cobro ya registrado queda anotado automáticamente.
+- El **registro** limita los intentos por conexión, no acepta correos temporales y detecta alias del mismo correo (en Gmail, `ana.perez+1@` es `anaperez@`).
 - Una clínica suspendida, vencida o bloqueada no puede leer ni escribir datos clínicos.
 - Recepción no puede modificar historia clínica, odontogramas ni el catálogo; solo el titular puede borrar registros.
 - Nadie de una clínica puede cambiar su propia fecha de pago ni aprobar sus pagos.
