@@ -68,6 +68,13 @@ Desde la ficha de cada cliente puedes cambiarle la plantilla (también a las cue
 
 Las cuentas se crean desde tu panel o desde el registro. El registro libre de Supabase sigue cerrado, así que **Add user** en el panel de Supabase no funciona: es a propósito.
 
+## Códigos de creadores (publicidad)
+
+- En tu panel, **Creadores**: creas a cada creador con su nombre, código (por ejemplo MARIA10) y WhatsApp, y copias su enlace (`/registro/?codigo=MARIA10`). Quien entra por ese enlace, o escribe el código al registrarse, queda con el código puesto. También lo puede poner en **Mi suscripción** si todavía no ha pagado nunca.
+- El negocio tiene **10% de descuento en su primer pago** (el reporte de pago ya sale con el descuento y dice el código).
+- Cuando apruebas ese primer pago, se genera sola la **comisión del creador: $2 si pagó Básico y $2,50 si pagó Premium** (una sola vez por negocio). En **Creadores** ves las comisiones por pagar, cuántos negocios usaron cada código y cuántos pagaron; las marcas como pagadas y puedes avisarle por WhatsApp.
+- El descuento y las comisiones se cambian en **Ajustes > Creadores**. Si pausas un código, nadie nuevo lo puede usar. Ver `sql/2026-11-28_creadores.sql`.
+
 ## Pedidos y estadísticas
 
 Cuando un cliente final toca **Enviar por WhatsApp** en una página, el pedido queda guardado: productos, total, tipo de entrega y forma de pago. No se guardan nombres, teléfonos ni direcciones.

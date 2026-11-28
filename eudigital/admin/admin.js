@@ -9,7 +9,7 @@
   const ORDEN = ["pizzeria", "arepera", "burgers", "delicias", "sushi", "boutique", "licoreria"];
   const plantillas = () => ORDEN.map((id) => (window.EU_PLANTILLAS || {})[id]).filter(Boolean);
   const nombrePlantilla = (id) => ((window.EU_PLANTILLAS || {})[id] || { nombre: id }).nombre;
-  const D = { sitios: [], cuentas: {}, pagos: [], notas: {}, ajustes: {}, seccion: "resumen", filtro: "todos", buscar: "" };
+  const D = { sitios: [], cuentas: {}, pagos: [], notas: {}, ajustes: {}, creadores: [], comisiones: [], seccion: "resumen", filtro: "todos", buscar: "" };
   let refs = {};
 
   /* ---------- Ayudas ---------- */
@@ -106,6 +106,11 @@
       D.cuentas = Object.fromEntries((cuentas || []).map((c) => [c.sitio_id, c]));
       D.pagos = pagos || [];
       D.notas = Object.fromEntries((notas || []).map((n) => [n.sitio_id, n]));
+      // Creadores y comisiones (si la tabla todavía no existe, la sección sale vacía)
+      try {
+        const [cr, co] = await Promise.all([api.select("eu_creadores", "select=*&order=creado.desc"), api.select("eu_comisiones", "select=*&order=creado.desc&limit=1000")]);
+        D.creadores = cr || []; D.comisiones = co || [];
+      } catch (_) { D.creadores = []; D.comisiones = []; }
       D.ajustes = (ajustes && ajustes[0] && ajustes[0].datos) || {};
       await revisarAvisos();
       if (location.hash === "#pagos") { D.seccion = "pagos"; history.replaceState(null, "", location.pathname + location.search); }
@@ -126,6 +131,7 @@
     { id: "pagos", titulo: "Pagos" },
     { id: "clientes", titulo: "Clientes" },
     { id: "nuevo", titulo: "Nuevo cliente" },
+    { id: "creadores", titulo: "Creadores" },
     { id: "plantillas", titulo: "Plantillas" },
     { id: "ajustes", titulo: "Ajustes" },
   ];
@@ -145,10 +151,11 @@
     const n = pendientes().length;
     refs.nav.replaceChildren(...SECCIONES.map((s) => h("button", {
       type: "button", "aria-current": s.id === D.seccion ? "page" : null, onclick: () => irA(s.id),
-    }, s.titulo, s.id === "pagos" && n ? h("span", { class: "cuenta", "aria-label": n + " por revisar" }, String(n)) : null)));
+    }, s.titulo, s.id === "pagos" && n ? h("span", { class: "cuenta", "aria-label": n + " por revisar" }, String(n)) : null,
+      s.id === "creadores" && comisionesPendientes().length ? h("span", { class: "cuenta", "aria-label": comisionesPendientes().length + " comisiones por pagar" }, String(comisionesPendientes().length)) : null)));
   }
   function pintarSeccion() {
-    const f = { resumen, pagos: seccionPagos, clientes, nuevo: nuevoCliente, plantillas: seccionPlantillas, ajustes }[D.seccion] || resumen;
+    const f = { resumen, pagos: seccionPagos, clientes, nuevo: nuevoCliente, creadores: seccionCreadores, plantillas: seccionPlantillas, ajustes }[D.seccion] || resumen;
     refs.main.replaceChildren(...[].concat(f()));
   }
   const titulo = (t, sub, extra) => h("div", { class: "adm-titulo" }, h("div", {}, h("h1", {}, t), sub ? h("p", {}, sub) : null), extra || null);
@@ -315,6 +322,7 @@
       h("p", { class: "suave chico" }, [p.metodo, p.referencia ? "Ref. " + p.referencia : "Sin referencia", "Reportado el " + EU.fechaHora(p.creado)].join(". ")),
       s ? h("p", { class: "suave chico" }, "Hoy tiene: " + planTxt(s) + ". " + (c.vence ? (actual === "prueba" ? "La prueba termina el " : "Fecha de corte actual: ") + EU.fecha(c.vence, true) + "." : "")) : null,
       p.nota ? h("p", { class: "nota" }, "Nota del cliente: " + p.nota) : null,
+      p.codigo ? h("p", { class: "chico", style: "font-weight:700;color:var(--verde)" }, "Usó el código de creador " + p.codigo + ": descuento de " + EU.usd(p.descuento) + ". Al aprobar se genera la comisión del creador.") : (s && cuentaDe(s).creador_codigo && !D.comisiones.some((x) => x.sitio_id === s.id) ? h("p", { class: "chico", style: "font-weight:700;color:var(--verde)" }, "Llegó con el código " + cuentaDe(s).creador_codigo + ". Al aprobar se genera la comisión del creador.") : null),
       p.comprobante ? h("button", { class: "btn btn-sec btn-chico", type: "button", onclick: () => verComprobante(p) }, "Ver comprobante") : h("p", { class: "suave chico" }, "Sin comprobante."),
       selMeses, acciones);
     const aprobar = h("button", { class: "btn btn-verde", type: "button" }, "Aprobar");
@@ -324,6 +332,7 @@
       try {
         const nMeses = meses.ciclo === "anual" ? 12 : Number(meses.m) || p.meses;
         const vence = await api.rpc("eu_admin_aprobar_pago", { p_pago: p.id, p_meses: nMeses, p_plan: meses.plan, p_ciclo: meses.ciclo, p_extras: nExtras() });
+        api.select("eu_comisiones", "select=*&order=creado.desc&limit=1000").then((co) => { D.comisiones = co || D.comisiones; pintarNav(); }, () => {});
         p.estado = "aprobado"; p.meses = nMeses; p.plan = meses.plan; p.ciclo = meses.ciclo; p.revisado = new Date().toISOString();
         if (s) {
           D.cuentas[s.id] = Object.assign(D.cuentas[s.id] || { sitio_id: s.id }, { vence, plan: meses.plan, ciclo: meses.ciclo, paginas_extra: nExtras() });
@@ -765,6 +774,82 @@
     return [titulo("Nuevo cliente", "Crea la página y el usuario de tu cliente."), form];
   }
 
+  /* ---------- Creadores: códigos de publicidad y sus comisiones ---------- */
+  const comisionesPendientes = () => D.comisiones.filter((x) => x.estado === "pendiente");
+  const creadorDe = (id) => D.creadores.find((c) => c.id === id);
+  function seccionCreadores() {
+    const pend = comisionesPendientes();
+    const totalPend = pend.reduce((a, x) => a + Number(x.monto), 0);
+    const ajuste = Object.assign({ descuento: 10, basico: 2, premium: 2.5 }, D.ajustes.creadores || {});
+    const enlaceDe = (c) => location.origin + "/registro/?codigo=" + encodeURIComponent(c.codigo);
+    const filas = D.creadores.map((c) => {
+      const cuentas = principales().filter((s) => cuentaDe(s).creador_id === c.id);
+      const suyas = D.comisiones.filter((x) => x.creador_id === c.id);
+      const debe = suyas.filter((x) => x.estado === "pendiente").reduce((a, x) => a + Number(x.monto), 0);
+      const pagado = suyas.filter((x) => x.estado === "pagada").reduce((a, x) => a + Number(x.monto), 0);
+      const copiar = h("button", { class: "btn btn-sec btn-chico", type: "button" }, "Copiar enlace");
+      copiar.addEventListener("click", () => EU.copiar(enlaceDe(c), copiar));
+      const wa = telWa(c.whatsapp);
+      return h("article", { class: "hoja", style: "display:grid;gap:8px" },
+        h("div", { class: "hoja-fila" },
+          h("div", {}, h("h3", { style: "margin:0" }, c.nombre, " ", h("span", { class: "sello " + (c.activo ? "verde" : "gris") }, c.activo ? "Activo" : "Pausado")),
+            h("p", { class: "suave chico" }, "Código ", h("b", {}, c.codigo), c.whatsapp ? " · " + c.whatsapp : "")),
+          h("div", { class: "acciones" }, copiar, h("button", { class: "btn btn-sec btn-chico", type: "button", onclick: () => editarCreador(c) }, "Editar"))),
+        h("p", { class: "chico" }, cuentas.length + (cuentas.length === 1 ? " negocio usó su código" : " negocios usaron su código") + " · " + suyas.length + (suyas.length === 1 ? " ya pagó" : " ya pagaron") +
+          " · Por pagarle: " + EU.usd(debe) + " · Pagado: " + EU.usd(pagado)),
+        debe > 0 && wa ? h("a", { class: "btn btn-chico btn-verde", href: "https://wa.me/" + wa + "?text=" + encodeURIComponent("Hola " + c.nombre + ", te escribimos de " + (D.ajustes.marca || C.marca) + ". Tienes " + EU.usd(debe) + " en comisiones por los negocios que se suscribieron con tu código " + c.codigo + ". ¿Cómo prefieres que te paguemos?"), target: "_blank", rel: "noopener" }, "Avisarle por WhatsApp") : null);
+    });
+    const listaPend = pend.map((x) => {
+      const c = creadorDe(x.creador_id), s = sitioDe(x.sitio_id);
+      const b = h("button", { class: "btn btn-chico", type: "button" }, "Marcar pagada");
+      b.addEventListener("click", async () => {
+        b.disabled = true;
+        try {
+          await api.actualizar("eu_comisiones", "id=eq." + x.id, { estado: "pagada", pagada: new Date().toISOString() });
+          x.estado = "pagada"; x.pagada = new Date().toISOString();
+          EU.aviso("Comisión marcada como pagada."); pintarNav(); pintarSeccion();
+        } catch (err) { EU.aviso(err.message, true); b.disabled = false; }
+      });
+      return h("div", { class: "dato" }, h("div", { style: "flex:1;min-width:0" },
+        h("b", {}, EU.usd(x.monto) + " para " + (c ? c.nombre : "creador eliminado")),
+        h("p", { class: "suave chico" }, (s ? s.nombre : "Página eliminada") + " pagó el plan " + (EU.planes.nombres[x.plan] || x.plan) + " el " + EU.fecha(String(x.creado).slice(0, 10), true) + ".")), b);
+    });
+    return [titulo("Creadores", "Códigos para publicidad: " + ajuste.descuento + "% de descuento en el primer pago del negocio, y " + EU.usd(ajuste.basico) + " (Básico) o " + EU.usd(ajuste.premium) + " (Premium) para el creador cuando ese negocio paga.",
+        h("button", { class: "btn", type: "button", onclick: () => editarCreador(null) }, "Nuevo creador")),
+      h("section", { class: "hoja" }, h("div", { class: "hoja-cab" }, h("h2", {}, "Comisiones por pagar"), h("p", {}, pend.length ? "Total: " + EU.usd(totalPend) + ". Se generan solas cuando apruebas el primer pago de un negocio que usó un código." : "No hay comisiones pendientes.")),
+        pend.length ? h("div", {}, listaPend) : null),
+      D.creadores.length ? h("div", { class: "campos" }, filas) : h("p", { class: "vacio-adm" }, "Todavía no tienes creadores. Crea uno, copia su enlace y compártelo: quien se registre con él ya lleva el código puesto.")];
+  }
+  function editarCreador(c) {
+    const d = c ? EU.clonar(c) : { nombre: "", codigo: "", whatsapp: "", nota: "", activo: true };
+    EU.modal({
+      titulo: c ? "Editar creador" : "Nuevo creador",
+      construir: (m) => {
+        const ed = EU.crearEditor({ raiz: () => d });
+        const error = h("p", { class: "banda rojo", role: "alert", hidden: true });
+        m.cuerpo.append(h("div", { class: "campos" },
+          ed.campo({ tipo: "texto", ruta: "nombre", etiqueta: "Nombre del creador", max: 80 }),
+          ed.campo({ tipo: "texto", ruta: "codigo", etiqueta: "Código", max: 20, placeholder: "Ej: MARIA10", ayuda: "Solo letras y números, sin espacios. Es lo que escriben sus seguidores." }),
+          ed.campo({ tipo: "telefono", ruta: "whatsapp", etiqueta: "WhatsApp del creador", ayuda: "Para avisarle de sus comisiones." }),
+          ed.campo({ tipo: "area", ruta: "nota", etiqueta: "Nota (solo la ves tú)", max: 300, filas: 2 }),
+          ed.campo({ tipo: "interruptor", ruta: "activo", etiqueta: "Código activo", ayuda: "Si lo apagas, nadie nuevo lo puede usar. Las comisiones que ya tiene se mantienen." })), error);
+        const ok = h("button", { class: "btn", type: "button" }, "Guardar");
+        ok.addEventListener("click", async () => {
+          const fila = { nombre: String(d.nombre || "").trim(), codigo: String(d.codigo || "").toUpperCase().replace(/[^A-Z0-9]/g, ""), whatsapp: String(d.whatsapp || "").trim() || null, nota: String(d.nota || "").trim() || null, activo: d.activo !== false };
+          const falta = fila.nombre.length < 2 ? "Escribe el nombre del creador." : !/^[A-Z0-9]{3,20}$/.test(fila.codigo) ? "El código lleva de 3 a 20 letras o números." : D.creadores.some((x) => x.codigo === fila.codigo && (!c || x.id !== c.id)) ? "Ese código ya es de otro creador." : "";
+          if (falta) { error.textContent = falta; error.hidden = false; return; }
+          ok.disabled = true;
+          try {
+            if (c) { await api.actualizar("eu_creadores", "id=eq." + c.id, fila); Object.assign(c, fila); }
+            else { const r = await api.insertar("eu_creadores", [fila]); D.creadores.unshift((r && r[0]) || fila); }
+            m.cerrar(); EU.aviso(c ? "Creador guardado." : "Creador creado. Copia su enlace y compártelo."); pintarSeccion();
+          } catch (err) { error.textContent = err.message; error.hidden = false; ok.disabled = false; }
+        });
+        m.pie.append(h("button", { class: "btn btn-sec", type: "button", onclick: () => m.cerrar() }, "Cancelar"), ok);
+      },
+    });
+  }
+
   /* ---------- Plantillas ---------- */
   function seccionPlantillas() {
     return [titulo("Plantillas", "Ábrelas para mostrárselas a tus clientes. Los pedidos de prueba llegan a tu WhatsApp."),
@@ -793,6 +878,7 @@
     if (d.diasPrueba == null) d.diasPrueba = pl.diasPrueba;
     if (d.maxPaginasPremium == null) d.maxPaginasPremium = pl.maxPaginas;
     if (d.registroAbierto == null) d.registroAbierto = true;
+    d.creadores = Object.assign({ descuento: 10, basico: 2, premium: 2.5 }, d.creadores || {});
     // Frenos del registro (la base de datos usa estos mismos valores por defecto)
     if (d.topeRegistrosHora == null) d.topeRegistrosHora = 100;
     if (d.topeRegistrosDia == null) d.topeRegistrosDia = 500;
@@ -842,6 +928,12 @@
           ed.campo({ tipo: "numero", ruta: "topeRegistrosConexion", etiqueta: "Registros desde una misma conexión al día", min: 1, max: 50, sufijo: "cuentas", si: { ruta: "registroAbierto" },
             ayuda: "Frena a quien crea cuentas en masa. Si haces una charla o un evento donde varios se registran con el mismo wifi, súbelo ese día. Cuando se pasa un tope, el registro dice «Estamos recibiendo muchos registros» y se puede intentar más tarde." }),
           h("div", { class: "dato" }, h("div", { style: "flex:1;min-width:0" }, h("b", {}, "Enlace de registro"), h("p", { class: "suave chico", style: "overflow-wrap:anywhere" }, enlaceRegistro)), copiarRegistro))),
+      h("section", { class: "hoja" }, h("div", { class: "hoja-cab" }, h("h2", {}, "Creadores"), h("p", {}, "Descuento para quien usa un código de creador (en su primer pago) y comisión para el creador cuando ese cliente paga.")),
+        h("div", { class: "campos" },
+          ed.campo({ tipo: "numero", ruta: "creadores.descuento", etiqueta: "Descuento con código", min: 0, max: 90, sufijo: "%" }),
+          h("div", { class: "dos-col" },
+            ed.campo({ tipo: "dinero", ruta: "creadores.basico", etiqueta: "Comisión si paga Básico" }),
+            ed.campo({ tipo: "dinero", ruta: "creadores.premium", etiqueta: "Comisión si paga Premium" })))),
       h("section", { class: "hoja" }, h("div", { class: "hoja-cab" }, h("h2", {}, "Cobros")),
         ed.campos([
           { tipo: "interruptor", ruta: "autoSuspender", etiqueta: "Suspender solas las páginas vencidas", ayuda: "Todas las noches, a las 12:30 am, se suspenden las páginas que pasaron los días de gracia sin pagar. Las pruebas gratis que terminaron se suspenden siempre, sin días de gracia." },

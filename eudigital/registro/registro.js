@@ -15,7 +15,10 @@
   let planes = EU.planes.leer();
   // Si viene de "Mira tu negocio aquí" en la portada, el nombre llega ya escrito
   const nombreTraido = String(params.get("nombre") || "").replace(/[\u0000-\u001f\u007f]/g, "").replace(/\s+/g, " ").trim().slice(0, 80);
-  const d = { plantilla: ORDEN.includes(params.get("plantilla")) ? params.get("plantilla") : "", nombre: nombreTraido, usuario: EU.slug(nombreTraido), whatsapp: "", contacto: "", clave: "" };
+  const d = { plantilla: ORDEN.includes(params.get("plantilla")) ? params.get("plantilla") : "", nombre: nombreTraido, usuario: EU.slug(nombreTraido), whatsapp: "", contacto: "", clave: "", codigo: "" };
+  // Código de creador: llega en el enlace (?codigo=) o desde la portada, y se recuerda en la pestaña
+  const limpiarCodigo = (t) => String(t || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 20);
+  try { d.codigo = limpiarCodigo(params.get("codigo") || params.get("ref") || sessionStorage.getItem("eu:codigo")); if (d.codigo) sessionStorage.setItem("eu:codigo", d.codigo); } catch (_) { d.codigo = limpiarCodigo(params.get("codigo")); }
   let usuarioTocado = false;
   // Al cambiar de idioma la página se vuelve a abrir: lo que ya escribió se guarda un momento
   // en esta pestaña (sin la contraseña) y se recupera.
@@ -24,12 +27,12 @@
     const b = JSON.parse(sessionStorage.getItem(BORRADOR) || "null");
     sessionStorage.removeItem(BORRADOR);
     if (b) {
-      ["plantilla", "nombre", "usuario", "whatsapp", "contacto"].forEach((k) => { if (typeof b[k] === "string" && b[k]) d[k] = b[k]; });
+      ["plantilla", "nombre", "usuario", "whatsapp", "contacto", "codigo"].forEach((k) => { if (typeof b[k] === "string" && b[k]) d[k] = b[k]; });
       if (b.usuarioTocado) usuarioTocado = true;
     }
   } catch (_) { /* sin almacenamiento */ }
   const cambiarIdioma = (nuevo) => {
-    try { sessionStorage.setItem(BORRADOR, JSON.stringify({ plantilla: d.plantilla, nombre: d.nombre, usuario: d.usuario, whatsapp: d.whatsapp, contacto: d.contacto, usuarioTocado })); } catch (_) { /* sin almacenamiento */ }
+    try { sessionStorage.setItem(BORRADOR, JSON.stringify({ plantilla: d.plantilla, nombre: d.nombre, usuario: d.usuario, whatsapp: d.whatsapp, contacto: d.contacto, codigo: d.codigo, usuarioTocado })); } catch (_) { /* sin almacenamiento */ }
     EU.idiomaCambiar(nuevo);
   };
 
@@ -105,6 +108,25 @@
     const whatsapp = h("input", { class: "entrada", type: "tel", inputmode: "tel", autocomplete: "tel", maxlength: 22, placeholder: "Ej: 0414 123 4567" });
     const contacto = h("input", { class: "entrada", type: "text", maxlength: 80, autocomplete: "name" });
     whatsapp.value = d.whatsapp; contacto.value = d.contacto;
+    const codigo = h("input", { class: "entrada", type: "text", maxlength: 20, autocomplete: "off", autocapitalize: "characters", spellcheck: false, placeholder: "Ej: MARIA10", style: "text-transform:uppercase" });
+    codigo.value = d.codigo;
+    const notaCodigo = h("p", { class: "ayuda", id: "a-codigo" }, "Si un creador te recomendó, escribe su código y tienes descuento en tu primer pago.");
+    let revisarCodT;
+    const revisarCodigo = () => {
+      const c = d.codigo;
+      if (!c) { notaCodigo.textContent = "Si un creador te recomendó, escribe su código y tienes descuento en tu primer pago."; notaCodigo.style.color = ""; return; }
+      api.rpc("eu_codigo_creador", { p_codigo: c }).then((ok) => {
+        if (c !== d.codigo) return;
+        notaCodigo.textContent = ok ? "✓ Código válido: tienes " + (planes.descuentoCreador || 10) + "% de descuento en tu primer pago." : "Ese código no existe. Revísalo o déjalo vacío.";
+        notaCodigo.style.color = ok ? "var(--verde)" : "var(--rojo)";
+      }, () => {});
+    };
+    codigo.addEventListener("input", () => {
+      d.codigo = limpiarCodigo(codigo.value);
+      try { sessionStorage.setItem("eu:codigo", d.codigo); } catch (_) { /* nada */ }
+      clearTimeout(revisarCodT); revisarCodT = setTimeout(revisarCodigo, 400);
+    });
+    if (d.codigo) setTimeout(revisarCodigo, 0);
     const clave = h("input", { class: "entrada", type: "password", autocomplete: "new-password", minlength: 8, maxlength: 60 });
     const ver = h("button", { class: "btn btn-sec", type: "button", "aria-pressed": "false" }, "Mostrar");
     ver.addEventListener("click", () => { const oculta = clave.type === "password"; clave.type = oculta ? "text" : "password"; ver.textContent = oculta ? "Ocultar" : "Mostrar"; ver.setAttribute("aria-pressed", String(oculta)); });
@@ -172,7 +194,8 @@
           campo("usuario", "Usuario", usuario, h("div", { style: "display:flex;flex-direction:column;gap:6px" }, estado, enlace, h("p", { class: "ayuda", id: "a-usuario" }, "Con este usuario entras a tu panel y es el final del enlace de tu página."))),
           campo("whatsapp", "WhatsApp donde recibes los pedidos", whatsapp, "Ahí te llega cada pedido. Lo puedes cambiar después."),
           campo("clave", "Contraseña", clave, "Al menos 8 letras o números.", h("div", { class: "rg-clave" }, clave, ver)),
-          campo("contacto", "Tu nombre (opcional)", contacto)),
+          campo("contacto", "Tu nombre (opcional)", contacto),
+          campo("codigo", "Código de creador (opcional)", codigo, notaCodigo)),
         error, boton, letra));
     function marcar(id, texto) {
       const r = refs[id];
@@ -192,7 +215,7 @@
     }
     function campoDeMensaje(m) {
       m = String(m || "").toLowerCase();
-      return m.includes("whatsapp") ? "whatsapp" : m.includes("contraseña") ? "clave" : m.includes("usuario") ? "usuario" : m.includes("nombre") ? "nombre" : m.includes("plantilla") ? "plantilla" : "";
+      return m.includes("whatsapp") ? "whatsapp" : m.includes("contraseña") ? "clave" : m.includes("usuario") ? "usuario" : m.includes("nombre") ? "nombre" : m.includes("plantilla") ? "plantilla" : m.includes("código") ? "codigo" : "";
     }
 
     form.addEventListener("submit", async (e) => {
@@ -213,7 +236,7 @@
       try {
         await api.rpc("eu_registrarse", {
           p_usuario: usuarioFinal, p_clave: d.clave, p_nombre: d.nombre.trim(), p_plantilla: d.plantilla,
-          p_whatsapp: telefono(d.whatsapp), p_contacto: d.contacto.trim() || null,
+          p_whatsapp: telefono(d.whatsapp), p_contacto: d.contacto.trim() || null, p_codigo: d.codigo || null,
         });
       } catch (err) {
         const texto = err.status === 404 ? "El registro todavía no está disponible. Escríbenos por WhatsApp y te creamos tu página." : err.message || "No se pudo crear tu página. Intenta de nuevo.";

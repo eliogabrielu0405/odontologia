@@ -37,10 +37,17 @@
       const q = new URLSearchParams();
       if (plantilla) q.set("plantilla", plantilla);
       if (nombre) q.set("nombre", nombre);
+      if (codigoCreador) q.set("codigo", codigoCreador);
       return { href: "/registro/" + (q.toString() ? "?" + q : ""), target: null };
     }
     return { href: enlaceWa("Hola, quiero una página de pedidos para " + (nombre ? "mi negocio " + nombre : "mi negocio") + (plantilla && P[plantilla] ? " con la plantilla " + P[plantilla].nombre : "") + "."), target: "_blank" };
   };
+  // Código de creador que llega en el enlace de la portada (?codigo=): se lleva al registro
+  const codigoCreador = (() => {
+    let c = String(new URLSearchParams(location.search).get("codigo") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 20);
+    try { if (c) sessionStorage.setItem("eu:codigo", c); else c = sessionStorage.getItem("eu:codigo") || ""; } catch (_) { /* nada */ }
+    return c;
+  })();
   // Nombre que la persona escribió en "Mira tu negocio aquí": las demos y los botones lo llevan
   let nombreMira = "";
   const demo = (k) => "/t/" + k + "/" + (nombreMira ? "?prueba=" + encodeURIComponent(nombreMira) : "");

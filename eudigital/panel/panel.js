@@ -963,15 +963,43 @@
     };
     // Páginas adicionales (solo Premium): cada una suma su precio por mes o por año
     const nExtras = () => (d.plan === "premium" ? Math.max(0, Math.min(18, Number(d.extras) || 0)) : 0);
-    const total = () => Math.round(((d.ciclo === "anual" ? EU.planes.precio(pl, d.plan, "anual") + nExtras() * EU.planes.precio(pl, "extra", "anual")
-      : (EU.planes.precio(pl, d.plan, "mensual") + nExtras() * EU.planes.precio(pl, "extra", "mensual")) * (Number(d.meses) || 1))) * 100) / 100;
+    const bruto = () => (d.ciclo === "anual" ? EU.planes.precio(pl, d.plan, "anual") + nExtras() * EU.planes.precio(pl, "extra", "anual")
+      : (EU.planes.precio(pl, d.plan, "mensual") + nExtras() * EU.planes.precio(pl, "extra", "mensual")) * (Number(d.meses) || 1));
+    // Código de creador: descuento solo en el primer pago
+    const primerPago = !S.pagos.some((x) => x.estado === "aprobado");
+    const codigoCuenta = () => (S.cuenta && S.cuenta.creador_id ? S.cuenta.creador_codigo || "" : "");
+    const pctDesc = () => (primerPago && codigoCuenta() ? Math.max(0, Math.min(90, Number(pl.descuentoCreador) || 0)) : 0);
+    const descuento = () => Math.round(bruto() * pctDesc()) / 100;
+    const total = () => Math.round((bruto() - descuento()) * 100) / 100;
     d.monto = total();
     const resumen = h("p", { class: "banda azul", "aria-live": "polite" });
     const baja = h("p", { class: "banda ambar", hidden: true }, "Con el plan Básico queda en línea solo tu página principal. Las demás se pausan, sin borrarse, hasta que vuelvas a Premium.");
+    // Si no puso código al registrarse y nunca ha pagado, lo puede poner aquí
+    const cajaCodigo = h("div", { class: "campo", hidden: !primerPago || !!codigoCuenta() });
+    if (!cajaCodigo.hidden) {
+      const inp = h("input", { class: "entrada", type: "text", maxlength: 20, placeholder: "Ej: MARIA10", style: "text-transform:uppercase", "aria-label": "Código de creador" });
+      const msg = h("p", { class: "ayuda" }, "¿Te recomendó un creador? Escribe su código y tienes " + (pl.descuentoCreador || 10) + "% de descuento en este primer pago.");
+      const ok = h("button", { class: "btn btn-sec btn-chico", type: "button" }, "Usar código");
+      ok.addEventListener("click", async () => {
+        const c = inp.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+        if (!c) { inp.focus(); return; }
+        ok.disabled = true;
+        try {
+          const usado = await api.rpc("eu_poner_codigo", { p_sitio: S.principal.id, p_codigo: c });
+          S.cuenta = Object.assign(S.cuenta || {}, { creador_id: "si", creador_codigo: usado || c });
+          cajaCodigo.hidden = true;
+          d.monto = total(); d.moneda = "USD";
+          montoCampo.replaceWith(montoCampo = ed.campo(defMonto));
+          pintarResumen();
+          EU.aviso("Código aplicado: " + (usado || c) + ".");
+        } catch (err) { msg.textContent = err.message || "No se pudo usar ese código."; msg.style.color = "var(--rojo)"; ok.disabled = false; }
+      });
+      cajaCodigo.append(h("label", {}, "Código de creador (opcional)"), h("div", { class: "fila-agregar" }, inp, ok), msg);
+    }
     const defMonto = { tipo: "dinero", ruta: "monto", etiqueta: "Monto que pagaste", ayuda: "Si pagaste en bolívares, escribe el monto en bolívares y elige Bolívares abajo." };
     const pintarResumen = () => {
       const tiempo = d.ciclo === "anual" ? "1 año" : d.meses + (String(d.meses) === "1" ? " mes" : " meses");
-      resumen.textContent = "Plan " + EU.planes.nombres[d.plan] + (nExtras() ? " con " + nExtras() + (nExtras() === 1 ? " página adicional" : " páginas adicionales") : "") + " por " + tiempo + ": " + EU.planes.dinero(total()) + ".";
+      resumen.textContent = "Plan " + EU.planes.nombres[d.plan] + (nExtras() ? " con " + nExtras() + (nExtras() === 1 ? " página adicional" : " páginas adicionales") : "") + " por " + tiempo + ": " + EU.planes.dinero(total()) + "." + (descuento() ? " Incluye " + pctDesc() + "% de descuento por el código " + codigoCuenta() + " (−" + EU.planes.dinero(descuento()) + ")." : "");
       baja.hidden = !(d.plan === "basico" && S.sitios.length > 1);
     };
     const ed = EU.crearEditor({ raiz: () => d, alCambiar: (def) => {
@@ -1000,7 +1028,7 @@
         ed.campo({ tipo: "selector", ruta: "extras", etiqueta: "Páginas adicionales", lista: true, si: { ruta: "plan", igual: "premium" },
           ayuda: "Además de las " + pl.maxPaginas + " que incluye el Premium. Cada una: " + EU.planes.dinero(EU.planes.precio(pl, "extra", "mensual")) + " al mes o " + EU.planes.dinero(EU.planes.precio(pl, "extra", "anual")) + " al año.",
           opciones: Array.from({ length: 11 }, (_, i) => ({ id: String(i), nombre: i ? i + (i === 1 ? " página" : " páginas") : "Ninguna" })) }),
-        resumen, baja,
+        resumen, baja, cajaCodigo,
         montoCampo, monedaCampo,
         metodos.length ? ed.campo({ tipo: "selector", ruta: "metodo", etiqueta: "Cómo pagaste", lista: true, opciones: [...metodos, "Otro"] }) : ed.campo({ tipo: "texto", ruta: "metodo", etiqueta: "Cómo pagaste", max: 40, requerido: true }),
         ed.campo({ tipo: "texto", ruta: "referencia", etiqueta: "Número de referencia", max: 80, placeholder: "Ej: 004512" }),
@@ -1027,7 +1055,7 @@
           await api.subir("eu-pagos", comprobante, blob);
         }
         const fila = { sitio_id: cuenta, monto: d.monto, moneda: d.moneda, metodo: String(d.metodo).slice(0, 40), referencia: d.referencia.trim() || null,
-          meses: d.ciclo === "anual" ? 12 : Number(d.meses) || 1, plan: d.plan, ciclo: d.ciclo, extras: nExtras(), nota: d.nota.trim() || null, comprobante, creado_por: api.sesion.uid };
+          meses: d.ciclo === "anual" ? 12 : Number(d.meses) || 1, plan: d.plan, ciclo: d.ciclo, extras: nExtras(), descuento: descuento(), codigo: descuento() ? codigoCuenta() : null, nota: d.nota.trim() || null, comprobante, creado_por: api.sesion.uid };
         const r = await api.insertar("eu_pagos", fila);
         const nuevo = (r && r[0]) || Object.assign({ estado: "pendiente", creado: new Date().toISOString() }, fila);
         S.pagos.unshift(nuevo);

@@ -27,6 +27,7 @@
         metodos: Array.isArray(d.metodos) ? d.metodos.filter(Boolean).map(String)
           : Array.isArray(d.pagos) ? d.pagos.map((m) => m && m.metodo).filter(Boolean).map(String) : [],
         whatsapp: String(d.whatsapp || "").replace(/\D+/g, ""),
+        descuentoCreador: Math.round(num(d.descuentoCreador != null ? d.descuentoCreador : d.creadores && d.creadores.descuento, 10, 0, 90)),
         precios: { basico: { mensual: uno("basico", "mensual"), anual: uno("basico", "anual") }, premium: { mensual: uno("premium", "mensual"), anual: uno("premium", "anual") }, extra: { mensual: uno("extra", "mensual"), anual: uno("extra", "anual") } },
       };
     },
