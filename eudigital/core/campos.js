@@ -399,7 +399,7 @@
         const b = enlace(def, obj);
         if (!Array.isArray(b.get())) b.set([]);
         const filas = h("div", { class: "pares" });
-        const btn = h("button", { class: "btn btn-sec btn-chico", type: "button", onclick: () => { b.get().push(["", ""]); pintar(true); cambio(def); } }, "Agregar dato");
+        const btn = h("button", { class: "btn btn-sec btn-chico", type: "button", onclick: () => { b.get().push(["", ""]); pintar(true); cambio(def); } }, def.boton || "Agregar dato");
         const el = caja(def, h("div", { class: "campos" }, filas, h("div", {}, btn)), { legend: true });
         function pintar(enfocar) {
           const a = b.get();

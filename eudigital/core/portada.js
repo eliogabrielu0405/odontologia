@@ -6,7 +6,7 @@
   const C = window.EU_CONFIG;
   const EU = window.EU;
   const P = window.EU_PLANTILLAS || {};
-  const ORDEN = ["pizzeria", "arepera", "burgers", "delicias", "sushi", "boutique"];
+  const ORDEN = ["pizzeria", "arepera", "burgers", "delicias", "sushi", "boutique", "licoreria"];
   const METODOS_BASE = ["Pago Móvil", "Zelle", "Binance", "Efectivo"];
   let pl = EU.planes.leer();
   let ciclo = "mensual";

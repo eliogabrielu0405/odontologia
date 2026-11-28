@@ -18,7 +18,7 @@
     editor: null, vistaPendiente: false, guardando: false,
     resumen: null, resumenT: 0, resumenError: "", pago: null,
   };
-  const ORDEN = ["pizzeria", "arepera", "burgers", "delicias", "sushi", "boutique"];
+  const ORDEN = ["pizzeria", "arepera", "burgers", "delicias", "sushi", "boutique", "licoreria"];
   const PLANTILLAS = () => ORDEN.map((id) => (window.EU_PLANTILLAS || {})[id]).filter(Boolean);
   const LLAVE_PAGINA = "eu:panel:pagina";
 
@@ -1112,7 +1112,7 @@
           h("p", {}, "Para una segunda sucursal, otro negocio o una línea de productos aparte.")),
         h("ul", { class: "plan-puntos" },
           h("li", {}, "Hasta " + max + " páginas en la misma cuenta, cada una con su enlace y su código QR"),
-          h("li", {}, "Cada página con la plantilla que quieras, también las Premium como Delicias"),
+          h("li", {}, "Cada página con la plantilla que quieras, también las Premium como Delicias y Licorería"),
           h("li", {}, "Cambias de plantilla cuando quieras y tu menú anterior queda guardado")),
         h("div", { class: "acciones" },
           h("button", { class: "btn", type: "button", onclick: () => elegirPlanDesdePaginas() }, "Ver el plan Premium"),

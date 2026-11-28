@@ -4,12 +4,12 @@ Una sola web con todo adentro:
 
 | Dirección | Qué es |
 |---|---|
-| `/` | Tu portada para vender: las 6 plantillas con su descripción, los planes y precios, cómo pagar, instalar la app y el botón de prueba gratis |
+| `/` | Tu portada para vender: las 7 plantillas con su descripción, los planes y precios, cómo pagar, instalar la app y el botón de prueba gratis |
 | `/registro/` | Donde un negocio crea su cuenta solo y prueba su página gratis |
 | `/?n=usuario` | La página de un cliente (por ejemplo `/?n=pizzeria-luigi`) |
 | `/panel/` | El panel de tus clientes: precios, fotos, tasa, agotados, colores, sus pedidos, su código QR, sus páginas y el pago de su plan. Se puede instalar como app |
 | `/admin/` | Tu panel: clientes, pagos, planes, suspensiones y tus ajustes |
-| `/t/pizzeria/`, `/t/arepera/`, `/t/burgers/`, `/t/delicias/`, `/t/sushi/`, `/t/boutique/` | Las demos de cada plantilla (los pedidos de prueba llegan a tu WhatsApp) |
+| `/t/pizzeria/`, `/t/arepera/`, `/t/burgers/`, `/t/delicias/`, `/t/sushi/`, `/t/boutique/`, `/t/licoreria/` | Las demos de cada plantilla (los pedidos de prueba llegan a tu WhatsApp) |
 
 Los datos viven en Supabase (proyecto **eudigital**).
 
@@ -169,6 +169,15 @@ Menú moderno de comida rápida, hecho a partir de la página de Son D'licias pe
 - **Lo que ve quien compra:** cabecera con el estado del horario, portada con foto, logo, eslogan, horario de la semana, WhatsApp, su red social y la mascota (con un globito al tocarla), buscador, categorías fijas arriba, «Lo más pedido» en carrusel, una franja con foto por categoría, y una hoja para elegir la opción obligatoria (carne, pollo…), los adicionales (hasta triple porción) y la cantidad. El pedido va en dos pasos en el teléfono (productos y entrega) o en una columna fija en la computadora, con «Te puede gustar», cupones, delivery por distancia, formas de pago con sus datos, «¿Lo mismo de la última vez?» y el código del pedido en el mensaje de WhatsApp.
 - **Lo que edita el dueño (panel, Menú):** categorías con nombre, nombre corto para el botón, emoji, foto de la franja, nota y el interruptor **Son adicionales** (sus productos se ofrecen al elegir cualquier otro); productos con foto, precio, descripción, **Opciones para elegir**, **Sale en «Lo más pedido»**, **Sugerirlo dentro del pedido** y agotado. En **Apariencia**: foto de la portada, buscador, títulos del carrusel y de las sugerencias, lo que dice la mascota, y los 4 temas (Brasa, Noche, Huerta y Cielo) o sus propios colores.
 - Archivos: `t/delicias/` (`index.html`, `app.js`, `datos.js`, fotos en `img/`, letra Poppins en `vendor/`). Los textos fijos en inglés, portugués e italiano están al final de `t/delicias/app.js`.
+
+## Plantilla Licorería (plan Premium)
+
+Catálogo nocturno y elegante (negro y dorado, con 4 temas: Reserva, Clásico, Neón y Esmeralda) hecho sobre la base de Delicias, con todo lo mismo: buscador, «Lo más vendido», franjas con foto, carrito, sugerencias, cupones, delivery por distancia, pagos, «Repetir pedido» e idiomas.
+
+- **Presentaciones con precio:** cada producto puede tener varias (Lata 355 ml $1,20, Six pack $6,50, Caja de 24 $24). El cliente elige una y la tarjeta muestra «desde» la más barata. En el panel se editan en **Presentaciones y precios** (nombre y precio). Si un producto tiene una sola, se agrega de un toque.
+- **Aviso de mayoría de edad** al entrar, una vez por teléfono (se apaga o se cambia la edad en Apariencia). No sale en la vista previa del panel.
+- **Combos** como categoría, **«No te olvides»** con hielo, refrescos y snacks en el pedido, y una pastilla dorada en la portada («Delivery hasta medianoche»).
+- Ilustraciones propias de botellas, latas, hielo y combos (sin marcas) en `t/licoreria/img/`. Ver `sql/2026-11-28_plantilla_licoreria.sql`.
 
 ## Portada de la plantilla Burgers: nombre en la pared y foto propia
 

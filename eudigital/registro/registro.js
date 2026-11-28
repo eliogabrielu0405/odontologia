@@ -7,7 +7,7 @@
   const h = EU.h;
   const api = EU.crearApi({ llave: "eu:panel", almacen: "local" });
   const app = document.getElementById("app");
-  const ORDEN = ["pizzeria", "arepera", "burgers", "delicias", "sushi", "boutique"];
+  const ORDEN = ["pizzeria", "arepera", "burgers", "delicias", "sushi", "boutique", "licoreria"];
   const PL = window.EU_PLANTILLAS || {};
   const params = new URLSearchParams(location.search);
   const WA = EU.soloNumeros(C.whatsappMarca);

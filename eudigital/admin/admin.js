@@ -6,7 +6,7 @@
   const h = EU.h;
   const api = EU.crearApi({ llave: "eu:admin", almacen: "sesion" });
   const app = document.getElementById("app");
-  const ORDEN = ["pizzeria", "arepera", "burgers", "delicias", "sushi", "boutique"];
+  const ORDEN = ["pizzeria", "arepera", "burgers", "delicias", "sushi", "boutique", "licoreria"];
   const plantillas = () => ORDEN.map((id) => (window.EU_PLANTILLAS || {})[id]).filter(Boolean);
   const nombrePlantilla = (id) => ((window.EU_PLANTILLAS || {})[id] || { nombre: id }).nombre;
   const D = { sitios: [], cuentas: {}, pagos: [], notas: {}, ajustes: {}, seccion: "resumen", filtro: "todos", buscar: "" };
@@ -36,7 +36,7 @@
   const montoTxt = (p) => (p.moneda === "VES" ? "Bs " + EU.fmtBs.format(p.monto) : EU.usd(p.monto));
   const pendientes = () => D.pagos.filter((p) => p.estado === "pendiente");
   const RESERVADOS = ["admin", "panel", "registro", "planes", "www", "app", "api", "core", "img", "sql", "tools", "eudigital", "eu-digital",
-    "soporte", "ayuda", "demo", "prueba", "test", "login", "entrar", "pizzeria", "arepera", "burgers", "delicias", "sushi", "boutique", "t"];
+    "soporte", "ayuda", "demo", "prueba", "test", "login", "entrar", "pizzeria", "arepera", "burgers", "delicias", "sushi", "boutique", "licoreria", "t"];
   const sumarDias = (iso, n) => new Date(Date.parse(iso + "T12:00:00Z") + n * 864e5).toISOString().slice(0, 10);
   const OP_PLAN = [{ id: "basico", nombre: "Básico" }, { id: "premium", nombre: "Premium" }];
   const OP_CICLO = [{ id: "mensual", nombre: "Por mes" }, { id: "anual", nombre: "Por año" }];

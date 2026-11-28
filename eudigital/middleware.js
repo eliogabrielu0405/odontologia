@@ -15,6 +15,7 @@ const PLANTILLAS = {
   burgers: { nombre: "Burgers y perros", texto: "Página de pedidos para hamburguesas y perros calientes, con pedidos directo a tu WhatsApp." },
   delicias: { nombre: "Delicias", texto: "Menú moderno de comida rápida con buscador, opciones y adicionales, y pedidos directo a tu WhatsApp." },
   sushi: { nombre: "Sushi", texto: "Página de pedidos para sushi, con carrito y pedidos directo a tu WhatsApp." },
+  licoreria: { nombre: "Licorería", texto: "Catálogo de licorería con precio por presentación, combos y pedidos directo a tu WhatsApp." },
   boutique: { nombre: "Boutique", texto: "Catálogo de ropa con tallas y colores, y pedidos directo a tu WhatsApp." },
 };
 // Respaldo por si no se puede leer core/config.js (son los mismos datos públicos de ese archivo)
