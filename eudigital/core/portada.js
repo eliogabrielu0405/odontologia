@@ -145,8 +145,8 @@
     const mayor = Math.max(EU.planes.ahorro(pl, "basico"), EU.planes.ahorro(pl, "premium"));
     document.getElementById("ahorro-anual").textContent = mayor > 0 ? "Pagando el año ahorras hasta " + dinero(mayor) + "." : "";
     document.getElementById("nota-planes").textContent = pl.registroAbierto
-      ? "Todos empiezan con la prueba gratis. Durante la prueba o al terminar, eliges Básico o Premium en tu panel, en Mi suscripción. Con Premium puedes tener hasta " + pl.maxPaginas + " páginas: una por sucursal o por marca."
-      : "Escríbenos y te creamos tu página con el plan que elijas. Con Premium puedes tener hasta " + pl.maxPaginas + " páginas: una por sucursal o por marca.";
+      ? "Todos empiezan con la prueba gratis. Durante la prueba o al terminar, eliges Básico o Premium en tu panel, en Mi suscripción. Con Premium tienes " + pl.maxPaginas + " páginas incluidas, una por sucursal o por marca, y más por " + dinero(EU.planes.precio(pl, "extra", "mensual")) + " al mes cada una."
+      : "Escríbenos y te creamos tu página con el plan que elijas. Con Premium tienes " + pl.maxPaginas + " páginas incluidas y más por " + dinero(EU.planes.precio(pl, "extra", "mensual")) + " al mes cada una.";
   }
   todos("[data-ciclo]").forEach((b) => b.addEventListener("click", () => {
     if (ciclo === b.dataset.ciclo) return;
@@ -164,6 +164,7 @@
   function pintarTextos() {
     todos("[data-dias]").forEach((x) => { x.textContent = String(pl.diasPrueba); });
     todos("[data-max]").forEach((x) => { x.textContent = String(pl.maxPaginas); });
+    todos("[data-extra]").forEach((x) => { x.textContent = dinero(EU.planes.precio(pl, "extra", "mensual")); });
     todos("[data-wa-visible]").forEach((x) => { x.textContent = telVisible(); });
     todos("[data-wa]").forEach((a) => { a.href = enlaceWa("Hola, quiero saber más de las páginas de pedidos."); });
     const d = destino();

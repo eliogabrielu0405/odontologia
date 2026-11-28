@@ -832,7 +832,8 @@
   const textoPago = (p) => {
     const n = Number(p.meses) || 1;
     const tiempo = p.ciclo === "anual" || n === 12 ? "1 año" : n + (n === 1 ? " mes" : " meses");
-    return (p.plan ? "Plan " + (EU.planes.nombres[p.plan] || p.plan) + ", " : "") + tiempo;
+    const extras = Number(p.extras) || 0;
+    return (p.plan ? "Plan " + (EU.planes.nombres[p.plan] || p.plan) + (extras ? " + " + extras + (extras === 1 ? " página adicional" : " páginas adicionales") : "") + ", " : "") + tiempo;
   };
   const montoPago = (p) => (p.moneda === "VES" ? "Bs " + EU.fmtBs.format(p.monto) : EU.usd(p.monto));
 
@@ -958,19 +959,23 @@
     const d = {
       plan: premiumEnUso().length ? "premium" : pre.plan || (actual === "premium" ? "premium" : "basico"), ciclo: pre.ciclo || (actual === "prueba" ? "mensual" : ciclo()),
       meses: "1", monto: 0, moneda: "USD", metodo: metodos[0] || "", referencia: "", nota: "",
+      extras: String(pre.extras != null ? pre.extras : Math.max(0, Number(S.cuenta && S.cuenta.paginas_extra) || 0)),
     };
-    const total = () => Math.round((d.ciclo === "anual" ? EU.planes.precio(pl, d.plan, "anual") : EU.planes.precio(pl, d.plan, "mensual") * (Number(d.meses) || 1)) * 100) / 100;
+    // Páginas adicionales (solo Premium): cada una suma su precio por mes o por año
+    const nExtras = () => (d.plan === "premium" ? Math.max(0, Math.min(18, Number(d.extras) || 0)) : 0);
+    const total = () => Math.round(((d.ciclo === "anual" ? EU.planes.precio(pl, d.plan, "anual") + nExtras() * EU.planes.precio(pl, "extra", "anual")
+      : (EU.planes.precio(pl, d.plan, "mensual") + nExtras() * EU.planes.precio(pl, "extra", "mensual")) * (Number(d.meses) || 1))) * 100) / 100;
     d.monto = total();
     const resumen = h("p", { class: "banda azul", "aria-live": "polite" });
     const baja = h("p", { class: "banda ambar", hidden: true }, "Con el plan Básico queda en línea solo tu página principal. Las demás se pausan, sin borrarse, hasta que vuelvas a Premium.");
     const defMonto = { tipo: "dinero", ruta: "monto", etiqueta: "Monto que pagaste", ayuda: "Si pagaste en bolívares, escribe el monto en bolívares y elige Bolívares abajo." };
     const pintarResumen = () => {
       const tiempo = d.ciclo === "anual" ? "1 año" : d.meses + (String(d.meses) === "1" ? " mes" : " meses");
-      resumen.textContent = "Plan " + EU.planes.nombres[d.plan] + " por " + tiempo + ": " + EU.planes.dinero(total()) + ".";
+      resumen.textContent = "Plan " + EU.planes.nombres[d.plan] + (nExtras() ? " con " + nExtras() + (nExtras() === 1 ? " página adicional" : " páginas adicionales") : "") + " por " + tiempo + ": " + EU.planes.dinero(total()) + ".";
       baja.hidden = !(d.plan === "basico" && S.sitios.length > 1);
     };
     const ed = EU.crearEditor({ raiz: () => d, alCambiar: (def) => {
-      if (["plan", "ciclo", "meses"].includes(def.ruta)) {
+      if (["plan", "ciclo", "meses", "extras"].includes(def.ruta)) {
         d.monto = total(); d.moneda = "USD";
         montoCampo.replaceWith(montoCampo = ed.campo(defMonto));
         monedaCampo.replaceWith(monedaCampo = ed.campo(defMoneda));
@@ -992,6 +997,9 @@
           ayuda: premiumEnUso().length ? "Tu página usa la plantilla " + nombresPremium() + ", que es del plan Premium." : "" }),
         ed.campo({ tipo: "selector", ruta: "ciclo", etiqueta: "Cada cuánto pagas", opciones: [{ id: "mensual", nombre: "Mes a mes" }, { id: "anual", nombre: "Un año" }] }),
         ed.campo({ tipo: "selector", ruta: "meses", etiqueta: "Meses que pagas", lista: true, si: { ruta: "ciclo", igual: "mensual" }, opciones: Array.from({ length: 11 }, (_, i) => ({ id: String(i + 1), nombre: i + 1 + (i ? " meses" : " mes") })) }),
+        ed.campo({ tipo: "selector", ruta: "extras", etiqueta: "Páginas adicionales", lista: true, si: { ruta: "plan", igual: "premium" },
+          ayuda: "Además de las " + pl.maxPaginas + " que incluye el Premium. Cada una: " + EU.planes.dinero(EU.planes.precio(pl, "extra", "mensual")) + " al mes o " + EU.planes.dinero(EU.planes.precio(pl, "extra", "anual")) + " al año.",
+          opciones: Array.from({ length: 11 }, (_, i) => ({ id: String(i), nombre: i ? i + (i === 1 ? " página" : " páginas") : "Ninguna" })) }),
         resumen, baja,
         montoCampo, monedaCampo,
         metodos.length ? ed.campo({ tipo: "selector", ruta: "metodo", etiqueta: "Cómo pagaste", lista: true, opciones: [...metodos, "Otro"] }) : ed.campo({ tipo: "texto", ruta: "metodo", etiqueta: "Cómo pagaste", max: 40, requerido: true }),
@@ -1019,7 +1027,7 @@
           await api.subir("eu-pagos", comprobante, blob);
         }
         const fila = { sitio_id: cuenta, monto: d.monto, moneda: d.moneda, metodo: String(d.metodo).slice(0, 40), referencia: d.referencia.trim() || null,
-          meses: d.ciclo === "anual" ? 12 : Number(d.meses) || 1, plan: d.plan, ciclo: d.ciclo, nota: d.nota.trim() || null, comprobante, creado_por: api.sesion.uid };
+          meses: d.ciclo === "anual" ? 12 : Number(d.meses) || 1, plan: d.plan, ciclo: d.ciclo, extras: nExtras(), nota: d.nota.trim() || null, comprobante, creado_por: api.sesion.uid };
         const r = await api.insertar("eu_pagos", fila);
         const nuevo = (r && r[0]) || Object.assign({ estado: "pendiente", creado: new Date().toISOString() }, fila);
         S.pagos.unshift(nuevo);
@@ -1080,7 +1088,8 @@
 
   function pintarPaginas() {
     const premium = plan() === "premium";
-    const max = S.planes.maxPaginas;
+    const extra = Math.max(0, Number(S.cuenta && S.cuenta.paginas_extra) || 0);
+    const max = S.planes.maxPaginas + extra;
     const activa = S.principal.estado === "activo";
     const out = [];
     const filas = S.sitios.map((s) => {
@@ -1102,9 +1111,13 @@
     out.push(h("section", { class: "hoja" },
       h("div", { class: "hoja-fila" },
         h("div", { class: "hoja-cab" }, h("h2", {}, S.sitios.length === 1 ? "Tu página" : "Tus páginas"),
-          premium ? h("p", {}, "Usas " + S.sitios.length + " de " + max + ".") : null),
+          premium ? h("p", {}, "Usas " + S.sitios.length + " de " + max + (extra ? " (" + S.planes.maxPaginas + " del plan y " + extra + (extra === 1 ? " adicional)" : " adicionales)") : "") + ".") : null),
         premium && activa && S.sitios.length < max ? h("button", { class: "btn", type: "button", onclick: nuevaPagina }, "Crear otra página") : null),
-      h("div", { class: "paginas" }, filas)));
+      h("div", { class: "paginas" }, filas),
+      // Llegó al tope: puede pagar una página adicional
+      premium && activa && S.sitios.length >= max ? h("div", { class: "banda azul" },
+        h("p", {}, "¿Necesitas otra página? Cada página adicional cuesta " + EU.planes.dinero(EU.planes.precio(S.planes, "extra", "mensual")) + " al mes (o " + EU.planes.dinero(EU.planes.precio(S.planes, "extra", "anual")) + " al año), además de tu plan."),
+        h("button", { class: "btn btn-chico", type: "button", style: "margin-top:8px", onclick: () => { S.pago = { plan: "premium", ciclo: ciclo(), extras: extra + 1 }; irA("suscripcion"); } }, "Agregar una página")) : null));
 
     if (!premium) {
       out.push(h("section", { class: "hoja" },

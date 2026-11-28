@@ -4,8 +4,8 @@
 (function () {
   "use strict";
   const EU = (window.EU = window.EU || {});
-  const BASE = { diasPrueba: 15, registroAbierto: true, maxPaginas: 5, metodos: [], whatsapp: "",
-    precios: { basico: { mensual: 10, anual: 110 }, premium: { mensual: 20, anual: 200 } } };
+  const BASE = { diasPrueba: 15, registroAbierto: true, maxPaginas: 2, metodos: [], whatsapp: "",
+    precios: { basico: { mensual: 10, anual: 110 }, premium: { mensual: 20, anual: 200 }, extra: { mensual: 10, anual: 110 } } };
   const num = (v, defecto, min, max) => {
     const n = Number(v);
     return Number.isFinite(n) && n >= min && n <= max ? n : defecto;
@@ -27,7 +27,7 @@
         metodos: Array.isArray(d.metodos) ? d.metodos.filter(Boolean).map(String)
           : Array.isArray(d.pagos) ? d.pagos.map((m) => m && m.metodo).filter(Boolean).map(String) : [],
         whatsapp: String(d.whatsapp || "").replace(/\D+/g, ""),
-        precios: { basico: { mensual: uno("basico", "mensual"), anual: uno("basico", "anual") }, premium: { mensual: uno("premium", "mensual"), anual: uno("premium", "anual") } },
+        precios: { basico: { mensual: uno("basico", "mensual"), anual: uno("basico", "anual") }, premium: { mensual: uno("premium", "mensual"), anual: uno("premium", "anual") }, extra: { mensual: uno("extra", "mensual"), anual: uno("extra", "anual") } },
       };
     },
     precio(pl, plan, ciclo) {
@@ -50,7 +50,7 @@
         { id: "basico", nombre: "Básico", para: "Para un negocio con una sola página.",
           puntos: ["Una página con la plantilla que elijas (menos las Premium)", "Pedidos directo a tu WhatsApp, sin comisión", "Panel para cambiar precios, fotos y la tasa del día", "Código QR, tarjeta para compartir y tus pedidos en cifras"] },
         { id: "premium", nombre: "Premium", para: "Para varios negocios, sucursales o líneas de productos.",
-          puntos: ["Todo lo del plan Básico", "Hasta " + pl.maxPaginas + " páginas, cada una con su enlace", "Todas las plantillas, también las Premium como Delicias y Licorería", "Cambia de plantilla sin perder tu menú"] },
+          puntos: ["Todo lo del plan Básico", pl.maxPaginas + (pl.maxPaginas === 1 ? " página incluida" : " páginas incluidas") + ", cada una con su enlace. Más páginas por " + EU.planes.dinero(EU.planes.precio(pl, "extra", "mensual")) + " al mes cada una", "Todas las plantillas, también las Premium como Delicias y Licorería", "Cambia de plantilla sin perder tu menú"] },
       ];
     },
   };

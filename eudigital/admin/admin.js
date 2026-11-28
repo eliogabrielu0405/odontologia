@@ -28,6 +28,7 @@
   const planTxt = (s) => (planDe(s) === "prueba" ? "Prueba gratis" : EU.planes.nombres[planDe(s)] + (cicloDe(s) === "anual" ? " anual" : " mensual"));
   const selloPlan = (s) => h("span", { class: "chip-plan chip-" + planDe(s) }, planDe(s) === "prueba" ? "Prueba" : EU.planes.nombres[planDe(s)]);
   const tiempoPago = (p) => { const n = Number(p.meses) || 1; return p.ciclo === "anual" || n === 12 ? "1 año" : n + (n === 1 ? " mes" : " meses"); };
+  const extrasTxt = (n) => (Number(n) > 0 ? " + " + n + (Number(n) === 1 ? " página adicional" : " páginas adicionales") : "");
   const SEL_SITIOS = "select=id,slug,nombre,plantilla,estado,dominio,creado,actualizado,dueno,principal&order=creado.desc";
   const enlaceSitio = (s) => (s.dominio ? "https://" + s.dominio : location.origin + "/?n=" + encodeURIComponent(s.slug));
   const enlacePanel = (s) => location.origin + "/panel/?u=" + encodeURIComponent(s.slug);
@@ -274,7 +275,7 @@
     const sello = { aprobado: ["Pagado", "verde"], rechazado: ["Rechazado", "rojo"], pendiente: ["En revisión", "ambar"] }[p.estado] || [p.estado, "gris"];
     return h("div", { class: "dato", style: "align-items:flex-start" },
       h("div", { style: "flex:1;min-width:0" },
-        h("b", { class: "num" }, montoTxt(p) + " por " + (p.plan ? "plan " + (EU.planes.nombres[p.plan] || p.plan) + ", " : "") + tiempoPago(p)),
+        h("b", { class: "num" }, montoTxt(p) + " por " + (p.plan ? "plan " + (EU.planes.nombres[p.plan] || p.plan) + extrasTxt(p.extras) + ", " : "") + tiempoPago(p)),
         h("p", { class: "suave chico" }, [conCliente && s ? s.nombre : "", p.metodo, p.referencia ? "Ref. " + p.referencia : "", EU.fechaHora(p.creado)].filter(Boolean).join(", ")),
         p.respuesta ? h("p", { class: "chico", style: "color:var(--rojo);font-weight:700" }, "Motivo: " + p.respuesta) : null),
       h("span", { class: "sello " + sello[1] }, sello[0]));
@@ -284,12 +285,14 @@
     const c = s ? cuentaDe(s) : {};
     // Lo que el cliente dijo que paga; se puede corregir antes de aprobar
     const actual = s ? planDe(s) : "basico";
-    const meses = { m: String(p.meses || 1), plan: p.plan || (actual === "premium" ? "premium" : "basico"), ciclo: p.ciclo || (Number(p.meses) >= 12 ? "anual" : "mensual") };
+    const meses = { m: String(p.meses || 1), plan: p.plan || (actual === "premium" ? "premium" : "basico"), ciclo: p.ciclo || (Number(p.meses) >= 12 ? "anual" : "mensual"), extras: String(Number(p.extras) || 0) };
+    const nExtras = () => (meses.plan === "premium" ? Number(meses.extras) || 0 : 0);
     const pl = PL();
     const debe = h("p", { class: "suave chico" });
     const pintarDebe = () => {
-      const total = meses.ciclo === "anual" ? EU.planes.precio(pl, meses.plan, "anual") : EU.planes.precio(pl, meses.plan, "mensual") * (Number(meses.m) || 1);
-      debe.textContent = "Ese plan cuesta " + EU.usd(total) + (meses.ciclo === "anual" ? " por el año." : " por " + meses.m + (meses.m === "1" ? " mes." : " meses.")) +
+      const total = meses.ciclo === "anual" ? EU.planes.precio(pl, meses.plan, "anual") + nExtras() * EU.planes.precio(pl, "extra", "anual")
+        : (EU.planes.precio(pl, meses.plan, "mensual") + nExtras() * EU.planes.precio(pl, "extra", "mensual")) * (Number(meses.m) || 1);
+      debe.textContent = (nExtras() ? "Con " + nExtras() + (nExtras() === 1 ? " página adicional, el plan cuesta " : " páginas adicionales, el plan cuesta ") : "Ese plan cuesta ") + EU.usd(total) + (meses.ciclo === "anual" ? " por el año." : " por " + meses.m + (meses.m === "1" ? " mes." : " meses.")) +
         (s && meses.plan === "basico" && paginasDe(s).length ? " Al pasar a Básico se pausan sus páginas adicionales." : "");
     };
     const ed = EU.crearEditor({ raiz: () => meses, alCambiar: pintarDebe });
@@ -298,6 +301,8 @@
         ed.campo({ tipo: "selector", ruta: "plan", etiqueta: "Plan", opciones: [{ id: "basico", nombre: "Básico" }, { id: "premium", nombre: "Premium" }] }),
         ed.campo({ tipo: "selector", ruta: "ciclo", etiqueta: "Paga", opciones: [{ id: "mensual", nombre: "Mes a mes" }, { id: "anual", nombre: "Un año" }] })),
       ed.campo({ tipo: "selector", ruta: "m", etiqueta: "Meses que se suman", lista: true, si: { ruta: "ciclo", igual: "mensual" }, opciones: Array.from({ length: 12 }, (_, i) => ({ id: String(i + 1), nombre: i + 1 + (i ? " meses" : " mes") })) }),
+      ed.campo({ tipo: "selector", ruta: "extras", etiqueta: "Páginas adicionales", lista: true, si: { ruta: "plan", igual: "premium" }, ayuda: "Además de las " + pl.maxPaginas + " del Premium. Al aprobar, la cuenta queda con esta cantidad.",
+        opciones: Array.from({ length: 11 }, (_, i) => ({ id: String(i), nombre: i ? i + (i === 1 ? " página" : " páginas") : "Ninguna" })) }),
       debe);
     pintarDebe();
     const selloPos = h("span", { class: "sello-pos" }, h("span", { class: "sello ambar" }, "En revisión"));
@@ -306,7 +311,7 @@
       selloPos,
       h("p", { class: "monto" }, montoTxt(p)),
       h("p", { class: "quien" }, s ? s.nombre : "Página eliminada"),
-      p.plan ? h("p", { class: "chico", style: "font-weight:700" }, "Dice que paga: plan " + (EU.planes.nombres[p.plan] || p.plan) + ", " + tiempoPago(p) + ".") : null,
+      p.plan ? h("p", { class: "chico", style: "font-weight:700" }, "Dice que paga: plan " + (EU.planes.nombres[p.plan] || p.plan) + extrasTxt(p.extras) + ", " + tiempoPago(p) + ".") : null,
       h("p", { class: "suave chico" }, [p.metodo, p.referencia ? "Ref. " + p.referencia : "Sin referencia", "Reportado el " + EU.fechaHora(p.creado)].join(". ")),
       s ? h("p", { class: "suave chico" }, "Hoy tiene: " + planTxt(s) + ". " + (c.vence ? (actual === "prueba" ? "La prueba termina el " : "Fecha de corte actual: ") + EU.fecha(c.vence, true) + "." : "")) : null,
       p.nota ? h("p", { class: "nota" }, "Nota del cliente: " + p.nota) : null,
@@ -318,10 +323,10 @@
       aprobar.disabled = rechazar.disabled = true; aprobar.textContent = "Aprobando";
       try {
         const nMeses = meses.ciclo === "anual" ? 12 : Number(meses.m) || p.meses;
-        const vence = await api.rpc("eu_admin_aprobar_pago", { p_pago: p.id, p_meses: nMeses, p_plan: meses.plan, p_ciclo: meses.ciclo });
+        const vence = await api.rpc("eu_admin_aprobar_pago", { p_pago: p.id, p_meses: nMeses, p_plan: meses.plan, p_ciclo: meses.ciclo, p_extras: nExtras() });
         p.estado = "aprobado"; p.meses = nMeses; p.plan = meses.plan; p.ciclo = meses.ciclo; p.revisado = new Date().toISOString();
         if (s) {
-          D.cuentas[s.id] = Object.assign(D.cuentas[s.id] || { sitio_id: s.id }, { vence, plan: meses.plan, ciclo: meses.ciclo });
+          D.cuentas[s.id] = Object.assign(D.cuentas[s.id] || { sitio_id: s.id }, { vence, plan: meses.plan, ciclo: meses.ciclo, paginas_extra: nExtras() });
           s.estado = "activo";
           paginasDe(s).forEach((x) => { x.estado = meses.plan === "premium" ? "activo" : "suspendido"; });
         }
@@ -826,7 +831,10 @@
             ed.campo({ tipo: "dinero", ruta: "precios.premium.anual", etiqueta: "Premium, por año" })),
           h("div", { class: "dos-col" },
             ed.campo({ tipo: "numero", ruta: "diasPrueba", etiqueta: "Días de prueba gratis", min: 1, max: 90, sufijo: "días" }),
-            ed.campo({ tipo: "numero", ruta: "maxPaginasPremium", etiqueta: "Páginas con Premium", min: 1, max: 20, sufijo: "páginas", ayuda: "Contando la principal." })),
+            ed.campo({ tipo: "numero", ruta: "maxPaginasPremium", etiqueta: "Páginas incluidas en Premium", min: 1, max: 20, sufijo: "páginas", ayuda: "Contando la principal." })),
+          h("div", { class: "dos-col" },
+            ed.campo({ tipo: "dinero", ruta: "precios.extra.mensual", etiqueta: "Página adicional, por mes", ayuda: "Para cuentas Premium que quieren más páginas de las incluidas." }),
+            ed.campo({ tipo: "dinero", ruta: "precios.extra.anual", etiqueta: "Página adicional, por año" })),
           ed.campo({ tipo: "interruptor", ruta: "registroAbierto", etiqueta: "Registro abierto", ayuda: "Cualquiera puede crear su página desde la portada y probarla gratis. Si lo apagas, solo tú creas clientes." }),
           h("div", { class: "dos-col" },
             ed.campo({ tipo: "numero", ruta: "topeRegistrosHora", etiqueta: "Registros por hora, como máximo", min: 10, max: 1000, sufijo: "por hora", si: { ruta: "registroAbierto" } }),
